@@ -44,6 +44,7 @@ import dailyPlansIndexHandler from './_handlers/daily-plans/index.js';
 import dailyPlansIdHandler from './_handlers/daily-plans/[id].js';
 import dailyPlansApproveHandler from './_handlers/daily-plans/approve.js';
 import planAssignmentsIdHandler from './_handlers/plan-assignments/[id].js';
+import commandCenterHandler from './_handlers/command-center/index.js';
 
 // Route definitions: [pattern, handler, paramNames]
 // Order matters — more specific routes first
@@ -99,6 +100,9 @@ const routes = [
 
   // Daily Plans
   ['daily-plans', dailyPlansIndexHandler],
+
+  // Command Center
+  ['command-center', commandCenterHandler],
 ];
 
 // Dynamic routes: [pattern, handler, paramMap]
