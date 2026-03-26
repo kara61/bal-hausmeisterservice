@@ -1,6 +1,13 @@
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+
+let _pdfParse;
+function getPdfParse() {
+  if (!_pdfParse) {
+    const require = createRequire(import.meta.url);
+    _pdfParse = require('pdf-parse');
+  }
+  return _pdfParse;
+}
 
 const TRASH_TYPE_KEYWORDS = {
   restmuell: ['restmüll', 'restmuell', 'grau', 'restabfall'],
@@ -86,7 +93,7 @@ export function parseCollectionDates(text, year) {
  * @returns {Promise<Array<{trash_type: string, collection_date: string}>>}
  */
 export async function parseAwpPdf(pdfBuffer, year) {
-  const data = await pdfParse(pdfBuffer);
+  const data = await getPdfParse()(pdfBuffer);
   return parseCollectionDates(data.text, year);
 }
 
