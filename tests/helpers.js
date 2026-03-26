@@ -2,6 +2,11 @@ import { pool } from '../src/db/pool.js';
 
 export async function cleanDb() {
   await pool.query(`
+    DELETE FROM task_assignments;
+    DELETE FROM extra_jobs;
+    DELETE FROM team_members;
+    DELETE FROM teams;
+    DELETE FROM properties;
     DELETE FROM monthly_reports;
     DELETE FROM sick_leave;
     DELETE FROM time_entries;

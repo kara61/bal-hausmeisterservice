@@ -11,6 +11,7 @@ import timeEntriesRouter from './routes/timeEntries.js';
 import sickLeaveRouter from './routes/sickLeave.js';
 import vacationRouter from './routes/vacation.js';
 import reportsRouter from './routes/reports.js';
+import propertiesRouter from './routes/properties.js';
 import { requireAuth } from './middleware/auth.js';
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/time-entries', requireAuth, timeEntriesRouter);
 app.use('/api/sick-leave', requireAuth, sickLeaveRouter);
 app.use('/api/vacation', requireAuth, vacationRouter);
 app.use('/api/reports', requireAuth, reportsRouter);
+app.use('/api/properties', requireAuth, propertiesRouter);
 
 // Serve built client in production
 const __dirname = dirname(fileURLToPath(import.meta.url));
