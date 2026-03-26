@@ -53,7 +53,19 @@ export default withErrorHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Worker not found' });
-    return res.json(result.rows[0]);
+
+    // Warn if another worker has the same name
+    const response = { ...result.rows[0] };
+    if (req.body.name) {
+      const nameDup = await pool.query(
+        'SELECT id FROM workers WHERE LOWER(name) = LOWER($1) AND id != $2 AND is_active = true',
+        [req.body.name, id]
+      );
+      if (nameDup.rows.length > 0) {
+        response._warning = 'Ein anderer Mitarbeiter hat den gleichen Namen';
+      }
+    }
+    return res.json(response);
   }
 
   if (req.method === 'DELETE') {

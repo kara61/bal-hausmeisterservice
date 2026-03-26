@@ -8,6 +8,7 @@ export default function Workers() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
+  const [warning, setWarning] = useState(null);
   const { t } = useLang();
 
   const loadWorkers = async () => {
@@ -20,10 +21,15 @@ export default function Workers() {
   const handleSave = async (form) => {
     try {
       setError(null);
+      setWarning(null);
+      let result;
       if (editing) {
-        await api.put(`/workers/${editing.id}`, form);
+        result = await api.put(`/workers/${editing.id}`, form);
       } else {
-        await api.post('/workers', form);
+        result = await api.post('/workers', form);
+      }
+      if (result?._warning) {
+        setWarning(result._warning);
       }
       setShowForm(false);
       setEditing(null);
@@ -49,7 +55,7 @@ export default function Workers() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t('workers.title')}</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); setError(null); }} className="btn btn-primary">
+        <button onClick={() => { setEditing(null); setShowForm(true); setError(null); setWarning(null); }} className="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {t('workers.new')}
         </button>
@@ -58,6 +64,12 @@ export default function Workers() {
       {error && (
         <div className="alert alert-danger mb-md animate-fade-in">
           {error}
+        </div>
+      )}
+
+      {warning && (
+        <div className="alert alert-warning mb-md animate-fade-in">
+          {warning}
         </div>
       )}
 

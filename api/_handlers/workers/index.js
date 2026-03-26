@@ -29,7 +29,15 @@ export default withErrorHandler(async (req, res) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
         [name, phone_number, worker_type, hourly_rate || null, monthly_salary || null, registration_date || null, vacation_entitlement || 0]
       );
-      return res.status(201).json(result.rows[0]);
+      const response = { ...result.rows[0] };
+      const nameDup = await pool.query(
+        'SELECT id FROM workers WHERE LOWER(name) = LOWER($1) AND id != $2 AND is_active = true',
+        [name, result.rows[0].id]
+      );
+      if (nameDup.rows.length > 0) {
+        response._warning = 'Ein anderer Mitarbeiter hat den gleichen Namen';
+      }
+      return res.status(201).json(response);
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Phone number already exists' });
       throw err;
