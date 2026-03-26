@@ -28,6 +28,17 @@ export default withErrorHandler(async (req, res) => {
 
     if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
+    // Check for duplicate phone number
+    if (req.body.phone_number) {
+      const dup = await pool.query(
+        'SELECT id FROM workers WHERE phone_number = $1 AND id != $2',
+        [req.body.phone_number, id]
+      );
+      if (dup.rows.length > 0) {
+        return res.status(409).json({ error: 'Phone number already exists' });
+      }
+    }
+
     updates.push(`updated_at = NOW()`);
     values.push(id);
 
