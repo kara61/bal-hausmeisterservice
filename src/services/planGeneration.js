@@ -212,3 +212,97 @@ export async function getPlanByDate(dateStr) {
   if (rows.length === 0) return null;
   return getPlanWithAssignments(rows[0].id);
 }
+
+export async function redistributeSickWorkers(dateStr) {
+  const plan = await getPlanByDate(dateStr);
+  if (!plan || plan.status === 'approved') return { reassigned: 0 };
+
+  // Get sick workers for this date
+  const { rows: sickWorkers } = await pool.query(
+    `SELECT worker_id FROM sick_leave
+     WHERE start_date <= $1
+       AND start_date + (declared_days || ' days')::INTERVAL > $1::DATE
+       AND status != 'rejected'`,
+    [dateStr]
+  );
+  const sickIds = new Set(sickWorkers.map(s => s.worker_id));
+  if (sickIds.size === 0) return { reassigned: 0 };
+
+  // Find assignments for sick workers
+  const { rows: sickAssignments } = await pool.query(
+    `SELECT pa.* FROM plan_assignments pa
+     WHERE pa.daily_plan_id = $1 AND pa.worker_id = ANY($2::int[])`,
+    [plan.id, [...sickIds]]
+  );
+  if (sickAssignments.length === 0) return { reassigned: 0 };
+
+  // Get available workers with preferences and current assignment counts
+  const { rows: workers } = await pool.query(
+    `SELECT w.id, w.name, w.phone_number,
+            COALESCE(wp.is_flex_worker, false) AS is_flex,
+            COALESCE(wp.max_properties_per_day, 4) AS max_properties,
+            (SELECT COUNT(*) FROM plan_assignments pa2
+             WHERE pa2.daily_plan_id = $1 AND pa2.worker_id = w.id) AS assignment_count
+     FROM workers w
+     LEFT JOIN worker_preferences wp ON wp.worker_id = w.id
+     WHERE w.is_active = true AND w.id != ALL($2::int[])`,
+    [plan.id, [...sickIds]]
+  );
+
+  let reassigned = 0;
+  for (const assignment of sickAssignments) {
+    // Get property history
+    const { rows: history } = await pool.query(
+      `SELECT DISTINCT worker_id FROM plan_assignments
+       WHERE property_id = $1 AND status = 'completed'`,
+      [assignment.property_id]
+    );
+    const propertyHistory = history.map(h => h.worker_id);
+
+    const withCounts = workers.map(w => ({
+      ...w,
+      assignment_count: Number(w.assignment_count),
+    }));
+
+    const best = findBestWorkerForProperty(withCounts, assignment.property_id, propertyHistory);
+    if (best) {
+      await pool.query(
+        `UPDATE plan_assignments SET worker_id = $1, source = 'auto'
+         WHERE id = $2`,
+        [best.id, assignment.id]
+      );
+      // Increment the count for the worker we just assigned
+      const w = workers.find(w => w.id === best.id);
+      if (w) w.assignment_count = Number(w.assignment_count) + 1;
+      reassigned++;
+    }
+  }
+
+  return { reassigned, total_sick_assignments: sickAssignments.length };
+}
+
+export async function approvePlan(planId, approvedBy) {
+  const { rows: [plan] } = await pool.query(
+    'SELECT * FROM daily_plans WHERE id = $1',
+    [planId]
+  );
+  if (!plan) throw new Error('Plan not found');
+  if (plan.status === 'approved') throw new Error('Plan is already approved');
+
+  const { rows: [updated] } = await pool.query(
+    `UPDATE daily_plans SET status = 'approved', approved_at = NOW(), approved_by = $2
+     WHERE id = $1 RETURNING *`,
+    [planId, approvedBy]
+  );
+  return updated;
+}
+
+export async function reassignPlanAssignment(assignmentId, newWorkerId) {
+  const { rows: [updated] } = await pool.query(
+    `UPDATE plan_assignments SET worker_id = $1, source = 'manual'
+     WHERE id = $2 RETURNING *`,
+    [newWorkerId, assignmentId]
+  );
+  if (!updated) throw new Error('Assignment not found');
+  return updated;
+}
