@@ -3,11 +3,15 @@ import { config } from '../config.js';
 
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
+  let token;
+
+  if (header && header.startsWith('Bearer ')) {
+    token = header.split(' ')[1];
+  } else if (req.query.token) {
+    token = req.query.token;
+  } else {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
-  const token = header.split(' ')[1];
   try {
     const payload = jwt.verify(token, config.jwtSecret);
     req.user = payload;
