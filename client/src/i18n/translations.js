@@ -280,6 +280,63 @@ export const translations = {
     'cc.reassign': 'Zuweisen',
     'cc.noAlerts': 'Keine Meldungen',
     'cc.planStatus': 'Plan-Status',
+
+    // Analytics
+    // Navigation
+    'nav.analytics': 'Analytik',
+
+    // Analytics page
+    'analytics.title': 'Performance Analytik',
+    'analytics.workers': 'Mitarbeiter',
+    'analytics.properties': 'Objekte',
+    'analytics.operations': 'Betrieb',
+    'analytics.costs': 'Kosten',
+    'analytics.export': 'Excel Export',
+    'analytics.noData': 'Keine Daten fuer diesen Zeitraum',
+    'analytics.loading': 'Daten werden geladen...',
+
+    // Date range
+    'analytics.from': 'Von',
+    'analytics.to': 'Bis',
+    'analytics.month': 'Monat',
+    'analytics.thisWeek': 'Diese Woche',
+    'analytics.thisMonth': 'Dieser Monat',
+    'analytics.lastMonth': 'Letzter Monat',
+
+    // Worker view
+    'analytics.worker.completed': 'Erledigt',
+    'analytics.worker.scheduled': 'Geplant',
+    'analytics.worker.daysWorked': 'Arbeitstage',
+    'analytics.worker.avgDuration': 'Ø Dauer',
+    'analytics.worker.photoCompliance': 'Foto-Compliance',
+    'analytics.worker.overtime': 'Ueberstunden',
+    'analytics.worker.sickDays': 'Krankheitstage',
+    'analytics.worker.min': 'Min',
+
+    // Property view
+    'analytics.property.avgDuration': 'Ø Dauer',
+    'analytics.property.completionRate': 'Abschlussrate',
+    'analytics.property.visits': 'Besuche',
+    'analytics.property.postponements': 'Verschiebungen',
+    'analytics.property.topWorker': 'Haeufigster MA',
+
+    // Operations view
+    'analytics.ops.planAdherence': 'Plantreue',
+    'analytics.ops.completed': 'Erledigt',
+    'analytics.ops.scheduled': 'Geplant',
+    'analytics.ops.avgWorkers': 'Ø MA/Tag',
+    'analytics.ops.overtime': 'Ueberstunden gesamt',
+    'analytics.ops.sickLeave': 'Krankheitstage',
+    'analytics.ops.daysTracked': 'Tage erfasst',
+
+    // Cost view
+    'analytics.cost.totalHours': 'Stunden gesamt',
+    'analytics.cost.overtimeHours': 'Ueberstunden',
+    'analytics.cost.regularCost': 'Regulaere Kosten',
+    'analytics.cost.overtimeCost': 'Ueberstundenkosten',
+    'analytics.cost.totalCost': 'Gesamtkosten',
+    'analytics.cost.costPerProperty': 'Kosten/Objekt',
+    'analytics.cost.utilization': 'Auslastung',
   },
 
   en: {
@@ -563,5 +620,62 @@ export const translations = {
     'cc.reassign': 'Assign',
     'cc.noAlerts': 'No alerts',
     'cc.planStatus': 'Plan status',
+
+    // Analytics
+    // Navigation
+    'nav.analytics': 'Analytics',
+
+    // Analytics page
+    'analytics.title': 'Performance Analytics',
+    'analytics.workers': 'Workers',
+    'analytics.properties': 'Properties',
+    'analytics.operations': 'Operations',
+    'analytics.costs': 'Costs',
+    'analytics.export': 'Excel Export',
+    'analytics.noData': 'No data for this period',
+    'analytics.loading': 'Loading data...',
+
+    // Date range
+    'analytics.from': 'From',
+    'analytics.to': 'To',
+    'analytics.month': 'Month',
+    'analytics.thisWeek': 'This week',
+    'analytics.thisMonth': 'This month',
+    'analytics.lastMonth': 'Last month',
+
+    // Worker view
+    'analytics.worker.completed': 'Completed',
+    'analytics.worker.scheduled': 'Scheduled',
+    'analytics.worker.daysWorked': 'Days worked',
+    'analytics.worker.avgDuration': 'Avg duration',
+    'analytics.worker.photoCompliance': 'Photo compliance',
+    'analytics.worker.overtime': 'Overtime',
+    'analytics.worker.sickDays': 'Sick days',
+    'analytics.worker.min': 'min',
+
+    // Property view
+    'analytics.property.avgDuration': 'Avg duration',
+    'analytics.property.completionRate': 'Completion rate',
+    'analytics.property.visits': 'Visits',
+    'analytics.property.postponements': 'Postponements',
+    'analytics.property.topWorker': 'Most frequent worker',
+
+    // Operations view
+    'analytics.ops.planAdherence': 'Plan adherence',
+    'analytics.ops.completed': 'Completed',
+    'analytics.ops.scheduled': 'Scheduled',
+    'analytics.ops.avgWorkers': 'Avg workers/day',
+    'analytics.ops.overtime': 'Total overtime',
+    'analytics.ops.sickLeave': 'Sick days',
+    'analytics.ops.daysTracked': 'Days tracked',
+
+    // Cost view
+    'analytics.cost.totalHours': 'Total hours',
+    'analytics.cost.overtimeHours': 'Overtime hours',
+    'analytics.cost.regularCost': 'Regular cost',
+    'analytics.cost.overtimeCost': 'Overtime cost',
+    'analytics.cost.totalCost': 'Total cost',
+    'analytics.cost.costPerProperty': 'Cost/property',
+    'analytics.cost.utilization': 'Utilization',
   },
 };
