@@ -11,6 +11,9 @@ import {
   markCompleted,
   saveVisitPhoto,
 } from './accountabilityFlow.js';
+import { approvePlan, redistributeSickWorkers } from './planGeneration.js';
+import { notifyWorkersOfRedistribution } from './planNotifications.js';
+import { config } from '../config.js';
 
 // --- Conversation state helpers (DB-backed) ---
 
@@ -256,6 +259,21 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
     }
   }
 
+  // Plan approval/edit from Halil (button IDs: plan_approve_X, plan_edit_X)
+  if (command.startsWith('plan_approve_') && phone === config.halilWhatsappNumber?.replace('whatsapp:', '')) {
+    const planId = parseInt(command.replace('plan_approve_', ''), 10);
+    try {
+      await approvePlan(planId, 'halil_whatsapp');
+      return { type: 'plan_approved', response: 'Tagesplan genehmigt! Wird morgen um 05:00 an die Mitarbeiter gesendet.' };
+    } catch (err) {
+      return { type: 'plan_error', response: `Fehler: ${err.message}` };
+    }
+  }
+
+  if (command.startsWith('plan_edit_') && phone === config.halilWhatsappNumber?.replace('whatsapp:', '')) {
+    return { type: 'plan_edit', response: 'Oeffne das Dashboard um den Plan zu bearbeiten:\nhttps://bal-hausmeisterservice.vercel.app/daily-plan' };
+  }
+
   // Default: show main menu with buttons
   const firstName = worker.name.split(' ')[0];
   return {
@@ -472,6 +490,21 @@ async function handleSickDayCount(worker, text) {
   );
 
   await notifyHalilSickDeclaration(worker.name, days);
+
+  // Immediately redistribute this worker's properties to other workers
+  const redistribution = await redistributeSickWorkers(today);
+  if (redistribution.details && redistribution.details.length > 0) {
+    // Update property_visits to reflect new worker assignments
+    for (const d of redistribution.details) {
+      await pool.query(
+        `UPDATE property_visits SET worker_id = $1
+         WHERE plan_assignment_id = $2 AND status = 'assigned'`,
+        [d.newWorkerId, d.assignmentId]
+      );
+    }
+    // Notify workers who received extra properties
+    await notifyWorkersOfRedistribution(redistribution.details, worker.name);
+  }
 
   const dayText = days ? `${days} Tage` : 'unbestimmte Zeit';
   return {

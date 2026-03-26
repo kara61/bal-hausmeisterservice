@@ -79,7 +79,7 @@ export async function generateDraftPlan(dateStr) {
   const { rows: sickWorkers } = await pool.query(
     `SELECT worker_id FROM sick_leave
      WHERE start_date <= $1
-       AND start_date + (declared_days || ' days')::INTERVAL > $1::DATE
+       AND (declared_days = 0 OR start_date + (declared_days || ' days')::INTERVAL > $1::DATE)
        AND status != 'rejected'`,
     [dateStr]
   );
@@ -215,18 +215,18 @@ export async function getPlanByDate(dateStr) {
 
 export async function redistributeSickWorkers(dateStr) {
   const plan = await getPlanByDate(dateStr);
-  if (!plan || plan.status === 'approved') return { reassigned: 0 };
+  if (!plan) return { reassigned: 0, details: [] };
 
   // Get sick workers for this date
   const { rows: sickWorkers } = await pool.query(
     `SELECT worker_id FROM sick_leave
      WHERE start_date <= $1
-       AND start_date + (declared_days || ' days')::INTERVAL > $1::DATE
+       AND (declared_days = 0 OR start_date + (declared_days || ' days')::INTERVAL > $1::DATE)
        AND status != 'rejected'`,
     [dateStr]
   );
   const sickIds = new Set(sickWorkers.map(s => s.worker_id));
-  if (sickIds.size === 0) return { reassigned: 0 };
+  if (sickIds.size === 0) return { reassigned: 0, details: [] };
 
   // Find assignments for sick workers
   const { rows: sickAssignments } = await pool.query(
@@ -234,7 +234,7 @@ export async function redistributeSickWorkers(dateStr) {
      WHERE pa.daily_plan_id = $1 AND pa.worker_id = ANY($2::int[])`,
     [plan.id, [...sickIds]]
   );
-  if (sickAssignments.length === 0) return { reassigned: 0 };
+  if (sickAssignments.length === 0) return { reassigned: 0, details: [] };
 
   // Get available workers with preferences and current assignment counts
   const { rows: workers } = await pool.query(
@@ -250,6 +250,7 @@ export async function redistributeSickWorkers(dateStr) {
   );
 
   let reassigned = 0;
+  const details = [];
   for (const assignment of sickAssignments) {
     // Get property history
     const { rows: history } = await pool.query(
@@ -266,8 +267,13 @@ export async function redistributeSickWorkers(dateStr) {
 
     const best = findBestWorkerForProperty(withCounts, assignment.property_id, propertyHistory);
     if (best) {
+      // Get original worker name before overwriting
+      const { rows: [orig] } = await pool.query(
+        'SELECT w.name FROM workers w WHERE w.id = $1', [assignment.worker_id]
+      );
+
       await pool.query(
-        `UPDATE plan_assignments SET worker_id = $1, source = 'auto'
+        `UPDATE plan_assignments SET worker_id = $1, source = 'substitution'
          WHERE id = $2`,
         [best.id, assignment.id]
       );
@@ -275,10 +281,18 @@ export async function redistributeSickWorkers(dateStr) {
       const w = workers.find(w => w.id === best.id);
       if (w) w.assignment_count = Number(w.assignment_count) + 1;
       reassigned++;
+      details.push({
+        assignmentId: assignment.id,
+        propertyId: assignment.property_id,
+        newWorkerId: best.id,
+        newWorkerName: best.name,
+        newWorkerPhone: best.phone_number,
+        originalWorkerName: orig?.name || 'Unbekannt',
+      });
     }
   }
 
-  return { reassigned, total_sick_assignments: sickAssignments.length };
+  return { reassigned, total_sick_assignments: sickAssignments.length, details };
 }
 
 export async function approvePlan(planId, approvedBy) {

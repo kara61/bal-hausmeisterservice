@@ -3,7 +3,7 @@ import { detectMissingCheckouts, flagMissingCheckout } from '../../../src/servic
 import { sendWhatsAppMessage } from '../../../src/services/whatsapp.js';
 import { config } from '../../../src/config.js';
 import { generateDraftPlan } from '../../../src/services/planGeneration.js';
-import { notifyHalilPlanGaps } from '../../../src/services/planNotifications.js';
+import { notifyHalilPlanReady } from '../../../src/services/planNotifications.js';
 import { computeDailyAnalyticsForDate, computePropertyMonthlyForMonth } from '../../../src/services/analytics.js';
 
 export default async function handler(req, res) {
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     // Generate draft plan for tomorrow
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
     const plan = await generateDraftPlan(tomorrow);
-    await notifyHalilPlanGaps(plan.id);
+    await notifyHalilPlanReady(plan.id);
 
     // Compute analytics for yesterday
     await computeDailyAnalyticsForDate(yesterday);

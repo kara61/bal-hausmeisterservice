@@ -5,7 +5,23 @@ import { createVisitsFromPlan } from './accountabilityFlow.js';
 
 const DAY_NAMES = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
+function formatDateLabel(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const weekday = new Date(year, month - 1, day).getDay();
+  return `${DAY_NAMES[weekday]}, ${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}`;
+}
+
+function formatAssignmentLine(index, assignment) {
+  const label = `${index}. ${assignment.address}, ${assignment.city} — ${assignment.standard_tasks}`;
+  if (assignment.source === 'substitution' && assignment.original_worker_name) {
+    return `${label} (Vertretung fuer ${assignment.original_worker_name})`;
+  }
+  return label;
+}
+
 export async function sendPlanAssignments(planId) {
+  // Include original_worker_name for substitutions via a self-join trick:
+  // When source='substitution', we look up who had this assignment before via sick_leave
   const { rows: assignments } = await pool.query(
     `SELECT pa.*, w.name AS worker_name, w.phone_number AS worker_phone,
             p.address, p.city, p.standard_tasks
@@ -19,6 +35,7 @@ export async function sendPlanAssignments(planId) {
 
   if (assignments.length === 0) return { sent: 0 };
 
+  // For substitution assignments, find original worker names from sick_leave
   const { rows: [plan] } = await pool.query(
     'SELECT plan_date FROM daily_plans WHERE id = $1',
     [planId]
@@ -26,9 +43,26 @@ export async function sendPlanAssignments(planId) {
   const dateStr = plan.plan_date instanceof Date
     ? plan.plan_date.toISOString().split('T')[0]
     : plan.plan_date;
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const weekday = new Date(year, month - 1, day).getDay();
-  const dayLabel = `${DAY_NAMES[weekday]}, ${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}`;
+
+  // Get sick workers for this date to label substitutions
+  const { rows: sickWorkers } = await pool.query(
+    `SELECT sl.worker_id, w.name FROM sick_leave sl
+     JOIN workers w ON w.id = sl.worker_id
+     WHERE sl.start_date <= $1
+       AND (sl.declared_days = 0 OR sl.start_date + (sl.declared_days || ' days')::INTERVAL > $1::DATE)
+       AND sl.status != 'rejected'`,
+    [dateStr]
+  );
+
+  // For substitution-source assignments, check which sick worker had this property assigned on this weekday
+  for (const a of assignments) {
+    if (a.source === 'substitution' && sickWorkers.length > 0) {
+      // Use the first sick worker as the original (most common case: single sick worker)
+      a.original_worker_name = sickWorkers[0].name;
+    }
+  }
+
+  const dayLabel = formatDateLabel(dateStr);
 
   // Create property visits for the accountability flow
   await createVisitsFromPlan(planId);
@@ -47,9 +81,7 @@ export async function sendPlanAssignments(planId) {
 
   let sent = 0;
   for (const [, worker] of byWorker) {
-    const lines = worker.properties.map((p, i) =>
-      `${i + 1}. ${p.address}, ${p.city} — ${p.standard_tasks}`
-    );
+    const lines = worker.properties.map((p, i) => formatAssignmentLine(i + 1, p));
     const message = `Deine Aufgaben fuer heute (${dayLabel}):\n\n${lines.join('\n')}\n\nDruecke "Einchecken" wenn du loslegst.`;
 
     await sendWhatsAppButtons(worker.phone, message, [{ id: 'einchecken', title: 'Einchecken' }]);
@@ -59,7 +91,7 @@ export async function sendPlanAssignments(planId) {
   return { sent };
 }
 
-export async function notifyHalilPlanGaps(planId) {
+export async function notifyHalilPlanReady(planId) {
   const { rows: [plan] } = await pool.query(
     'SELECT * FROM daily_plans WHERE id = $1',
     [planId]
@@ -69,26 +101,91 @@ export async function notifyHalilPlanGaps(planId) {
   const dateStr = plan.plan_date instanceof Date
     ? plan.plan_date.toISOString().split('T')[0]
     : plan.plan_date;
+
+  // Get assignments grouped by worker
+  const { rows: assignments } = await pool.query(
+    `SELECT pa.worker_id, w.name AS worker_name, p.address, p.city
+     FROM plan_assignments pa
+     JOIN workers w ON w.id = pa.worker_id
+     JOIN properties p ON p.id = pa.property_id
+     WHERE pa.daily_plan_id = $1
+     ORDER BY w.name, pa.assignment_order`,
+    [planId]
+  );
+
+  // Check for unassigned properties
   const [year, month, day] = dateStr.split('-').map(Number);
   const weekday = new Date(year, month - 1, day).getDay();
-
-  const assignedPropertyIds = (await pool.query(
-    'SELECT property_id FROM plan_assignments WHERE daily_plan_id = $1',
-    [planId]
-  )).rows.map(r => r.property_id);
+  const assignedPropertyIds = assignments.map(a => a.property_id || 0);
 
   const { rows: unassigned } = await pool.query(
     `SELECT address, city FROM properties
      WHERE assigned_weekday = $1 AND is_active = true
        AND id != ALL($2::int[])`,
-    [weekday, assignedPropertyIds.length > 0 ? assignedPropertyIds : [0]]
+    [weekday, assignedPropertyIds.length > 0 ? [...new Set(assignments.map(a => a.property_id || 0))] : [0]]
   );
 
+  // Build plan summary message
+  const dayLabel = formatDateLabel(dateStr);
+  const byWorker = new Map();
+  for (const a of assignments) {
+    if (!byWorker.has(a.worker_name)) byWorker.set(a.worker_name, []);
+    byWorker.get(a.worker_name).push(`${a.address}, ${a.city}`);
+  }
+
+  let msg = `Tagesplan fuer ${dayLabel}:\n\n`;
+  for (const [name, props] of byWorker) {
+    msg += `${name}:\n${props.map((p, i) => `  ${i + 1}. ${p}`).join('\n')}\n\n`;
+  }
+
   if (unassigned.length > 0) {
-    const list = unassigned.map(p => `- ${p.address}, ${p.city}`).join('\n');
-    await sendWhatsAppMessage(
-      config.halilWhatsappNumber,
-      `Tagesplan ${dateStr}: ${unassigned.length} Objekte ohne Zuordnung:\n${list}\n\nBitte im Dashboard zuweisen.`
+    msg += `⚠ ${unassigned.length} Objekte ohne Zuordnung:\n`;
+    msg += unassigned.map(p => `  - ${p.address}, ${p.city}`).join('\n');
+    msg += '\n\n';
+  }
+
+  msg += `${assignments.length} Aufgaben, ${byWorker.size} Mitarbeiter`;
+
+  await sendWhatsAppButtons(
+    config.halilWhatsappNumber,
+    msg,
+    [
+      { id: `plan_approve_${planId}`, title: 'Genehmigen' },
+      { id: `plan_edit_${planId}`, title: 'Bearbeiten' },
+    ]
+  );
+}
+
+/**
+ * Send immediate notification to workers who received extra properties
+ * due to a sick worker redistribution.
+ */
+export async function notifyWorkersOfRedistribution(details, sickWorkerName) {
+  // Group by new worker
+  const byWorker = new Map();
+  for (const d of details) {
+    if (!byWorker.has(d.newWorkerId)) {
+      byWorker.set(d.newWorkerId, { phone: d.newWorkerPhone, name: d.newWorkerName, properties: [] });
+    }
+  }
+
+  // Fetch property details for each reassignment
+  for (const d of details) {
+    const { rows: [prop] } = await pool.query(
+      'SELECT address, city, standard_tasks FROM properties WHERE id = $1',
+      [d.propertyId]
     );
+    if (prop) {
+      byWorker.get(d.newWorkerId).properties.push(prop);
+    }
+  }
+
+  for (const [, worker] of byWorker) {
+    const lines = worker.properties.map((p, i) =>
+      `${i + 1}. ${p.address}, ${p.city} — ${p.standard_tasks}`
+    );
+    const msg = `Zusaetzliche Aufgaben (Vertretung fuer ${sickWorkerName}):\n\n${lines.join('\n')}\n\nDruecke "Angekommen" wenn du vor Ort bist.`;
+
+    await sendWhatsAppButtons(worker.phone, msg, [{ id: 'angekommen', title: 'Angekommen' }]);
   }
 }
