@@ -1,0 +1,35 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Workers from './pages/Workers';
+import TimeEntries from './pages/TimeEntries';
+import SickLeave from './pages/SickLeave';
+import Vacation from './pages/Vacation';
+import Reports from './pages/Reports';
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="workers" element={<Workers />} />
+            <Route path="time-entries" element={<TimeEntries />} />
+            <Route path="sick-leave" element={<SickLeave />} />
+            <Route path="vacation" element={<Vacation />} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}

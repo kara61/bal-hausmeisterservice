@@ -1,0 +1,9 @@
+{
+  "name": "Bal Hausmeisterservice Admin",
+  "short_name": "Bal HMS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1a365d",
+  "icons": []
+}
