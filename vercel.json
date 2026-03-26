@@ -1,9 +1,10 @@
 {
   "buildCommand": "cd client && npm install && npx vite build",
   "outputDirectory": "client/dist",
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/((?!api/).*)", "dest": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cron/nightly", "schedule": "0 0 * * *" },
