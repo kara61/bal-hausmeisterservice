@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \":*)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 -c \":*)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Data/**)",
+      "Bash(python3:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 << 'PYEOF':*)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Garbage/Archiv/**)",
+      "Bash(python -c \"import PyPDF2; print\\(''PyPDF2 available''\\)\")",
+      "Bash(python -c \"import pdfplumber; print\\(''pdfplumber available''\\)\")",
+      "Bash(python -c \"import fitz; print\\(''PyMuPDF available''\\)\")",
+      "Bash(python -c \"import pdfminer; print\\(''pdfminer available''\\)\")",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python << 'PYEOF':*)",
+      "Read(//c/Users/User Computer/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/subagent-driven-development/**)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout 5 node src/index.js)",
+      "Bash(echo \"Exit code: $?\")"
+    ]
+  }
+}
