@@ -94,6 +94,11 @@ export default function Analytics() {
 
   const tabs = ['workers', 'properties', 'operations', 'costs'];
 
+  const switchTab = (tb) => {
+    setData(null);
+    setTab(tb);
+  };
+
   return (
     <div className="analytics-page animate-fade-in">
       <div className="analytics-header">
@@ -109,7 +114,7 @@ export default function Analytics() {
           <button
             key={tb}
             className={`analytics-tab${tab === tb ? ' active' : ''}`}
-            onClick={() => setTab(tb)}
+            onClick={() => switchTab(tb)}
           >
             {t(`analytics.${tb}`)}
           </button>
