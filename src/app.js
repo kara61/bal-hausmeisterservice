@@ -13,6 +13,8 @@ import vacationRouter from './routes/vacation.js';
 import reportsRouter from './routes/reports.js';
 import propertiesRouter from './routes/properties.js';
 import teamsRouter from './routes/teams.js';
+import tasksRouter from './routes/tasks.js';
+import extraJobsRouter from './routes/extraJobs.js';
 import { requireAuth } from './middleware/auth.js';
 
 const app = express();
@@ -36,6 +38,8 @@ app.use('/api/vacation', requireAuth, vacationRouter);
 app.use('/api/reports', requireAuth, reportsRouter);
 app.use('/api/properties', requireAuth, propertiesRouter);
 app.use('/api/teams', requireAuth, teamsRouter);
+app.use('/api/tasks', requireAuth, tasksRouter);
+app.use('/api/extra-jobs', requireAuth, extraJobsRouter);
 
 // Serve built client in production
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,6 +52,11 @@ if (existsSync(clientDist)) {
       res.sendFile(join(clientDist, 'index.html'));
     }
   });
+}
+
+const uploadsDir = join(__dirname, '../uploads');
+if (existsSync(uploadsDir)) {
+  app.use('/uploads', express.static(uploadsDir));
 }
 
 // Global error handler
