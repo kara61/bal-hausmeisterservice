@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import ExtraJobForm from '../components/ExtraJobForm';
 
-const STATUS_COLORS = {
-  pending: '#e2e8f0',
-  in_progress: '#bee3f8',
-  done: '#c6f6d5',
+const STATUS_BADGES = {
+  pending: 'badge-neutral',
+  in_progress: 'badge-info',
+  done: 'badge-success',
 };
 
 const STATUS_LABELS = {
@@ -53,65 +53,65 @@ export default function ExtraJobs() {
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>Zusatzauftraege</h1>
-        <button onClick={() => setShowForm(true)} style={{
-          padding: '0.5rem 1rem', background: '#1a365d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-        }}>+ Neuer Auftrag</button>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Zusatzauftraege</h1>
+        <button onClick={() => setShowForm(true)} className="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Neuer Auftrag
+        </button>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{ marginRight: '0.5rem' }}>Datum filtern:</label>
-        <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
-          style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }} />
+      <div className="flex gap-sm items-center mb-lg">
+        <span className="form-label" style={{ marginBottom: 0 }}>Datum filtern:</span>
+        <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="input" style={{ width: 'auto' }} />
         {dateFilter && (
-          <button onClick={() => setDateFilter('')} style={{
-            marginLeft: '0.5rem', padding: '0.25rem 0.75rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer',
-          }}>Filter entfernen</button>
+          <button onClick={() => setDateFilter('')} className="btn btn-ghost btn-sm">Filter entfernen</button>
         )}
       </div>
 
       {showForm && (
-        <ExtraJobForm teams={teams} onSubmit={handleSubmit} onCancel={() => setShowForm(false)} />
+        <div className="mb-lg animate-slide-in">
+          <ExtraJobForm teams={teams} onSubmit={handleSubmit} onCancel={() => setShowForm(false)} />
+        </div>
       )}
 
-      <table style={{ width: '100%', background: 'white', borderRadius: '8px', borderCollapse: 'collapse', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Datum</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Beschreibung</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Adresse</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Team</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {jobs.map(j => (
-            <tr key={j.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '0.75rem' }}>{j.date}</td>
-              <td style={{ padding: '0.75rem' }}>{j.description}</td>
-              <td style={{ padding: '0.75rem' }}>{j.address}</td>
-              <td style={{ padding: '0.75rem' }}>{j.team_name || '-'}</td>
-              <td style={{ padding: '0.75rem' }}>
-                <span style={{
-                  display: 'inline-block', padding: '0.15rem 0.5rem', borderRadius: '4px',
-                  background: STATUS_COLORS[j.status] || '#e2e8f0', fontSize: '0.85rem',
-                }}>{STATUS_LABELS[j.status] || j.status}</span>
-              </td>
-              <td style={{ padding: '0.75rem' }}>
-                {j.status !== 'done' && (
-                  <button onClick={() => handleDone(j.id)}
-                    style={{ marginRight: '0.5rem', padding: '0.25rem 0.75rem', background: '#c6f6d5', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Erledigt</button>
-                )}
-                <button onClick={() => handleDelete(j.id)}
-                  style={{ padding: '0.25rem 0.75rem', background: '#fed7d7', color: '#c53030', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Loeschen</button>
-              </td>
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Beschreibung</th>
+              <th>Adresse</th>
+              <th>Team</th>
+              <th>Status</th>
+              <th>Aktionen</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {jobs.map(j => (
+              <tr key={j.id}>
+                <td><span className="mono">{j.date}</span></td>
+                <td style={{ fontWeight: 600 }}>{j.description}</td>
+                <td>{j.address}</td>
+                <td>{j.team_name || <span className="text-muted">—</span>}</td>
+                <td><span className={`badge ${STATUS_BADGES[j.status] || 'badge-neutral'}`}>{STATUS_LABELS[j.status] || j.status}</span></td>
+                <td>
+                  <div className="flex gap-xs">
+                    {j.status !== 'done' && (
+                      <button onClick={() => handleDone(j.id)} className="btn btn-success btn-sm">Erledigt</button>
+                    )}
+                    <button onClick={() => handleDelete(j.id)} className="btn btn-danger btn-sm">Loeschen</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {jobs.length === 0 && (
+              <tr><td colSpan={6}><div className="empty-state"><div className="empty-state-text">Keine Zusatzauftraege vorhanden</div></div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

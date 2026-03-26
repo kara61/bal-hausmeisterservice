@@ -76,57 +76,79 @@ export default function DailyTasks() {
   const other = tasks.filter(t => t.status === 'postponed' || t.status === 'carried_over');
 
   return (
-    <div>
-      <h1>Tagesansicht</h1>
-
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }} />
-        <button onClick={handleGenerate} style={{
-          padding: '0.5rem 1rem', background: '#1a365d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-        }}>Aufgaben generieren</button>
-        <button onClick={handleCarryover} style={{
-          padding: '0.5rem 1rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer',
-        }}>Uebertragen</button>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Tagesansicht</h1>
+        <div className="page-header-actions">
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="input"
+            style={{ width: 'auto' }}
+          />
+          <button onClick={handleGenerate} className="btn btn-primary">
+            Aufgaben generieren
+          </button>
+          <button onClick={handleCarryover} className="btn btn-secondary">
+            Uebertragen
+          </button>
+        </div>
       </div>
 
       {/* Teams Section */}
-      <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h3 style={{ margin: 0 }}>Teams ({date})</h3>
-          <button onClick={() => setShowTeamForm(!showTeamForm)} style={{
-            padding: '0.25rem 0.75rem', background: '#1a365d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-          }}>Team erstellen</button>
+      <div className="card mb-lg">
+        <div className="card-header">
+          <div className="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: '-2px', marginRight: '6px' }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Teams ({date})
+          </div>
+          <button onClick={() => setShowTeamForm(!showTeamForm)} className="btn btn-primary btn-sm">
+            Team erstellen
+          </button>
         </div>
+
         {teams.length > 0 ? (
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className="flex gap-sm flex-wrap">
             {teams.map(t => (
-              <div key={t.id} style={{ padding: '0.5rem 1rem', background: '#edf2f7', borderRadius: '4px' }}>
+              <div key={t.id} className="team-chip">
                 <strong>{t.name}</strong>
-                {t.members && <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem' }}>({t.members.map(m => m.name).join(', ')})</span>}
+                {t.members && <span className="text-sm text-secondary">({t.members.map(m => m.name).join(', ')})</span>}
               </div>
             ))}
           </div>
         ) : (
-          <p style={{ color: '#718096', margin: 0 }}>Keine Teams fuer diesen Tag.</p>
+          <p className="text-muted text-sm">Keine Teams fuer diesen Tag.</p>
         )}
+
         {showTeamForm && (
-          <form onSubmit={handleCreateTeam} style={{ marginTop: '1rem', padding: '1rem', background: '#f7fafc', borderRadius: '4px' }}>
-            <div style={{ marginBottom: '0.5rem' }}>
-              <input required value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="Teamname"
-                style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', marginRight: '0.5rem' }} />
+          <form onSubmit={handleCreateTeam} className="mt-md" style={{ padding: '1rem', background: 'var(--bg-surface-2)', borderRadius: 'var(--radius-sm)' }}>
+            <div className="mb-sm">
+              <input
+                required
+                value={teamName}
+                onChange={e => setTeamName(e.target.value)}
+                placeholder="Teamname"
+                className="input"
+                style={{ width: 'auto', minWidth: '200px' }}
+              />
             </div>
-            <div style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div className="flex gap-sm flex-wrap mb-sm">
               {workers.map(w => (
-                <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={selectedWorkers.includes(w.id)} onChange={() => toggleWorker(w.id)} />
+                <label key={w.id} className="flex items-center gap-xs" style={{ cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedWorkers.includes(w.id)}
+                    onChange={() => toggleWorker(w.id)}
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
                   {w.name}
                 </label>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="submit" style={{ padding: '0.25rem 0.75rem', background: '#1a365d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Erstellen</button>
-              <button type="button" onClick={() => setShowTeamForm(false)} style={{ padding: '0.25rem 0.75rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Abbrechen</button>
+            <div className="flex gap-sm">
+              <button type="submit" className="btn btn-primary btn-sm">Erstellen</button>
+              <button type="button" onClick={() => setShowTeamForm(false)} className="btn btn-secondary btn-sm">Abbrechen</button>
             </div>
           </form>
         )}
@@ -134,38 +156,55 @@ export default function DailyTasks() {
 
       {/* Unassigned Tasks */}
       {unassigned.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ color: '#c53030', marginBottom: '0.5rem' }}>Nicht zugewiesen ({unassigned.length})</h3>
+        <div className="task-section">
+          <div className="task-section-header">
+            <span className="task-section-title text-danger">Nicht zugewiesen</span>
+            <span className="task-section-count">{unassigned.length}</span>
+          </div>
           {unassigned.map(t => <TaskCard key={t.id} task={t} teams={teams} onAssign={handleAssign} onPostpone={handlePostpone} />)}
         </div>
       )}
 
       {/* Active Tasks */}
       {active.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '0.5rem' }}>Aktiv ({active.length})</h3>
+        <div className="task-section">
+          <div className="task-section-header">
+            <span className="task-section-title" style={{ color: 'var(--info)' }}>Aktiv</span>
+            <span className="task-section-count">{active.length}</span>
+          </div>
           {active.map(t => <TaskCard key={t.id} task={t} teams={teams} onAssign={handleAssign} onPostpone={handlePostpone} />)}
         </div>
       )}
 
       {/* Done Tasks */}
       {done.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ color: '#276749', marginBottom: '0.5rem' }}>Erledigt ({done.length})</h3>
+        <div className="task-section">
+          <div className="task-section-header">
+            <span className="task-section-title text-success">Erledigt</span>
+            <span className="task-section-count">{done.length}</span>
+          </div>
           {done.map(t => <TaskCard key={t.id} task={t} teams={teams} onAssign={handleAssign} onPostpone={handlePostpone} />)}
         </div>
       )}
 
       {/* Postponed / Carried Over */}
       {other.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ color: '#975a16', marginBottom: '0.5rem' }}>Verschoben / Uebertragen ({other.length})</h3>
+        <div className="task-section">
+          <div className="task-section-header">
+            <span className="task-section-title text-warning">Verschoben / Uebertragen</span>
+            <span className="task-section-count">{other.length}</span>
+          </div>
           {other.map(t => <TaskCard key={t.id} task={t} teams={teams} onAssign={handleAssign} onPostpone={handlePostpone} />)}
         </div>
       )}
 
       {tasks.length === 0 && (
-        <p style={{ color: '#718096' }}>Keine Aufgaben fuer diesen Tag. Klicke "Aufgaben generieren" um zu starten.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <div className="empty-state-text">Keine Aufgaben fuer diesen Tag. Klicke "Aufgaben generieren" um zu starten.</div>
+        </div>
       )}
     </div>
   );

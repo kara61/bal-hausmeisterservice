@@ -34,56 +34,68 @@ export default function TimeEntries() {
     load();
   };
 
-  const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '-';
+  const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '—';
   const formatDate = (d) => new Date(d).toLocaleDateString('de-DE');
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>Zeiterfassung</h1>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Zeiterfassung</h1>
         <MonthPicker month={month} year={year} onChange={handleMonthChange} />
       </div>
-      <table style={{ width: '100%', background: 'white', borderRadius: '8px', borderCollapse: 'collapse', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Datum</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Mitarbeiter</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Einchecken</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Auschecken</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map(e => (
-            <tr key={e.id} style={{ borderBottom: '1px solid #e2e8f0', background: e.is_flagged ? '#fff5f5' : 'white' }}>
-              <td style={{ padding: '0.75rem' }}>{formatDate(e.date)}</td>
-              <td style={{ padding: '0.75rem' }}>{e.worker_name}</td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === e.id
-                  ? <input type="datetime-local" value={editForm.check_in} onChange={ev => setEditForm(f => ({ ...f, check_in: ev.target.value }))} />
-                  : formatTime(e.check_in)}
-              </td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === e.id
-                  ? <input type="datetime-local" value={editForm.check_out} onChange={ev => setEditForm(f => ({ ...f, check_out: ev.target.value }))} />
-                  : formatTime(e.check_out)}
-              </td>
-              <td style={{ padding: '0.75rem' }}>{e.is_flagged && <FlagBadge reason={e.flag_reason} />}</td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === e.id ? (
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button onClick={saveEdit} style={{ padding: '0.25rem 0.5rem', background: '#c6f6d5', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Speichern</button>
-                    <button onClick={() => setEditingId(null)} style={{ padding: '0.25rem 0.5rem', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Abbrechen</button>
-                  </div>
-                ) : (
-                  <button onClick={() => startEdit(e)} style={{ padding: '0.25rem 0.5rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Bearbeiten</button>
-                )}
-              </td>
+
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Mitarbeiter</th>
+              <th>Einchecken</th>
+              <th>Auschecken</th>
+              <th>Status</th>
+              <th>Aktionen</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {entries.map(e => (
+              <tr key={e.id} className={e.is_flagged ? 'flagged' : ''}>
+                <td><span className="mono">{formatDate(e.date)}</span></td>
+                <td style={{ fontWeight: 600 }}>{e.worker_name}</td>
+                <td>
+                  {editingId === e.id
+                    ? <input type="datetime-local" value={editForm.check_in} onChange={ev => setEditForm(f => ({ ...f, check_in: ev.target.value }))} className="input" style={{ width: 'auto' }} />
+                    : <span className="mono">{formatTime(e.check_in)}</span>}
+                </td>
+                <td>
+                  {editingId === e.id
+                    ? <input type="datetime-local" value={editForm.check_out} onChange={ev => setEditForm(f => ({ ...f, check_out: ev.target.value }))} className="input" style={{ width: 'auto' }} />
+                    : <span className="mono">{formatTime(e.check_out)}</span>}
+                </td>
+                <td>{e.is_flagged && <FlagBadge reason={e.flag_reason} />}</td>
+                <td>
+                  {editingId === e.id ? (
+                    <div className="flex gap-xs">
+                      <button onClick={saveEdit} className="btn btn-success btn-sm">Speichern</button>
+                      <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">Abbrechen</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => startEdit(e)} className="btn btn-secondary btn-sm">Bearbeiten</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {entries.length === 0 && (
+              <tr>
+                <td colSpan={6}>
+                  <div className="empty-state">
+                    <div className="empty-state-text">Keine Eintraege fuer diesen Monat</div>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

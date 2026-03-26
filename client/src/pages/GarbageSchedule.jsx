@@ -8,6 +8,13 @@ const TRASH_TYPE_LABELS = {
   gelb: 'Gelber Sack',
 };
 
+const TRASH_TYPE_BADGES = {
+  restmuell: 'badge-neutral',
+  bio: 'badge-success',
+  papier: 'badge-info',
+  gelb: 'badge-warning',
+};
+
 export default function GarbageSchedule() {
   const [file, setFile] = useState(null);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -106,100 +113,68 @@ export default function GarbageSchedule() {
   };
 
   return (
-    <div>
-      <h1 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Muellplan (AWP)</h1>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Muellplan (AWP)</h1>
+      </div>
 
       {/* Upload Section */}
-      <div style={{
-        background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px',
-        padding: '1.25rem', marginBottom: '1.5rem',
-      }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>PDF hochladen</h2>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>PDF-Datei</label>
+      <div className="card mb-lg">
+        <div className="card-title mb-md">PDF hochladen</div>
+        <div className="flex gap-md flex-wrap items-center">
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">PDF-Datei</label>
             <input
               type="file"
               accept=".pdf"
               onChange={e => setFile(e.target.files[0] || null)}
-              style={{ fontSize: '0.9rem' }}
+              style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}
             />
           </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Jahr</label>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Jahr</label>
             <input
               type="number"
               value={year}
               onChange={e => setYear(e.target.value)}
-              style={{
-                padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px',
-                fontSize: '0.9rem', width: '80px',
-              }}
+              className="input"
+              style={{ width: '90px' }}
             />
           </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Objekt</label>
-            <select
-              value={propertyId}
-              onChange={e => setPropertyId(e.target.value)}
-              style={{
-                padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px',
-                fontSize: '0.9rem',
-              }}
-            >
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Objekt</label>
+            <select value={propertyId} onChange={e => setPropertyId(e.target.value)} className="select" style={{ width: 'auto', minWidth: '180px' }}>
               <option value="">-- Auto-Erkennung --</option>
               {properties.map(p => (
                 <option key={p.id} value={p.id}>{p.address}, {p.city}</option>
               ))}
             </select>
           </div>
-          <button
-            onClick={handleUpload}
-            style={{
-              padding: '0.5rem 1.25rem', background: '#2b6cb0', color: 'white',
-              border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem',
-            }}
-          >Hochladen</button>
+          <button onClick={handleUpload} className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>
+            Hochladen
+          </button>
         </div>
+
         {uploadResult && (
-          <div style={{
-            marginTop: '1rem', padding: '0.75rem', borderRadius: '4px',
-            background: uploadResult.error ? '#fed7d7' : uploadResult.needs_mapping ? '#fefcbf' : '#c6f6d5',
-            fontSize: '0.9rem',
-          }}>
+          <div className={`alert mt-md ${uploadResult.error ? 'alert-danger' : uploadResult.needs_mapping ? 'alert-warning' : 'alert-success'}`}>
             {uploadResult.error
               ? `Fehler: ${uploadResult.error}`
               : uploadResult.needs_mapping
                 ? (
                   <div>
-                    <p style={{ marginBottom: '0.5rem' }}>
+                    <p className="mb-sm">
                       Automatische Zuordnung fehlgeschlagen.
                       {uploadResult.extracted_address && ` Erkannte Adresse: "${uploadResult.extracted_address}".`}
                       {' '}{uploadResult.total_dates} Termine gefunden. Bitte Objekt manuell zuordnen:
                     </p>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <select
-                        value={mappingPropertyId}
-                        onChange={e => setMappingPropertyId(e.target.value)}
-                        style={{
-                          padding: '0.4rem', border: '1px solid #e2e8f0', borderRadius: '4px',
-                          fontSize: '0.9rem',
-                        }}
-                      >
+                    <div className="flex gap-sm items-center">
+                      <select value={mappingPropertyId} onChange={e => setMappingPropertyId(e.target.value)} className="select" style={{ width: 'auto', minWidth: '180px' }}>
                         <option value="">-- Objekt waehlen --</option>
                         {properties.map(p => (
                           <option key={p.id} value={p.id}>{p.address}, {p.city}</option>
                         ))}
                       </select>
-                      <button
-                        onClick={handleMap}
-                        disabled={!mappingPropertyId}
-                        style={{
-                          padding: '0.4rem 1rem', background: mappingPropertyId ? '#2b6cb0' : '#a0aec0',
-                          color: 'white', border: 'none', borderRadius: '4px', cursor: mappingPropertyId ? 'pointer' : 'default',
-                          fontSize: '0.9rem',
-                        }}
-                      >Zuordnen</button>
+                      <button onClick={handleMap} disabled={!mappingPropertyId} className="btn btn-primary btn-sm">Zuordnen</button>
                     </div>
                   </div>
                 )
@@ -209,81 +184,63 @@ export default function GarbageSchedule() {
       </div>
 
       {/* Summary Table */}
-      <div style={{
-        background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px',
-        padding: '1.25rem', marginBottom: '1.5rem',
-      }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Importierte Muellplaene</h2>
+      <div className="card mb-lg">
+        <div className="card-title mb-md">Importierte Muellplaene</div>
         {summary.length === 0 ? (
-          <p style={{ fontSize: '0.9rem', color: '#718096' }}>Keine Muellplaene vorhanden.</p>
+          <p className="text-muted text-sm">Keine Muellplaene vorhanden.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '0.5rem' }}>Objekt</th>
-                <th style={{ padding: '0.5rem' }}>Termine</th>
-                <th style={{ padding: '0.5rem' }}>Muellarten</th>
-                <th style={{ padding: '0.5rem' }}>Zeitraum</th>
-                <th style={{ padding: '0.5rem' }}>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.map(item => (
-                <tr key={item.property_id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                  <td style={{ padding: '0.5rem' }}>{item.address}, {item.city}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.total_dates}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.trash_types}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.earliest_date} — {item.latest_date}</td>
-                  <td style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => handleShowDetail(item.property_id)}
-                      style={{
-                        padding: '0.3rem 0.75rem', background: '#2b6cb0', color: 'white',
-                        border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem',
-                      }}
-                    >Anzeigen</button>
-                    <button
-                      onClick={() => handleDelete(item.property_id)}
-                      style={{
-                        padding: '0.3rem 0.75rem', background: '#e53e3e', color: 'white',
-                        border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem',
-                      }}
-                    >Loeschen</button>
-                  </td>
+          <div className="data-table-wrapper" style={{ border: 'none' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Objekt</th>
+                  <th>Termine</th>
+                  <th>Muellarten</th>
+                  <th>Zeitraum</th>
+                  <th>Aktionen</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {summary.map(item => (
+                  <tr key={item.property_id}>
+                    <td style={{ fontWeight: 600 }}>{item.address}, {item.city}</td>
+                    <td><span className="mono">{item.total_dates}</span></td>
+                    <td>{item.trash_types}</td>
+                    <td><span className="mono text-sm">{item.earliest_date} — {item.latest_date}</span></td>
+                    <td>
+                      <div className="flex gap-xs">
+                        <button onClick={() => handleShowDetail(item.property_id)} className="btn btn-secondary btn-sm">Anzeigen</button>
+                        <button onClick={() => handleDelete(item.property_id)} className="btn btn-danger btn-sm">Loeschen</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Detail View */}
       {detail && (
-        <div style={{
-          background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px',
-          padding: '1.25rem',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.1rem' }}>Termine</h2>
-            <button
-              onClick={() => { setDetail(null); setDetailPropertyId(null); }}
-              style={{
-                padding: '0.3rem 0.75rem', background: '#718096', color: 'white',
-                border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem',
-              }}
-            >Schliessen</button>
+        <div className="card animate-slide-in">
+          <div className="card-header">
+            <div className="card-title">Termine</div>
+            <button onClick={() => { setDetail(null); setDetailPropertyId(null); }} className="btn btn-secondary btn-sm">Schliessen</button>
           </div>
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: '0.5rem',
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.5rem' }}>
             {detail.map((entry, i) => (
               <div key={i} style={{
-                padding: '0.5rem 0.75rem', background: 'white', border: '1px solid #e2e8f0',
-                borderRadius: '4px', fontSize: '0.9rem',
+                padding: '0.5rem 0.85rem',
+                background: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}>
-                <span style={{ fontWeight: 600 }}>{entry.collection_date}</span>
-                <span style={{ marginLeft: '0.5rem', color: '#4a5568' }}>
+                <span className="mono fw-bold">{entry.collection_date}</span>
+                <span className={`badge ${TRASH_TYPE_BADGES[entry.trash_type] || 'badge-neutral'}`}>
                   {TRASH_TYPE_LABELS[entry.trash_type] || entry.trash_type}
                 </span>
               </div>

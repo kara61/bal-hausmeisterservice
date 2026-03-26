@@ -1,13 +1,5 @@
 import { useState } from 'react';
 
-const STATUS_COLORS = {
-  pending: '#e2e8f0',
-  in_progress: '#bee3f8',
-  done: '#c6f6d5',
-  postponed: '#fed7d7',
-  carried_over: '#fefcbf',
-};
-
 const STATUS_LABELS = {
   pending: 'Offen',
   in_progress: 'In Bearbeitung',
@@ -16,45 +8,63 @@ const STATUS_LABELS = {
   carried_over: 'Uebertragen',
 };
 
+const STATUS_BADGE_CLASS = {
+  pending: 'badge-neutral',
+  in_progress: 'badge-info',
+  done: 'badge-success',
+  postponed: 'badge-warning',
+  carried_over: 'badge-accent',
+};
+
 export default function TaskCard({ task, teams, onAssign, onPostpone }) {
   const [selectedTeam, setSelectedTeam] = useState('');
 
-  const bg = STATUS_COLORS[task.status] || '#e2e8f0';
-
   return (
-    <div style={{ background: bg, padding: '1rem', borderRadius: '8px', marginBottom: '0.5rem' }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{task.address} {task.city && `- ${task.city}`}</div>
-      {task.task_description && <div style={{ marginBottom: '0.25rem' }}>{task.task_description}</div>}
-      <div style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-        Status: {STATUS_LABELS[task.status] || task.status}
-        {task.team_name && ` | Team: ${task.team_name}`}
+    <div className={`task-card status-${task.status}`}>
+      <div className="flex justify-between items-center">
+        <div className="task-card-title">
+          {task.address} {task.city && <span className="text-secondary"> — {task.city}</span>}
+        </div>
+        <span className={`badge ${STATUS_BADGE_CLASS[task.status] || 'badge-neutral'}`}>
+          {STATUS_LABELS[task.status] || task.status}
+        </span>
       </div>
-      {task.postpone_reason && (
-        <div style={{ fontSize: '0.85rem', fontStyle: 'italic', marginBottom: '0.25rem' }}>Grund: {task.postpone_reason}</div>
-      )}
-      {task.photo_url && (
-        <div style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-          <a href={task.photo_url} target="_blank" rel="noreferrer" style={{ color: '#2b6cb0' }}>Foto ansehen</a>
+
+      {task.task_description && <div className="task-card-meta">{task.task_description}</div>}
+
+      {task.team_name && (
+        <div className="task-card-meta">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px' }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          {task.team_name}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+      {task.postpone_reason && <div className="task-card-reason">Grund: {task.postpone_reason}</div>}
+
+      {task.photo_url && (
+        <div className="task-card-meta">
+          <a href={task.photo_url} target="_blank" rel="noreferrer" className="text-accent" style={{ textDecoration: 'none' }}>
+            Foto ansehen
+          </a>
+        </div>
+      )}
+
+      <div className="task-card-actions">
         {task.status === 'pending' && !task.team_id && teams && teams.length > 0 && (
           <>
-            <select value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)}
-              style={{ padding: '0.25rem', border: '1px solid #ccc', borderRadius: '4px' }}>
+            <select value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} className="select" style={{ width: 'auto', minWidth: '140px' }}>
               <option value="">-- Team zuweisen --</option>
               {teams.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
-            <button disabled={!selectedTeam} onClick={() => { onAssign(task.id, Number(selectedTeam)); setSelectedTeam(''); }}
-              style={{ padding: '0.25rem 0.75rem', background: '#1a365d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Zuweisen</button>
+            <button disabled={!selectedTeam} onClick={() => { onAssign(task.id, Number(selectedTeam)); setSelectedTeam(''); }} className="btn btn-primary btn-sm">
+              Zuweisen
+            </button>
           </>
         )}
         {(task.status === 'pending' || task.status === 'in_progress') && (
-          <button onClick={() => onPostpone(task.id)}
-            style={{ padding: '0.25rem 0.75rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Verschieben</button>
+          <button onClick={() => onPostpone(task.id)} className="btn btn-secondary btn-sm">Verschieben</button>
         )}
       </div>
     </div>

@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import MonthPicker from '../components/MonthPicker';
 
+const STATUS_BADGES = { draft: 'badge-warning', reviewed: 'badge-info', sent: 'badge-success' };
+const STATUS_LABELS = { draft: 'Entwurf', reviewed: 'Geprueft', sent: 'Gesendet' };
+const MONTH_NAMES = ['Januar', 'Februar', 'Maerz', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
 export default function Reports() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -36,62 +40,66 @@ export default function Reports() {
     load();
   };
 
-  const statusLabels = { draft: 'Entwurf', reviewed: 'Geprueft', sent: 'Gesendet' };
-  const statusColors = { draft: '#fefcbf', reviewed: '#bee3f8', sent: '#c6f6d5' };
-  const monthNames = ['Januar', 'Februar', 'Maerz', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-
   return (
-    <div>
-      <h1 style={{ marginBottom: '1rem' }}>Berichte</h1>
-      <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Neuen Bericht erstellen</h2>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Berichte</h1>
+      </div>
+
+      <div className="card mb-lg">
+        <div className="card-title mb-md">Neuen Bericht erstellen</div>
+        <div className="flex gap-md items-center flex-wrap">
           <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
-          <button onClick={handleGenerate} disabled={generating} style={{
-            padding: '0.5rem 1.5rem', background: generating ? '#aaa' : '#1a365d',
-            color: 'white', border: 'none', borderRadius: '4px', cursor: generating ? 'default' : 'pointer',
-          }}>
+          <button onClick={handleGenerate} disabled={generating} className="btn btn-primary">
             {generating ? 'Wird erstellt...' : 'Bericht erstellen'}
           </button>
         </div>
       </div>
-      <table style={{ width: '100%', background: 'white', borderRadius: '8px', borderCollapse: 'collapse', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Monat</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Erstellt am</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reports.map(r => (
-            <tr key={r.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '0.75rem' }}>{monthNames[r.month - 1]} {r.year}</td>
-              <td style={{ padding: '0.75rem' }}>{r.generated_at ? new Date(r.generated_at).toLocaleDateString('de-DE') : '-'}</td>
-              <td style={{ padding: '0.75rem' }}>
-                <span style={{ padding: '0.15rem 0.5rem', borderRadius: '12px', background: statusColors[r.status], fontSize: '0.8rem' }}>
-                  {statusLabels[r.status]}
-                </span>
-              </td>
-              <td style={{ padding: '0.75rem', display: 'flex', gap: '0.25rem' }}>
-                {r.pdf_path && (
-                  <button onClick={() => handleDownload(r.id)}
-                    style={{ padding: '0.25rem 0.5rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Download PDF</button>
-                )}
-                {r.status === 'draft' && (
-                  <button onClick={() => handleStatusUpdate(r.id, 'reviewed')}
-                    style={{ padding: '0.25rem 0.5rem', background: '#bee3f8', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Als geprueft markieren</button>
-                )}
-                {r.status === 'reviewed' && (
-                  <button onClick={() => handleStatusUpdate(r.id, 'sent')}
-                    style={{ padding: '0.25rem 0.5rem', background: '#c6f6d5', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Als gesendet markieren</button>
-                )}
-              </td>
+
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Monat</th>
+              <th>Erstellt am</th>
+              <th>Status</th>
+              <th>Aktionen</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {reports.map(r => (
+              <tr key={r.id}>
+                <td style={{ fontWeight: 600 }}>{MONTH_NAMES[r.month - 1]} {r.year}</td>
+                <td><span className="mono">{r.generated_at ? new Date(r.generated_at).toLocaleDateString('de-DE') : '—'}</span></td>
+                <td><span className={`badge ${STATUS_BADGES[r.status] || 'badge-neutral'}`}>{STATUS_LABELS[r.status]}</span></td>
+                <td>
+                  <div className="flex gap-xs">
+                    {r.pdf_path && (
+                      <button onClick={() => handleDownload(r.id)} className="btn btn-secondary btn-sm">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        PDF
+                      </button>
+                    )}
+                    {r.status === 'draft' && (
+                      <button onClick={() => handleStatusUpdate(r.id, 'reviewed')} className="btn btn-info btn-sm" style={{ background: 'var(--info-soft)', color: 'var(--info)', borderColor: 'var(--info-border)' }}>
+                        Als geprueft
+                      </button>
+                    )}
+                    {r.status === 'reviewed' && (
+                      <button onClick={() => handleStatusUpdate(r.id, 'sent')} className="btn btn-success btn-sm">
+                        Als gesendet
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {reports.length === 0 && (
+              <tr><td colSpan={4}><div className="empty-state"><div className="empty-state-text">Keine Berichte vorhanden</div></div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

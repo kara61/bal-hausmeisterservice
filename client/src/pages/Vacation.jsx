@@ -12,40 +12,54 @@ export default function Vacation() {
 
   useEffect(() => { load(); }, [year]);
 
+  const getRemainColor = (remaining) => {
+    if (remaining <= 3) return 'text-danger';
+    if (remaining <= 7) return 'text-warning';
+    return 'text-success';
+  };
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>Urlaubskonto</h1>
-        <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))}
-          style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd', width: '80px' }} />
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Urlaubskonto</h1>
+        <input
+          type="number"
+          value={year}
+          onChange={e => setYear(parseInt(e.target.value))}
+          className="input"
+          style={{ width: '100px' }}
+        />
       </div>
-      <table style={{ width: '100%', background: 'white', borderRadius: '8px', borderCollapse: 'collapse', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Mitarbeiter</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Anspruch</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Genommen</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Verbleibend</th>
-          </tr>
-        </thead>
-        <tbody>
-          {balances.map(b => (
-            <tr key={b.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '0.75rem' }}>{b.worker_name}</td>
-              <td style={{ padding: '0.75rem' }}>{b.entitlement_days} Tage</td>
-              <td style={{ padding: '0.75rem' }}>{b.used_days} Tage</td>
-              <td style={{ padding: '0.75rem' }}>
-                <span style={{
-                  fontWeight: 600,
-                  color: b.remaining <= 3 ? '#c53030' : b.remaining <= 7 ? '#d69e2e' : '#38a169',
-                }}>
-                  {b.remaining} Tage
-                </span>
-              </td>
+
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Mitarbeiter</th>
+              <th>Anspruch</th>
+              <th>Genommen</th>
+              <th>Verbleibend</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {balances.map(b => (
+              <tr key={b.id}>
+                <td style={{ fontWeight: 600 }}>{b.worker_name}</td>
+                <td><span className="mono">{b.entitlement_days} Tage</span></td>
+                <td><span className="mono">{b.used_days} Tage</span></td>
+                <td>
+                  <span className={`mono fw-bold ${getRemainColor(b.remaining)}`}>
+                    {b.remaining} Tage
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {balances.length === 0 && (
+              <tr><td colSpan={4}><div className="empty-state"><div className="empty-state-text">Keine Urlaubsdaten fuer dieses Jahr</div></div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

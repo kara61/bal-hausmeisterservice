@@ -35,47 +35,57 @@ export default function Properties() {
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>Objekte</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} style={{
-          padding: '0.5rem 1rem', background: '#1a365d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-        }}>+ Neues Objekt</button>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Objekte</h1>
+        <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Neues Objekt
+        </button>
       </div>
 
       {showForm && (
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div className="mb-lg animate-slide-in">
           <PropertyForm property={editing} onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditing(null); }} />
         </div>
       )}
 
-      <table style={{ width: '100%', background: 'white', borderRadius: '8px', borderCollapse: 'collapse', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Adresse</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Stadt</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Aufgaben</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Tag</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {properties.map(p => (
-            <tr key={p.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '0.75rem' }}>{p.address}</td>
-              <td style={{ padding: '0.75rem' }}>{p.city}</td>
-              <td style={{ padding: '0.75rem' }}>{p.standard_tasks || '-'}</td>
-              <td style={{ padding: '0.75rem' }}>{p.assigned_weekday !== null && p.assigned_weekday !== undefined ? DAY_NAMES[p.assigned_weekday] : '-'}</td>
-              <td style={{ padding: '0.75rem' }}>
-                <button onClick={() => { setEditing(p); setShowForm(true); }}
-                  style={{ marginRight: '0.5rem', padding: '0.25rem 0.75rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Bearbeiten</button>
-                <button onClick={() => handleDelete(p.id)}
-                  style={{ padding: '0.25rem 0.75rem', background: '#fed7d7', color: '#c53030', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Deaktivieren</button>
-              </td>
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Adresse</th>
+              <th>Stadt</th>
+              <th>Aufgaben</th>
+              <th>Tag</th>
+              <th>Aktionen</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {properties.map(p => (
+              <tr key={p.id}>
+                <td style={{ fontWeight: 600 }}>{p.address}</td>
+                <td>{p.city}</td>
+                <td className="text-secondary">{p.standard_tasks || '—'}</td>
+                <td>
+                  {p.assigned_weekday !== null && p.assigned_weekday !== undefined
+                    ? <span className="badge badge-accent">{DAY_NAMES[p.assigned_weekday]}</span>
+                    : <span className="text-muted">—</span>}
+                </td>
+                <td>
+                  <div className="flex gap-xs">
+                    <button onClick={() => { setEditing(p); setShowForm(true); }} className="btn btn-secondary btn-sm">Bearbeiten</button>
+                    <button onClick={() => handleDelete(p.id)} className="btn btn-danger btn-sm">Deaktivieren</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {properties.length === 0 && (
+              <tr><td colSpan={5}><div className="empty-state"><div className="empty-state-text">Keine Objekte vorhanden</div></div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

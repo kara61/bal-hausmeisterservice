@@ -21,24 +21,40 @@ export default function Login() {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <form onSubmit={handleSubmit} style={{
-        background: 'white', padding: '2rem', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        width: '100%', maxWidth: '360px',
-      }}>
-        <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', textAlign: 'center' }}>Bal Hausmeisterservice</h1>
-        <p style={{ textAlign: 'center', color: '#666', marginBottom: '1.5rem' }}>Admin Login</p>
-        {error && <p style={{ color: 'red', marginBottom: '1rem' }}>{error}</p>}
-        <input type="text" placeholder="Benutzername" value={username}
-          onChange={e => setUsername(e.target.value)}
-          style={{ width: '100%', padding: '0.75rem', marginBottom: '0.75rem', border: '1px solid #ddd', borderRadius: '4px' }} />
-        <input type="password" placeholder="Passwort" value={password}
-          onChange={e => setPassword(e.target.value)}
-          style={{ width: '100%', padding: '0.75rem', marginBottom: '1rem', border: '1px solid #ddd', borderRadius: '4px' }} />
-        <button type="submit" style={{
-          width: '100%', padding: '0.75rem', background: '#1a365d', color: 'white',
-          border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem',
-        }}>Anmelden</button>
+    <div className="login-screen">
+      <div className="login-bg" />
+      <div className="login-grid" />
+
+      <form onSubmit={handleSubmit} className="login-card animate-fade-in">
+        <div className="login-brand">
+          <div className="login-brand-name">Bal Hausmeisterservice</div>
+          <div className="login-brand-bar" />
+          <div className="login-brand-sub">Admin Panel</div>
+        </div>
+
+        {error && <div className="login-error">{error}</div>}
+
+        <input
+          type="text"
+          placeholder="Benutzername"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="login-input"
+          autoComplete="username"
+        />
+
+        <input
+          type="password"
+          placeholder="Passwort"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="login-input"
+          autoComplete="current-password"
+        />
+
+        <button type="submit" className="login-btn">
+          Anmelden
+        </button>
       </form>
     </div>
   );

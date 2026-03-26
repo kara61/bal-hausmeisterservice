@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 
+const STATUS_BADGES = {
+  pending: 'badge-warning',
+  approved: 'badge-success',
+  overridden: 'badge-danger',
+};
+
+const STATUS_LABELS = {
+  pending: 'Offen',
+  approved: 'Genehmigt',
+  overridden: 'Ueberschrieben',
+};
+
 export default function SickLeave() {
   const [records, setRecords] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -29,73 +41,76 @@ export default function SickLeave() {
     load();
   };
 
-  const statusColors = { pending: '#fefcbf', approved: '#c6f6d5', overridden: '#fed7d7' };
-  const statusLabels = { pending: 'Offen', approved: 'Genehmigt', overridden: 'Ueberschrieben' };
-
   return (
-    <div>
-      <h1 style={{ marginBottom: '1rem' }}>Krankmeldungen</h1>
-      <table style={{ width: '100%', background: 'white', borderRadius: '8px', borderCollapse: 'collapse', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Mitarbeiter</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Startdatum</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Gemeldet</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>AOK</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Urlaub</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Unbezahlt</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {records.map(r => (
-            <tr key={r.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '0.75rem' }}>{r.worker_name}</td>
-              <td style={{ padding: '0.75rem' }}>{new Date(r.start_date).toLocaleDateString('de-DE')}</td>
-              <td style={{ padding: '0.75rem' }}>{r.declared_days} Tage</td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === r.id
-                  ? <input type="number" value={editForm.aok_approved_days} onChange={e => setEditForm(f => ({ ...f, aok_approved_days: parseInt(e.target.value) }))} style={{ width: '60px' }} />
-                  : (r.aok_approved_days !== null ? `${r.aok_approved_days} Tage` : '-')}
-              </td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === r.id
-                  ? <input type="number" value={editForm.vacation_deducted_days} onChange={e => setEditForm(f => ({ ...f, vacation_deducted_days: parseInt(e.target.value) }))} style={{ width: '60px' }} />
-                  : `${r.vacation_deducted_days} Tage`}
-              </td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === r.id
-                  ? <input type="number" value={editForm.unpaid_days} onChange={e => setEditForm(f => ({ ...f, unpaid_days: parseInt(e.target.value) }))} style={{ width: '60px' }} />
-                  : `${r.unpaid_days} Tage`}
-              </td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === r.id ? (
-                  <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}>
-                    <option value="pending">Offen</option>
-                    <option value="approved">Genehmigt</option>
-                    <option value="overridden">Ueberschrieben</option>
-                  </select>
-                ) : (
-                  <span style={{ padding: '0.15rem 0.5rem', borderRadius: '12px', background: statusColors[r.status], fontSize: '0.8rem' }}>
-                    {statusLabels[r.status]}
-                  </span>
-                )}
-              </td>
-              <td style={{ padding: '0.75rem' }}>
-                {editingId === r.id ? (
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button onClick={saveEdit} style={{ padding: '0.25rem 0.5rem', background: '#c6f6d5', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Speichern</button>
-                    <button onClick={() => setEditingId(null)} style={{ padding: '0.25rem 0.5rem', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Abbrechen</button>
-                  </div>
-                ) : (
-                  <button onClick={() => startEdit(r)} style={{ padding: '0.25rem 0.5rem', background: '#edf2f7', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Bearbeiten</button>
-                )}
-              </td>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Krankmeldungen</h1>
+      </div>
+
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Mitarbeiter</th>
+              <th>Startdatum</th>
+              <th>Gemeldet</th>
+              <th>AOK</th>
+              <th>Urlaub</th>
+              <th>Unbezahlt</th>
+              <th>Status</th>
+              <th>Aktionen</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {records.map(r => (
+              <tr key={r.id}>
+                <td style={{ fontWeight: 600 }}>{r.worker_name}</td>
+                <td><span className="mono">{new Date(r.start_date).toLocaleDateString('de-DE')}</span></td>
+                <td><span className="mono">{r.declared_days} Tage</span></td>
+                <td>
+                  {editingId === r.id
+                    ? <input type="number" value={editForm.aok_approved_days} onChange={e => setEditForm(f => ({ ...f, aok_approved_days: parseInt(e.target.value) }))} className="input" style={{ width: '70px' }} />
+                    : <span className="mono">{r.aok_approved_days !== null ? `${r.aok_approved_days} Tage` : '—'}</span>}
+                </td>
+                <td>
+                  {editingId === r.id
+                    ? <input type="number" value={editForm.vacation_deducted_days} onChange={e => setEditForm(f => ({ ...f, vacation_deducted_days: parseInt(e.target.value) }))} className="input" style={{ width: '70px' }} />
+                    : <span className="mono">{r.vacation_deducted_days} Tage</span>}
+                </td>
+                <td>
+                  {editingId === r.id
+                    ? <input type="number" value={editForm.unpaid_days} onChange={e => setEditForm(f => ({ ...f, unpaid_days: parseInt(e.target.value) }))} className="input" style={{ width: '70px' }} />
+                    : <span className="mono">{r.unpaid_days} Tage</span>}
+                </td>
+                <td>
+                  {editingId === r.id ? (
+                    <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))} className="select" style={{ width: 'auto' }}>
+                      <option value="pending">Offen</option>
+                      <option value="approved">Genehmigt</option>
+                      <option value="overridden">Ueberschrieben</option>
+                    </select>
+                  ) : (
+                    <span className={`badge ${STATUS_BADGES[r.status] || 'badge-neutral'}`}>{STATUS_LABELS[r.status]}</span>
+                  )}
+                </td>
+                <td>
+                  {editingId === r.id ? (
+                    <div className="flex gap-xs">
+                      <button onClick={saveEdit} className="btn btn-success btn-sm">Speichern</button>
+                      <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">Abbrechen</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => startEdit(r)} className="btn btn-secondary btn-sm">Bearbeiten</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {records.length === 0 && (
+              <tr><td colSpan={8}><div className="empty-state"><div className="empty-state-text">Keine Krankmeldungen vorhanden</div></div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
