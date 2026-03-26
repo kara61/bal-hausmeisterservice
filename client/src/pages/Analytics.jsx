@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLang } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../utils/api';
+import { api } from '../api/client';
 import '../styles/analytics.css';
 
 function getDateRange(preset) {
