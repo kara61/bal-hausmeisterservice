@@ -1,4 +1,5 @@
 import { pool } from '../db/pool.js';
+import { notifyHalilSickDeclaration } from './notifications.js';
 
 const conversationState = new Map();
 
@@ -140,6 +141,8 @@ async function handleSickDayCount(worker, text) {
      VALUES ($1, $2, $3, 'pending')`,
     [worker.id, today, days || 0]
   );
+
+  await notifyHalilSickDeclaration(worker.name, days);
 
   const dayText = days ? `${days} Tage` : 'unbestimmte Zeit';
   return {
