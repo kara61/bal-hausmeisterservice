@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS conversation_state (
+  phone_number VARCHAR(20) PRIMARY KEY,
+  state VARCHAR(100) NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

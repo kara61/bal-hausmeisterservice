@@ -1,7 +1,6 @@
 import 'dotenv/config';
 
 export const config = {
-  port: parseInt(process.env.PORT || '3000', 10),
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
   twilio: {
@@ -9,11 +8,10 @@ export const config = {
     authToken: process.env.TWILIO_AUTH_TOKEN,
     whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER,
   },
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
   halilWhatsappNumber: process.env.HALIL_WHATSAPP_NUMBER,
   adminUsername: process.env.ADMIN_USERNAME || 'halil',
   adminPasswordHash: process.env.ADMIN_PASSWORD_HASH,
-  missingCheckoutReminderHours: parseInt(
-    process.env.MISSING_CHECKOUT_REMINDER_HOURS || '10',
-    10
-  ),
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
 };
