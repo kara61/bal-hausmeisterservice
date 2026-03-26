@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { readFile } from 'fs/promises';
+import { readFile, unlink } from 'fs/promises';
 import { pool } from '../db/pool.js';
 import { parseAwpPdf, extractAddressFromPdf } from '../services/awpParser.js';
 import {
@@ -11,7 +11,13 @@ import {
 } from '../services/garbageScheduling.js';
 
 const router = Router();
-const upload = multer({ dest: 'uploads/awp/' });
+const upload = multer({
+  dest: 'uploads/awp/',
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, file.mimetype === 'application/pdf');
+  },
+});
 
 // POST /upload — upload PDF, parse, auto-match or return needs_mapping
 router.post('/upload', upload.single('pdf'), async (req, res, next) => {
@@ -26,6 +32,9 @@ router.post('/upload', upload.single('pdf'), async (req, res, next) => {
     }
 
     const pdfBuffer = await readFile(req.file.path);
+    // Clean up uploaded file after reading
+    unlink(req.file.path).catch(() => {});
+
     const dates = await parseAwpPdf(pdfBuffer, year);
 
     if (dates.length === 0) {

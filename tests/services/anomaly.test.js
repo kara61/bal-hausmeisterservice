@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { it, expect, beforeEach } from 'vitest';
 import { detectMissingCheckouts, detectLongShifts } from '../../src/services/anomaly.js';
 import { pool } from '../../src/db/pool.js';
-import { cleanDb, createTestWorker } from '../helpers.js';
+import { cleanDb, createTestWorker, describeWithDb } from '../helpers.js';
 
-describe('detectMissingCheckouts', () => {
+describeWithDb('detectMissingCheckouts', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('finds entries with check-in but no check-out for a given date', async () => {
@@ -28,7 +28,7 @@ describe('detectMissingCheckouts', () => {
   });
 });
 
-describe('detectLongShifts', () => {
+describeWithDb('detectLongShifts', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('flags shifts longer than threshold', async () => {

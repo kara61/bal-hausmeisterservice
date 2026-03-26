@@ -17,6 +17,7 @@ export default function GarbageSchedule() {
   const [summary, setSummary] = useState([]);
   const [detail, setDetail] = useState(null);
   const [detailPropertyId, setDetailPropertyId] = useState(null);
+  const [mappingPropertyId, setMappingPropertyId] = useState('');
 
   const loadProperties = async () => {
     try {
@@ -58,6 +59,22 @@ export default function GarbageSchedule() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload fehlgeschlagen');
       setUploadResult(data);
+      loadSummary();
+    } catch (e) {
+      setUploadResult({ error: e.message });
+    }
+  };
+
+  const handleMap = async () => {
+    if (!mappingPropertyId || !uploadResult) return;
+    try {
+      await api.post('/garbage/map', {
+        property_id: parseInt(mappingPropertyId, 10),
+        dates: uploadResult.dates,
+        source_pdf: uploadResult.source_pdf,
+      });
+      setUploadResult({ message: 'Zuordnung erfolgreich' });
+      setMappingPropertyId('');
       loadSummary();
     } catch (e) {
       setUploadResult({ error: e.message });
@@ -153,7 +170,39 @@ export default function GarbageSchedule() {
             {uploadResult.error
               ? `Fehler: ${uploadResult.error}`
               : uploadResult.needs_mapping
-                ? `Warnung: ${uploadResult.message || 'Zuordnung erforderlich'}`
+                ? (
+                  <div>
+                    <p style={{ marginBottom: '0.5rem' }}>
+                      Automatische Zuordnung fehlgeschlagen.
+                      {uploadResult.extracted_address && ` Erkannte Adresse: "${uploadResult.extracted_address}".`}
+                      {' '}{uploadResult.total_dates} Termine gefunden. Bitte Objekt manuell zuordnen:
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <select
+                        value={mappingPropertyId}
+                        onChange={e => setMappingPropertyId(e.target.value)}
+                        style={{
+                          padding: '0.4rem', border: '1px solid #e2e8f0', borderRadius: '4px',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        <option value="">-- Objekt waehlen --</option>
+                        {properties.map(p => (
+                          <option key={p.id} value={p.id}>{p.address}, {p.city}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleMap}
+                        disabled={!mappingPropertyId}
+                        style={{
+                          padding: '0.4rem 1rem', background: mappingPropertyId ? '#2b6cb0' : '#a0aec0',
+                          color: 'white', border: 'none', borderRadius: '4px', cursor: mappingPropertyId ? 'pointer' : 'default',
+                          fontSize: '0.9rem',
+                        }}
+                      >Zuordnen</button>
+                    </div>
+                  </div>
+                )
                 : uploadResult.message || 'Upload erfolgreich'}
           </div>
         )}
@@ -184,7 +233,7 @@ export default function GarbageSchedule() {
                   <td style={{ padding: '0.5rem' }}>{item.address}, {item.city}</td>
                   <td style={{ padding: '0.5rem' }}>{item.total_dates}</td>
                   <td style={{ padding: '0.5rem' }}>{item.trash_types}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.first_date} — {item.last_date}</td>
+                  <td style={{ padding: '0.5rem' }}>{item.earliest_date} — {item.latest_date}</td>
                   <td style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem' }}>
                     <button
                       onClick={() => handleShowDetail(item.property_id)}
@@ -233,7 +282,7 @@ export default function GarbageSchedule() {
                 padding: '0.5rem 0.75rem', background: 'white', border: '1px solid #e2e8f0',
                 borderRadius: '4px', fontSize: '0.9rem',
               }}>
-                <span style={{ fontWeight: 600 }}>{entry.date}</span>
+                <span style={{ fontWeight: 600 }}>{entry.collection_date}</span>
                 <span style={{ marginLeft: '0.5rem', color: '#4a5568' }}>
                   {TRASH_TYPE_LABELS[entry.trash_type] || entry.trash_type}
                 </span>

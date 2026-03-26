@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { it, expect, beforeEach } from 'vitest';
 import { adjustSickLeave } from '../../src/services/sickLeave.js';
 import { pool } from '../../src/db/pool.js';
-import { cleanDb, createTestWorker } from '../helpers.js';
+import { cleanDb, createTestWorker, describeWithDb } from '../helpers.js';
 
-describe('adjustSickLeave', () => {
+describeWithDb('adjustSickLeave', () => {
   let worker;
 
   beforeEach(async () => {

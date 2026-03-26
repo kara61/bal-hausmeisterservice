@@ -44,13 +44,17 @@ Gelber Sack
 32.01.  15.13.  29.02.  10.04.
     `;
 
+    // 2025 is not a leap year, so 29.02 is invalid
     const results = parseCollectionDates(text, 2025);
 
-    // 32.01 invalid day, 15.13 invalid month, 29.02 valid (leap year check uses 2024 internally)
-    expect(results).toContainEqual({ trash_type: 'gelb', collection_date: '2025-02-29' });
     expect(results).toContainEqual({ trash_type: 'gelb', collection_date: '2025-04-10' });
+    expect(results).not.toContainEqual(expect.objectContaining({ collection_date: '2025-02-29' }));
     expect(results).not.toContainEqual(expect.objectContaining({ collection_date: '2025-01-32' }));
     expect(results).not.toContainEqual(expect.objectContaining({ collection_date: '2025-13-15' }));
+
+    // 2024 IS a leap year, so 29.02 should be valid
+    const leapResults = parseCollectionDates(text, 2024);
+    expect(leapResults).toContainEqual({ trash_type: 'gelb', collection_date: '2024-02-29' });
   });
 
   it('should default to restmuell if no context found', () => {

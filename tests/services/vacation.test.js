@@ -5,7 +5,7 @@ import {
   ensureVacationBalance,
 } from '../../src/services/vacation.js';
 import { pool } from '../../src/db/pool.js';
-import { cleanDb, createTestWorker } from '../helpers.js';
+import { cleanDb, createTestWorker, describeWithDb } from '../helpers.js';
 
 describe('calculateVacationEntitlement', () => {
   it('returns 2 days per full month worked in the year', () => {
@@ -25,7 +25,7 @@ describe('calculateVacationEntitlement', () => {
   });
 });
 
-describe('getVacationBalance', () => {
+describeWithDb('getVacationBalance', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('returns balance for a worker', async () => {
@@ -41,7 +41,7 @@ describe('getVacationBalance', () => {
   });
 });
 
-describe('ensureVacationBalance', () => {
+describeWithDb('ensureVacationBalance', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('creates a vacation balance record if none exists', async () => {

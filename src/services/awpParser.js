@@ -26,10 +26,9 @@ function detectTrashType(line) {
 /**
  * Validate that a date (month, day) is real.
  */
-function isValidDate(month, day) {
+function isValidDate(month, day, year = 2024) {
   if (month < 1 || month > 12) return false;
-  // Use a non-timezone-affected approach
-  const daysInMonth = new Date(2024, month, 0).getDate(); // 2024 is a leap year for safety
+  const daysInMonth = new Date(year, month, 0).getDate();
   return day >= 1 && day <= daysInMonth;
 }
 
@@ -64,7 +63,7 @@ export function parseCollectionDates(text, year) {
       const day = parseInt(match[1], 10);
       const month = parseInt(match[2], 10);
 
-      if (!isValidDate(month, day)) continue;
+      if (!isValidDate(month, day, year)) continue;
 
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       results.push({

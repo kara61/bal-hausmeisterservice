@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../../src/app.js';
-import { cleanDb } from '../helpers.js';
+import { cleanDb, describeWithDb } from '../helpers.js';
 
-describe('GET /api/workers', () => {
+describeWithDb('GET /api/workers', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('returns empty array when no workers exist', async () => {
@@ -13,7 +13,7 @@ describe('GET /api/workers', () => {
   });
 });
 
-describe('POST /api/workers', () => {
+describeWithDb('POST /api/workers', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('creates a new worker', async () => {
@@ -58,7 +58,7 @@ describe('POST /api/workers', () => {
   });
 });
 
-describe('PUT /api/workers/:id', () => {
+describeWithDb('PUT /api/workers/:id', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('updates a worker', async () => {
@@ -78,7 +78,7 @@ describe('PUT /api/workers/:id', () => {
   });
 });
 
-describe('DELETE /api/workers/:id', () => {
+describeWithDb('DELETE /api/workers/:id', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('soft-deletes a worker (sets is_active = false)', async () => {

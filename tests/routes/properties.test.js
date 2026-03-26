@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../../src/app.js';
-import { cleanDb } from '../helpers.js';
+import { cleanDb, describeWithDb } from '../helpers.js';
 
-describe('GET /api/properties', () => {
+describeWithDb('GET /api/properties', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('returns empty array when no properties exist', async () => {
@@ -13,7 +13,7 @@ describe('GET /api/properties', () => {
   });
 });
 
-describe('POST /api/properties', () => {
+describeWithDb('POST /api/properties', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('creates a new property', async () => {
@@ -38,7 +38,7 @@ describe('POST /api/properties', () => {
   });
 });
 
-describe('PUT /api/properties/:id', () => {
+describeWithDb('PUT /api/properties/:id', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('updates a property', async () => {
@@ -54,7 +54,7 @@ describe('PUT /api/properties/:id', () => {
   });
 });
 
-describe('DELETE /api/properties/:id', () => {
+describeWithDb('DELETE /api/properties/:id', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('soft-deletes a property (sets is_active = false)', async () => {

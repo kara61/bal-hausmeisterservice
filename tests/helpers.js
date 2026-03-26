@@ -1,4 +1,14 @@
+import { describe } from 'vitest';
 import { pool } from '../src/db/pool.js';
+import { dbAvailable } from './setup.js';
+
+/**
+ * Use instead of `describe` for tests that need a real PostgreSQL database.
+ * Skips the entire suite when no DB is available.
+ */
+export const describeWithDb = dbAvailable
+  ? describe
+  : describe.skip;
 
 export async function cleanDb() {
   await pool.query(`

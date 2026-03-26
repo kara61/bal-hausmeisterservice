@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { it, expect, beforeEach, vi } from 'vitest';
 import { handleIncomingMessage } from '../../src/services/bot.js';
-import { cleanDb, createTestWorker } from '../helpers.js';
+import { cleanDb, createTestWorker, describeWithDb } from '../helpers.js';
 
 vi.mock('../../src/services/whatsapp.js', () => ({
   sendWhatsAppMessage: vi.fn().mockResolvedValue({}),
@@ -8,7 +8,7 @@ vi.mock('../../src/services/whatsapp.js', () => ({
   sendInteractiveButtons: vi.fn().mockResolvedValue({}),
 }));
 
-describe('handleIncomingMessage', () => {
+describeWithDb('handleIncomingMessage', () => {
   beforeEach(async () => { await cleanDb(); });
 
   it('rejects unregistered phone numbers', async () => {
