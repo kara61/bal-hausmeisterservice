@@ -179,13 +179,13 @@ async function getAlerts(dateStr) {
 
   // Pending sick leave
   const { rows: sick } = await pool.query(
-    `SELECT sl.id, sl.worker_id, sl.start_date, sl.end_date, w.name AS worker_name
+    `SELECT sl.id, sl.worker_id, sl.start_date, sl.declared_days, w.name AS worker_name
      FROM sick_leave sl JOIN workers w ON w.id = sl.worker_id
      WHERE sl.status = 'pending'
      ORDER BY sl.start_date LIMIT 10`
   );
   for (const s of sick) {
-    alerts.push({ type: 'sick_leave', id: s.id, workerId: s.worker_id, workerName: s.worker_name, startDate: s.start_date, endDate: s.end_date });
+    alerts.push({ type: 'sick_leave', id: s.id, workerId: s.worker_id, workerName: s.worker_name, startDate: s.start_date, declaredDays: s.declared_days });
   }
 
   // Unassigned properties in today's plan
