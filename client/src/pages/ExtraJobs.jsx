@@ -112,7 +112,7 @@ export default function ExtraJobs() {
           <tbody>
             {jobs.map(j => (
               <tr key={j.id}>
-                <td><span className="mono">{j.date}</span></td>
+                <td><span className="mono">{new Date(j.date).toLocaleDateString('de-DE')}</span></td>
                 <td style={{ fontWeight: 600 }}>{j.description}</td>
                 <td>{j.address}</td>
                 <td>{j.team_name || <span className="text-muted">—</span>}</td>

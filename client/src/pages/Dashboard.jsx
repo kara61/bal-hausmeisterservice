@@ -109,7 +109,7 @@ export default function Dashboard() {
                 <div key={f.id} style={{ padding: '0.7rem 0', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{f.worker_name}</div>
-                    <div className="text-sm text-muted">{f.date}</div>
+                    <div className="text-sm text-muted">{new Date(f.date).toLocaleDateString('de-DE')}</div>
                   </div>
                   <span className="badge badge-danger">{f.flag_reason}</span>
                 </div>
@@ -135,7 +135,7 @@ export default function Dashboard() {
                 <div key={s.id} style={{ padding: '0.7rem 0', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.worker_name}</div>
-                    <div className="text-sm text-muted">{t('dashboard.from')} {s.start_date}</div>
+                    <div className="text-sm text-muted">{t('dashboard.from')} {new Date(s.start_date).toLocaleDateString('de-DE')}</div>
                   </div>
                   <span className="badge badge-warning">{s.declared_days} {t('common.days')}</span>
                 </div>
