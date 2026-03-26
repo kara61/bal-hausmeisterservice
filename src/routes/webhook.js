@@ -22,13 +22,17 @@ const validateTwilio = (req, res, next) => {
 };
 
 router.post('/', validateTwilio, async (req, res) => {
-  const { From, Body } = req.body;
+  const { From, Body, NumMedia, MediaUrl0, MediaContentType0 } = req.body;
 
-  if (!From || Body === undefined) {
-    return res.status(400).send('Missing From or Body');
+  if (!From) {
+    return res.status(400).send('Missing From');
   }
 
-  const result = await handleIncomingMessage(From, Body);
+  const result = await handleIncomingMessage(From, Body || '', {
+    numMedia: parseInt(NumMedia || '0', 10),
+    mediaUrl: MediaUrl0,
+    mediaContentType: MediaContentType0,
+  });
   await sendWhatsAppMessage(From, result.response);
   res.status(200).send('<Response></Response>');
 });
