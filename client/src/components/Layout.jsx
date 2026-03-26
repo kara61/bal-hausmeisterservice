@@ -91,7 +91,7 @@ export default function Layout() {
     <div className="app-shell">
       <nav className="sidebar">
         <div className="sidebar-brand">
-          <div className="sidebar-brand-name">Bal HMS</div>
+          <img src="/logo.png" alt="Bal Hausmeisterservice" className="sidebar-logo" />
           <div className="sidebar-brand-sub">{t('nav.management')}</div>
         </div>
 

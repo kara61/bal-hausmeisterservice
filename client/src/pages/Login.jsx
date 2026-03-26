@@ -29,7 +29,7 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} className="login-card animate-fade-in">
         <div className="login-brand">
-          <div className="login-brand-name">{t('login.title')}</div>
+          <img src="/logo.png" alt="Bal Hausmeisterservice" className="login-logo" />
           <div className="login-brand-bar" />
           <div className="login-brand-sub">{t('login.subtitle')}</div>
         </div>
