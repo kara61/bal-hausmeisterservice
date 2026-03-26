@@ -161,7 +161,12 @@ const skipBodyParse = new Set(['garbage/upload']);
 
 export default async function handler(req, res) {
   // Extract the path after /api/
-  const pathSegments = req.query.path || [];
+  // Try req.query.path first, then parse from URL
+  let pathSegments = req.query.path || [];
+  if (pathSegments.length === 0 && req.url) {
+    const urlPath = req.url.replace(/\?.*$/, '').replace(/^\/api\//, '');
+    if (urlPath) pathSegments = urlPath.split('/');
+  }
   const routePath = pathSegments.join('/');
 
   // Parse JSON body for non-upload routes

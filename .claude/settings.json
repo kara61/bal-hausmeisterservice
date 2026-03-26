@@ -51,7 +51,24 @@
       "Bash(find api/_handlers -name \"*.js\" -exec sed -i \"s|from ''\\\\.\\\\.|from ''../..|g\" {} +)",
       "Bash(head -5 api/_handlers/tasks/[id]/assign.js)",
       "Bash(node -e \"import\\(''''./api/[...path].js''''\\).then\\(\\(\\) => console.log\\(''''Import OK''''\\)\\).catch\\(e => console.error\\(''''Import error:'''', e.message\\)\\)\")",
-      "Bash(node -e \"import\\(''./api/[...path].js''\\).then\\(\\(\\) => console.log\\(''Import OK''\\)\\).catch\\(e => console.error\\(e.message\\)\\)\")"
+      "Bash(node -e \"import\\(''./api/[...path].js''\\).then\\(\\(\\) => console.log\\(''Import OK''\\)\\).catch\\(e => console.error\\(e.message\\)\\)\")",
+      "Bash(node -e \"import\\(''bcrypt''\\).then\\(b=>b.default.hash\\(''halilb61'',10\\).then\\(console.log\\)\\)\")",
+      "Bash(curl -s https://balhausmeister.vercel.app/api/health)",
+      "Bash(curl -s -X POST https://balhausmeister.vercel.app/api/auth/login -H \"Content-Type: application/json\" -d '{\"\"username\"\":\"\"halil\"\",\"\"password\"\":\"\"halilb61\"\"}')",
+      "Bash(grep -r \"from ''''.*whatsapp\" api/_handlers/ src/services/)",
+      "Bash(claude mcp:*)",
+      "Read(//c/Users/User Computer/.claude/plugins/cache/claude-plugins-official/context7/b10b583de281/**)",
+      "Read(//c/Users/User Computer/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/context7/**)",
+      "Read(//c/Users/User Computer/.claude/**)",
+      "Bash(curl -s -X POST \"https://balhausmeister.vercel.app/api/auth/login\" -H \"Content-Type: application/json\" -d '{\"\"username\"\":\"\"halil\"\",\"\"password\"\":\"\"halilb61\"\"}')",
+      "mcp__plugin_supabase_supabase__list_tables",
+      "Bash(npm i:*)",
+      "Bash(vercel logs:*)",
+      "Bash(vercel link:*)",
+      "Bash(grep '\"\"type\"\"' package.json)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\User Computer\\.claude\\plugins\\cache\\claude-plugins-official\\context7\\b10b583de281"
     ]
   }
 }
