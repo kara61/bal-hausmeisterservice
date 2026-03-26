@@ -9,6 +9,7 @@ import {
   getWorkerVisitsForDate,
   getWorkerFlowState,
 } from '../../src/services/accountabilityFlow.js';
+import { handleIncomingMessage } from '../../src/services/bot.js';
 
 describe('formatPropertyPrompt', () => {
   it('formats arrival prompt with address and tasks', () => {
@@ -119,5 +120,54 @@ describeWithDb('accountability flow DB functions', () => {
     expect(state.nextVisit).toBeTruthy();
     expect(state.nextVisit.address).toBe('Straße 1');
     expect(state.allDone).toBe(false);
+  });
+});
+
+describeWithDb('accountability bot flow', () => {
+  beforeEach(async () => { await cleanDb(); });
+  afterEach(async () => { await cleanDb(); });
+
+  it('guides worker through property sequence after check-in', async () => {
+    const worker = await createTestWorker({ name: 'Ali Yilmaz', phone_number: '+4917600000001' });
+    const prop1 = await createTestProperty({ address: 'Mozartstraße 12', city: 'Pfaffenhofen', assigned_weekday: 4, standard_tasks: 'Treppenhausreinigung' });
+    const prop2 = await createTestProperty({ address: 'Beethoven Residenz', city: 'Pfaffenhofen', assigned_weekday: 4, standard_tasks: 'Grünpflege' });
+
+    const plan = await createTestPlan({ plan_date: '2026-03-26', status: 'approved' });
+    await createTestAssignment(plan.id, worker.id, prop1.id, { assignment_order: 1 });
+    await createTestAssignment(plan.id, worker.id, prop2.id, { assignment_order: 2 });
+
+    // Create visits (simulating what happens on plan approval)
+    const { createVisitsFromPlan } = await import('../../src/services/accountabilityFlow.js');
+    await createVisitsFromPlan(plan.id);
+
+    // Step 1: Check in — should show first property
+    const checkin = await handleIncomingMessage('+4917600000001', 'einchecken');
+    expect(checkin.type).toBe('checkin_with_flow');
+    expect(checkin.response).toContain('Mozartstraße 12');
+    expect(checkin.buttons[0].id).toBe('angekommen');
+
+    // Step 2: Arrive at first property
+    const arrive = await handleIncomingMessage('+4917600000001', 'angekommen');
+    expect(arrive.type).toBe('arrived');
+    expect(arrive.response).toContain('Mozartstraße 12');
+    expect(arrive.buttons[0].id).toBe('fertig');
+
+    // Step 3: Complete first property — should show second property
+    const complete1 = await handleIncomingMessage('+4917600000001', 'fertig');
+    expect(complete1.type).toBe('visit_completed');
+    expect(complete1.response).toContain('abgeschlossen');
+    expect(complete1.response).toContain('Beethoven Residenz');
+
+    // Step 4: Arrive at second property
+    const arrive2 = await handleIncomingMessage('+4917600000001', 'angekommen');
+    expect(arrive2.type).toBe('arrived');
+    expect(arrive2.response).toContain('Beethoven Residenz');
+
+    // Step 5: Complete second property — should show day summary
+    const complete2 = await handleIncomingMessage('+4917600000001', 'fertig');
+    expect(complete2.type).toBe('day_complete');
+    expect(complete2.response).toContain('Gesamtzeit');
+    expect(complete2.response).toContain('Mozartstraße 12');
+    expect(complete2.response).toContain('Beethoven Residenz');
   });
 });
