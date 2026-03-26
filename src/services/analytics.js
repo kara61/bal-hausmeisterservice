@@ -197,6 +197,84 @@ export async function computeDailyAnalyticsForDate(dateStr) {
 }
 
 /**
+ * Fetches worker analytics for a date range, pre-aggregated.
+ */
+export async function getWorkerAnalytics(fromDate, toDate) {
+  const { rows } = await pool.query(
+    `SELECT ad.*, w.name AS worker_name
+     FROM analytics_daily ad
+     JOIN workers w ON w.id = ad.worker_id
+     WHERE ad.date >= $1 AND ad.date <= $2
+     ORDER BY ad.worker_id, ad.date`,
+    [fromDate, toDate]
+  );
+  return computeWorkerDailyStats(rows);
+}
+
+/**
+ * Fetches property analytics for a given month.
+ */
+export async function getPropertyAnalytics(monthStr) {
+  const { rows } = await pool.query(
+    `SELECT apm.*, p.address, p.city, w.name AS top_worker_name
+     FROM analytics_property_monthly apm
+     JOIN properties p ON p.id = apm.property_id
+     LEFT JOIN workers w ON w.id = apm.top_worker_id
+     WHERE apm.month = $1
+     ORDER BY p.address`,
+    [monthStr]
+  );
+  return computePropertyMonthlyStats(rows);
+}
+
+/**
+ * Fetches operations overview for a date range.
+ */
+export async function getOperationsAnalytics(fromDate, toDate) {
+  const { rows: dailyRows } = await pool.query(
+    `SELECT
+       ad.date,
+       SUM(ad.properties_completed)::int AS total_completed,
+       SUM(ad.properties_scheduled)::int AS total_scheduled,
+       COUNT(DISTINCT ad.worker_id) FILTER (WHERE ad.check_in_time IS NOT NULL) AS workers_active,
+       SUM(ad.overtime_minutes)::int AS total_overtime
+     FROM analytics_daily ad
+     WHERE ad.date >= $1 AND ad.date <= $2
+     GROUP BY ad.date
+     ORDER BY ad.date`,
+    [fromDate, toDate]
+  );
+
+  const { rows: [{ count: sickCount }] } = await pool.query(
+    `SELECT COUNT(*)::int AS count FROM analytics_daily
+     WHERE date >= $1 AND date <= $2 AND sick_leave_declared = true`,
+    [fromDate, toDate]
+  );
+
+  return computeOperationsOverview(dailyRows, sickCount);
+}
+
+/**
+ * Fetches cost analytics for a date range.
+ */
+export async function getCostAnalytics(fromDate, toDate) {
+  const { rows } = await pool.query(
+    `SELECT
+       ad.worker_id, w.name AS worker_name, w.hourly_rate,
+       SUM(ad.total_duration_minutes)::int AS total_duration_minutes,
+       SUM(ad.overtime_minutes)::int AS overtime_minutes,
+       SUM(ad.properties_completed)::int AS properties_completed
+     FROM analytics_daily ad
+     JOIN workers w ON w.id = ad.worker_id
+     WHERE ad.date >= $1 AND ad.date <= $2
+     GROUP BY ad.worker_id, w.name, w.hourly_rate
+     ORDER BY w.name`,
+    [fromDate, toDate]
+  );
+  return computeCostInsights(rows, 160);
+}
+
+/**
  * Computes and upserts monthly property analytics for a given month.
  * @param {string} monthStr - YYYY-MM-01 (first of month)
  */

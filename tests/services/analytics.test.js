@@ -5,6 +5,10 @@ import {
   computeOperationsOverview,
   computeCostInsights,
   computeDailyAnalyticsForDate,
+  getWorkerAnalytics,
+  getPropertyAnalytics,
+  getOperationsAnalytics,
+  getCostAnalytics,
 } from '../../src/services/analytics.js';
 import { describeWithDb, cleanDb, createTestWorker, createTestProperty, createTestPlan, createTestAssignment, createTestVisit, createTestVisitPhoto } from '../helpers.js';
 import { pool } from '../../src/db/pool.js';
@@ -178,5 +182,72 @@ describeWithDb('computeDailyAnalyticsForDate', () => {
     await computeDailyAnalyticsForDate('2026-03-26');
     const { rows } = await pool.query(`SELECT * FROM analytics_daily WHERE date = '2026-03-26'`);
     expect(rows).toHaveLength(0);
+  });
+});
+
+describeWithDb('Analytics query functions', () => {
+  beforeEach(async () => { await cleanDb(); });
+  afterEach(async () => { await cleanDb(); });
+
+  it('getWorkerAnalytics returns worker performance data for date range', async () => {
+    const worker = await createTestWorker({ name: 'Ali' });
+
+    await pool.query(
+      `INSERT INTO analytics_daily (date, worker_id, properties_completed, properties_scheduled, total_duration_minutes, photos_submitted, photos_required, tasks_completed, tasks_postponed, overtime_minutes, check_in_time, sick_leave_declared)
+       VALUES ('2026-03-20', $1, 3, 4, 180, 2, 3, 3, 1, 30, '2026-03-20T07:00:00Z', false)`,
+      [worker.id]
+    );
+
+    const result = await getWorkerAnalytics('2026-03-01', '2026-03-31');
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Ali');
+    expect(result[0].totalCompleted).toBe(3);
+  });
+
+  it('getPropertyAnalytics returns property insights for a month', async () => {
+    const prop = await createTestProperty({ address: 'Mozartstraße 12' });
+
+    await pool.query(
+      `INSERT INTO analytics_property_monthly (month, property_id, avg_duration_minutes, completion_rate, visit_count, postponement_count)
+       VALUES ('2026-03-01', $1, 45, 95.00, 4, 0)`,
+      [prop.id]
+    );
+
+    const result = await getPropertyAnalytics('2026-03-01');
+    expect(result).toHaveLength(1);
+    expect(result[0].address).toBe('Mozartstraße 12');
+    expect(result[0].completionRate).toBe(95);
+  });
+
+  it('getOperationsAnalytics returns aggregated daily operations', async () => {
+    const worker = await createTestWorker({ name: 'Ali' });
+
+    await pool.query(
+      `INSERT INTO analytics_daily (date, worker_id, properties_completed, properties_scheduled, total_duration_minutes, overtime_minutes, sick_leave_declared)
+       VALUES ('2026-03-20', $1, 3, 4, 180, 30, false),
+              ('2026-03-21', $1, 4, 4, 200, 0, false)`,
+      [worker.id]
+    );
+
+    const result = await getOperationsAnalytics('2026-03-01', '2026-03-31');
+    expect(result.totalCompleted).toBe(7);
+    expect(result.totalScheduled).toBe(8);
+    expect(result.daysTracked).toBe(2);
+  });
+
+  it('getCostAnalytics returns worker cost breakdowns', async () => {
+    const worker = await createTestWorker({ name: 'Ali', hourly_rate: 14 });
+
+    await pool.query(
+      `INSERT INTO analytics_daily (date, worker_id, properties_completed, properties_scheduled, total_duration_minutes, overtime_minutes, sick_leave_declared)
+       VALUES ('2026-03-20', $1, 3, 3, 480, 0, false),
+              ('2026-03-21', $1, 4, 4, 540, 60, false)`,
+      [worker.id]
+    );
+
+    const result = await getCostAnalytics('2026-03-01', '2026-03-31');
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Ali');
+    expect(result[0].totalHours).toBe(17);
   });
 });
