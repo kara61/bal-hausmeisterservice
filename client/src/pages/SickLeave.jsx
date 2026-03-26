@@ -1,22 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-
-const STATUS_BADGES = {
-  pending: 'badge-warning',
-  approved: 'badge-success',
-  overridden: 'badge-danger',
-};
-
-const STATUS_LABELS = {
-  pending: 'Offen',
-  approved: 'Genehmigt',
-  overridden: 'Ueberschrieben',
-};
+import { useLang } from '../context/LanguageContext';
 
 export default function SickLeave() {
   const [records, setRecords] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const { t, lang } = useLang();
 
   const load = async () => {
     const data = await api.get('/sick-leave');
@@ -41,72 +31,75 @@ export default function SickLeave() {
     load();
   };
 
+  const statusBadge = { pending: 'badge-warning', approved: 'badge-success', overridden: 'badge-danger' };
+  const statusLabel = (s) => t(`common.${s === 'pending' ? 'open' : s}`);
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">Krankmeldungen</h1>
+        <h1 className="page-title">{t('sickLeave.title')}</h1>
       </div>
 
       <div className="data-table-wrapper">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Mitarbeiter</th>
-              <th>Startdatum</th>
-              <th>Gemeldet</th>
-              <th>AOK</th>
-              <th>Urlaub</th>
-              <th>Unbezahlt</th>
-              <th>Status</th>
-              <th>Aktionen</th>
+              <th>{t('sickLeave.worker')}</th>
+              <th>{t('sickLeave.startDate')}</th>
+              <th>{t('sickLeave.declared')}</th>
+              <th>{t('sickLeave.aok')}</th>
+              <th>{t('sickLeave.vacationDeducted')}</th>
+              <th>{t('sickLeave.unpaid')}</th>
+              <th>{t('common.status')}</th>
+              <th>{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {records.map(r => (
               <tr key={r.id}>
                 <td style={{ fontWeight: 600 }}>{r.worker_name}</td>
-                <td><span className="mono">{new Date(r.start_date).toLocaleDateString('de-DE')}</span></td>
-                <td><span className="mono">{r.declared_days} Tage</span></td>
+                <td><span className="mono">{new Date(r.start_date).toLocaleDateString(lang === 'en' ? 'en-GB' : 'de-DE')}</span></td>
+                <td><span className="mono">{r.declared_days} {t('common.days')}</span></td>
                 <td>
                   {editingId === r.id
                     ? <input type="number" value={editForm.aok_approved_days} onChange={e => setEditForm(f => ({ ...f, aok_approved_days: parseInt(e.target.value) }))} className="input" style={{ width: '70px' }} />
-                    : <span className="mono">{r.aok_approved_days !== null ? `${r.aok_approved_days} Tage` : '—'}</span>}
+                    : <span className="mono">{r.aok_approved_days !== null ? `${r.aok_approved_days} ${t('common.days')}` : '—'}</span>}
                 </td>
                 <td>
                   {editingId === r.id
                     ? <input type="number" value={editForm.vacation_deducted_days} onChange={e => setEditForm(f => ({ ...f, vacation_deducted_days: parseInt(e.target.value) }))} className="input" style={{ width: '70px' }} />
-                    : <span className="mono">{r.vacation_deducted_days} Tage</span>}
+                    : <span className="mono">{r.vacation_deducted_days} {t('common.days')}</span>}
                 </td>
                 <td>
                   {editingId === r.id
                     ? <input type="number" value={editForm.unpaid_days} onChange={e => setEditForm(f => ({ ...f, unpaid_days: parseInt(e.target.value) }))} className="input" style={{ width: '70px' }} />
-                    : <span className="mono">{r.unpaid_days} Tage</span>}
+                    : <span className="mono">{r.unpaid_days} {t('common.days')}</span>}
                 </td>
                 <td>
                   {editingId === r.id ? (
                     <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))} className="select" style={{ width: 'auto' }}>
-                      <option value="pending">Offen</option>
-                      <option value="approved">Genehmigt</option>
-                      <option value="overridden">Ueberschrieben</option>
+                      <option value="pending">{t('common.open')}</option>
+                      <option value="approved">{t('common.approved')}</option>
+                      <option value="overridden">{t('common.overridden')}</option>
                     </select>
                   ) : (
-                    <span className={`badge ${STATUS_BADGES[r.status] || 'badge-neutral'}`}>{STATUS_LABELS[r.status]}</span>
+                    <span className={`badge ${statusBadge[r.status] || 'badge-neutral'}`}>{statusLabel(r.status)}</span>
                   )}
                 </td>
                 <td>
                   {editingId === r.id ? (
                     <div className="flex gap-xs">
-                      <button onClick={saveEdit} className="btn btn-success btn-sm">Speichern</button>
-                      <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">Abbrechen</button>
+                      <button onClick={saveEdit} className="btn btn-success btn-sm">{t('common.save')}</button>
+                      <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">{t('common.cancel')}</button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(r)} className="btn btn-secondary btn-sm">Bearbeiten</button>
+                    <button onClick={() => startEdit(r)} className="btn btn-secondary btn-sm">{t('common.edit')}</button>
                   )}
                 </td>
               </tr>
             ))}
             {records.length === 0 && (
-              <tr><td colSpan={8}><div className="empty-state"><div className="empty-state-text">Keine Krankmeldungen vorhanden</div></div></td></tr>
+              <tr><td colSpan={8}><div className="empty-state"><div className="empty-state-text">{t('sickLeave.none')}</div></div></td></tr>
             )}
           </tbody>
         </table>

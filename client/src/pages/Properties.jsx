@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { useLang } from '../context/LanguageContext';
 import PropertyForm from '../components/PropertyForm';
-
-const DAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 export default function Properties() {
   const [properties, setProperties] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const { t } = useLang();
 
   const loadProperties = async () => {
     const data = await api.get('/properties');
@@ -28,7 +28,7 @@ export default function Properties() {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Objekt wirklich deaktivieren?')) {
+    if (confirm(t('properties.confirmDeactivate'))) {
       await api.delete(`/properties/${id}`);
       loadProperties();
     }
@@ -37,10 +37,10 @@ export default function Properties() {
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">Objekte</h1>
+        <h1 className="page-title">{t('properties.title')}</h1>
         <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Neues Objekt
+          {t('properties.new')}
         </button>
       </div>
 
@@ -54,11 +54,11 @@ export default function Properties() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Adresse</th>
-              <th>Stadt</th>
-              <th>Aufgaben</th>
-              <th>Tag</th>
-              <th>Aktionen</th>
+              <th>{t('common.address')}</th>
+              <th>{t('common.city')}</th>
+              <th>{t('properties.tasks')}</th>
+              <th>{t('properties.weekday')}</th>
+              <th>{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -69,19 +69,19 @@ export default function Properties() {
                 <td className="text-secondary">{p.standard_tasks || '—'}</td>
                 <td>
                   {p.assigned_weekday !== null && p.assigned_weekday !== undefined
-                    ? <span className="badge badge-accent">{DAY_NAMES[p.assigned_weekday]}</span>
+                    ? <span className="badge badge-accent">{t(`day.${p.assigned_weekday}`)}</span>
                     : <span className="text-muted">—</span>}
                 </td>
                 <td>
                   <div className="flex gap-xs">
-                    <button onClick={() => { setEditing(p); setShowForm(true); }} className="btn btn-secondary btn-sm">Bearbeiten</button>
-                    <button onClick={() => handleDelete(p.id)} className="btn btn-danger btn-sm">Deaktivieren</button>
+                    <button onClick={() => { setEditing(p); setShowForm(true); }} className="btn btn-secondary btn-sm">{t('common.edit')}</button>
+                    <button onClick={() => handleDelete(p.id)} className="btn btn-danger btn-sm">{t('common.deactivate')}</button>
                   </div>
                 </td>
               </tr>
             ))}
             {properties.length === 0 && (
-              <tr><td colSpan={5}><div className="empty-state"><div className="empty-state-text">Keine Objekte vorhanden</div></div></td></tr>
+              <tr><td colSpan={5}><div className="empty-state"><div className="empty-state-text">{t('properties.none')}</div></div></td></tr>
             )}
           </tbody>
         </table>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { useLang } from '../context/LanguageContext';
 import MonthPicker from '../components/MonthPicker';
 import FlagBadge from '../components/FlagBadge';
 
@@ -10,6 +11,7 @@ export default function TimeEntries() {
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const { t, lang } = useLang();
 
   const load = async () => {
     const data = await api.get(`/time-entries?month=${month}&year=${year}`);
@@ -17,8 +19,6 @@ export default function TimeEntries() {
   };
 
   useEffect(() => { load(); }, [month, year]);
-
-  const handleMonthChange = (m, y) => { setMonth(m); setYear(y); };
 
   const startEdit = (entry) => {
     setEditingId(entry.id);
@@ -34,26 +34,27 @@ export default function TimeEntries() {
     load();
   };
 
-  const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '—';
-  const formatDate = (d) => new Date(d).toLocaleDateString('de-DE');
+  const locale = lang === 'en' ? 'en-GB' : 'de-DE';
+  const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : '—';
+  const formatDate = (d) => new Date(d).toLocaleDateString(locale);
 
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">Zeiterfassung</h1>
-        <MonthPicker month={month} year={year} onChange={handleMonthChange} />
+        <h1 className="page-title">{t('timeEntries.title')}</h1>
+        <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
       </div>
 
       <div className="data-table-wrapper">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Datum</th>
-              <th>Mitarbeiter</th>
-              <th>Einchecken</th>
-              <th>Auschecken</th>
-              <th>Status</th>
-              <th>Aktionen</th>
+              <th>{t('common.date')}</th>
+              <th>{t('timeEntries.worker')}</th>
+              <th>{t('timeEntries.checkIn')}</th>
+              <th>{t('timeEntries.checkOut')}</th>
+              <th>{t('common.status')}</th>
+              <th>{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -75,23 +76,17 @@ export default function TimeEntries() {
                 <td>
                   {editingId === e.id ? (
                     <div className="flex gap-xs">
-                      <button onClick={saveEdit} className="btn btn-success btn-sm">Speichern</button>
-                      <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">Abbrechen</button>
+                      <button onClick={saveEdit} className="btn btn-success btn-sm">{t('common.save')}</button>
+                      <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">{t('common.cancel')}</button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(e)} className="btn btn-secondary btn-sm">Bearbeiten</button>
+                    <button onClick={() => startEdit(e)} className="btn btn-secondary btn-sm">{t('common.edit')}</button>
                   )}
                 </td>
               </tr>
             ))}
             {entries.length === 0 && (
-              <tr>
-                <td colSpan={6}>
-                  <div className="empty-state">
-                    <div className="empty-state-text">Keine Eintraege fuer diesen Monat</div>
-                  </div>
-                </td>
-              </tr>
+              <tr><td colSpan={6}><div className="empty-state"><div className="empty-state-text">{t('timeEntries.none')}</div></div></td></tr>
             )}
           </tbody>
         </table>

@@ -1,19 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-
-const TRASH_TYPE_LABELS = {
-  restmuell: 'Restmuell (grau)',
-  bio: 'Biomuell (braun)',
-  papier: 'Papier (gruen)',
-  gelb: 'Gelber Sack',
-};
-
-const TRASH_TYPE_BADGES = {
-  restmuell: 'badge-neutral',
-  bio: 'badge-success',
-  papier: 'badge-info',
-  gelb: 'badge-warning',
-};
+import { useLang } from '../context/LanguageContext';
 
 export default function GarbageSchedule() {
   const [file, setFile] = useState(null);
@@ -25,29 +12,20 @@ export default function GarbageSchedule() {
   const [detail, setDetail] = useState(null);
   const [detailPropertyId, setDetailPropertyId] = useState(null);
   const [mappingPropertyId, setMappingPropertyId] = useState('');
+  const { t } = useLang();
+
+  const trashLabel = (type) => t(`garbage.${type}`) || type;
+  const trashBadge = { restmuell: 'badge-neutral', bio: 'badge-success', papier: 'badge-info', gelb: 'badge-warning' };
 
   const loadProperties = async () => {
-    try {
-      const data = await api.get('/properties');
-      setProperties(data);
-    } catch (e) {
-      console.error('Fehler beim Laden der Objekte:', e);
-    }
+    try { setProperties(await api.get('/properties')); } catch (e) { console.error(e); }
   };
 
   const loadSummary = async () => {
-    try {
-      const data = await api.get('/garbage/summary');
-      setSummary(data);
-    } catch (e) {
-      console.error('Fehler beim Laden der Zusammenfassung:', e);
-    }
+    try { setSummary(await api.get('/garbage/summary')); } catch (e) { console.error(e); }
   };
 
-  useEffect(() => {
-    loadProperties();
-    loadSummary();
-  }, []);
+  useEffect(() => { loadProperties(); loadSummary(); }, []);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -55,7 +33,6 @@ export default function GarbageSchedule() {
     formData.append('pdf', file);
     formData.append('year', year);
     if (propertyId) formData.append('property_id', propertyId);
-
     try {
       const token = localStorage.getItem('token');
       const res = await fetch('/api/garbage/upload', {
@@ -64,7 +41,7 @@ export default function GarbageSchedule() {
         body: formData,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload fehlgeschlagen');
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
       setUploadResult(data);
       loadSummary();
     } catch (e) {
@@ -80,7 +57,7 @@ export default function GarbageSchedule() {
         dates: uploadResult.dates,
         source_pdf: uploadResult.source_pdf,
       });
-      setUploadResult({ message: 'Zuordnung erfolgreich' });
+      setUploadResult({ message: t('garbage.mappingSuccess') });
       setMappingPropertyId('');
       loadSummary();
     } catch (e) {
@@ -89,115 +66,85 @@ export default function GarbageSchedule() {
   };
 
   const handleShowDetail = async (pid) => {
-    try {
-      const data = await api.get(`/garbage/schedule/${pid}`);
-      setDetail(data);
-      setDetailPropertyId(pid);
-    } catch (e) {
-      console.error('Fehler beim Laden des Muellplans:', e);
-    }
+    try { setDetail(await api.get(`/garbage/schedule/${pid}`)); setDetailPropertyId(pid); } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (pid) => {
-    if (!confirm('Muellplan fuer dieses Objekt wirklich loeschen?')) return;
+    if (!confirm(t('garbage.confirmDelete'))) return;
     try {
       await api.delete(`/garbage/schedule/${pid}`);
       loadSummary();
-      if (detailPropertyId === pid) {
-        setDetail(null);
-        setDetailPropertyId(null);
-      }
-    } catch (e) {
-      console.error('Fehler beim Loeschen:', e);
-    }
+      if (detailPropertyId === pid) { setDetail(null); setDetailPropertyId(null); }
+    } catch (e) { console.error(e); }
   };
 
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">Muellplan (AWP)</h1>
+        <h1 className="page-title">{t('garbage.title')}</h1>
       </div>
 
-      {/* Upload Section */}
       <div className="card mb-lg">
-        <div className="card-title mb-md">PDF hochladen</div>
+        <div className="card-title mb-md">{t('garbage.uploadPdf')}</div>
         <div className="flex gap-md flex-wrap items-center">
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">PDF-Datei</label>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={e => setFile(e.target.files[0] || null)}
-              style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}
-            />
+            <label className="form-label">{t('garbage.pdfFile')}</label>
+            <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0] || null)} style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }} />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Jahr</label>
-            <input
-              type="number"
-              value={year}
-              onChange={e => setYear(e.target.value)}
-              className="input"
-              style={{ width: '90px' }}
-            />
+            <label className="form-label">{t('garbage.year')}</label>
+            <input type="number" value={year} onChange={e => setYear(e.target.value)} className="input" style={{ width: '90px' }} />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Objekt</label>
+            <label className="form-label">{t('garbage.property')}</label>
             <select value={propertyId} onChange={e => setPropertyId(e.target.value)} className="select" style={{ width: 'auto', minWidth: '180px' }}>
-              <option value="">-- Auto-Erkennung --</option>
-              {properties.map(p => (
-                <option key={p.id} value={p.id}>{p.address}, {p.city}</option>
-              ))}
+              <option value="">{t('garbage.autoDetect')}</option>
+              {properties.map(p => <option key={p.id} value={p.id}>{p.address}, {p.city}</option>)}
             </select>
           </div>
-          <button onClick={handleUpload} className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>
-            Hochladen
-          </button>
+          <button onClick={handleUpload} className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>{t('common.upload')}</button>
         </div>
 
         {uploadResult && (
           <div className={`alert mt-md ${uploadResult.error ? 'alert-danger' : uploadResult.needs_mapping ? 'alert-warning' : 'alert-success'}`}>
             {uploadResult.error
-              ? `Fehler: ${uploadResult.error}`
+              ? `${t('garbage.error')} ${uploadResult.error}`
               : uploadResult.needs_mapping
                 ? (
                   <div>
                     <p className="mb-sm">
-                      Automatische Zuordnung fehlgeschlagen.
-                      {uploadResult.extracted_address && ` Erkannte Adresse: "${uploadResult.extracted_address}".`}
-                      {' '}{uploadResult.total_dates} Termine gefunden. Bitte Objekt manuell zuordnen:
+                      {t('garbage.autoFail')}
+                      {uploadResult.extracted_address && ` ${t('garbage.detectedAddress')} "${uploadResult.extracted_address}".`}
+                      {' '}{uploadResult.total_dates} {t('garbage.datesFound')}
                     </p>
                     <div className="flex gap-sm items-center">
                       <select value={mappingPropertyId} onChange={e => setMappingPropertyId(e.target.value)} className="select" style={{ width: 'auto', minWidth: '180px' }}>
-                        <option value="">-- Objekt waehlen --</option>
-                        {properties.map(p => (
-                          <option key={p.id} value={p.id}>{p.address}, {p.city}</option>
-                        ))}
+                        <option value="">{t('garbage.selectProperty')}</option>
+                        {properties.map(p => <option key={p.id} value={p.id}>{p.address}, {p.city}</option>)}
                       </select>
-                      <button onClick={handleMap} disabled={!mappingPropertyId} className="btn btn-primary btn-sm">Zuordnen</button>
+                      <button onClick={handleMap} disabled={!mappingPropertyId} className="btn btn-primary btn-sm">{t('garbage.mapProperty')}</button>
                     </div>
                   </div>
                 )
-                : uploadResult.message || 'Upload erfolgreich'}
+                : uploadResult.message || t('garbage.uploadSuccess')}
           </div>
         )}
       </div>
 
-      {/* Summary Table */}
       <div className="card mb-lg">
-        <div className="card-title mb-md">Importierte Muellplaene</div>
+        <div className="card-title mb-md">{t('garbage.importedSchedules')}</div>
         {summary.length === 0 ? (
-          <p className="text-muted text-sm">Keine Muellplaene vorhanden.</p>
+          <p className="text-muted text-sm">{t('garbage.noSchedules')}</p>
         ) : (
           <div className="data-table-wrapper" style={{ border: 'none' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Objekt</th>
-                  <th>Termine</th>
-                  <th>Muellarten</th>
-                  <th>Zeitraum</th>
-                  <th>Aktionen</th>
+                  <th>{t('garbage.property')}</th>
+                  <th>{t('garbage.totalDates')}</th>
+                  <th>{t('garbage.trashTypes')}</th>
+                  <th>{t('garbage.period')}</th>
+                  <th>{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -209,8 +156,8 @@ export default function GarbageSchedule() {
                     <td><span className="mono text-sm">{item.earliest_date} — {item.latest_date}</span></td>
                     <td>
                       <div className="flex gap-xs">
-                        <button onClick={() => handleShowDetail(item.property_id)} className="btn btn-secondary btn-sm">Anzeigen</button>
-                        <button onClick={() => handleDelete(item.property_id)} className="btn btn-danger btn-sm">Loeschen</button>
+                        <button onClick={() => handleShowDetail(item.property_id)} className="btn btn-secondary btn-sm">{t('common.show')}</button>
+                        <button onClick={() => handleDelete(item.property_id)} className="btn btn-danger btn-sm">{t('common.delete')}</button>
                       </div>
                     </td>
                   </tr>
@@ -221,28 +168,17 @@ export default function GarbageSchedule() {
         )}
       </div>
 
-      {/* Detail View */}
       {detail && (
         <div className="card animate-slide-in">
           <div className="card-header">
-            <div className="card-title">Termine</div>
-            <button onClick={() => { setDetail(null); setDetailPropertyId(null); }} className="btn btn-secondary btn-sm">Schliessen</button>
+            <div className="card-title">{t('garbage.dates')}</div>
+            <button onClick={() => { setDetail(null); setDetailPropertyId(null); }} className="btn btn-secondary btn-sm">{t('common.close')}</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.5rem' }}>
             {detail.map((entry, i) => (
-              <div key={i} style={{
-                padding: '0.5rem 0.85rem',
-                background: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
+              <div key={i} style={{ padding: '0.5rem 0.85rem', background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="mono fw-bold">{entry.collection_date}</span>
-                <span className={`badge ${TRASH_TYPE_BADGES[entry.trash_type] || 'badge-neutral'}`}>
-                  {TRASH_TYPE_LABELS[entry.trash_type] || entry.trash_type}
-                </span>
+                <span className={`badge ${trashBadge[entry.trash_type] || 'badge-neutral'}`}>{trashLabel(entry.trash_type)}</span>
               </div>
             ))}
           </div>

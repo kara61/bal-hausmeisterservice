@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useLang } from '../context/LanguageContext';
 
 export default function ExtraJobForm({ teams, onSubmit, onCancel }) {
+  const { t } = useLang();
   const [form, setForm] = useState({ description: '', address: '', date: '', team_id: '' });
 
   const handleSubmit = (e) => {
@@ -13,35 +15,35 @@ export default function ExtraJobForm({ teams, onSubmit, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="form-card">
-      <div className="form-card-title">Neuer Zusatzauftrag</div>
+      <div className="form-card-title">{t('extraJobs.newTitle')}</div>
 
       <div className="form-row">
         <div className="form-group col-span-full">
-          <label className="form-label">Beschreibung *</label>
+          <label className="form-label">{t('common.description')} *</label>
           <textarea required value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="textarea" />
         </div>
         <div className="form-group">
-          <label className="form-label">Adresse *</label>
+          <label className="form-label">{t('common.address')} *</label>
           <input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="input" />
         </div>
         <div className="form-group">
-          <label className="form-label">Datum *</label>
+          <label className="form-label">{t('common.date')} *</label>
           <input type="date" required value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="input" />
         </div>
         <div className="form-group">
-          <label className="form-label">Team</label>
+          <label className="form-label">{t('common.team')}</label>
           <select value={form.team_id} onChange={e => setForm({ ...form, team_id: e.target.value })} className="select">
-            <option value="">-- Kein Team --</option>
-            {teams && teams.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+            <option value="">{t('common.noTeam')}</option>
+            {teams && teams.map(tm => (
+              <option key={tm.id} value={tm.id}>{tm.name}</option>
             ))}
           </select>
         </div>
       </div>
 
       <div className="form-actions">
-        <button type="submit" className="btn btn-primary">Speichern</button>
-        <button type="button" onClick={onCancel} className="btn btn-secondary">Abbrechen</button>
+        <button type="submit" className="btn btn-primary">{t('common.save')}</button>
+        <button type="button" onClick={onCancel} className="btn btn-secondary">{t('common.cancel')}</button>
       </div>
     </form>
   );

@@ -1,8 +1,7 @@
+import { useLang } from '../context/LanguageContext';
+
 export default function MonthPicker({ month, year, onChange }) {
-  const months = [
-    'Januar', 'Februar', 'Maerz', 'April', 'Mai', 'Juni',
-    'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
-  ];
+  const { t } = useLang();
 
   return (
     <div className="flex gap-sm items-center">
@@ -12,7 +11,7 @@ export default function MonthPicker({ month, year, onChange }) {
         className="select"
         style={{ width: 'auto', minWidth: '130px' }}
       >
-        {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+        {Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{t(`month.${i + 1}`)}</option>)}
       </select>
       <input
         type="number"
