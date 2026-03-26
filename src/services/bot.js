@@ -503,7 +503,7 @@ async function handleSickDayCount(worker, text) {
       );
     }
     // Notify workers who received extra properties
-    await notifyWorkersOfRedistribution(redistribution.details, worker.name);
+    await notifyWorkersOfRedistribution(redistribution.details);
   }
 
   const dayText = days ? `${days} Tage` : 'unbestimmte Zeit';

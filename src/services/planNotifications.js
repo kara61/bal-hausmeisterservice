@@ -12,11 +12,7 @@ function formatDateLabel(dateStr) {
 }
 
 function formatAssignmentLine(index, assignment) {
-  const label = `${index}. ${assignment.address}, ${assignment.city} — ${assignment.standard_tasks}`;
-  if (assignment.source === 'substitution' && assignment.original_worker_name) {
-    return `${label} (Vertretung fuer ${assignment.original_worker_name})`;
-  }
-  return label;
+  return `${index}. ${assignment.address}, ${assignment.city} — ${assignment.standard_tasks}`;
 }
 
 export async function sendPlanAssignments(planId) {
@@ -43,24 +39,6 @@ export async function sendPlanAssignments(planId) {
   const dateStr = plan.plan_date instanceof Date
     ? plan.plan_date.toISOString().split('T')[0]
     : plan.plan_date;
-
-  // Get sick workers for this date to label substitutions
-  const { rows: sickWorkers } = await pool.query(
-    `SELECT sl.worker_id, w.name FROM sick_leave sl
-     JOIN workers w ON w.id = sl.worker_id
-     WHERE sl.start_date <= $1
-       AND (sl.declared_days = 0 OR sl.start_date + (sl.declared_days || ' days')::INTERVAL > $1::DATE)
-       AND sl.status != 'rejected'`,
-    [dateStr]
-  );
-
-  // For substitution-source assignments, check which sick worker had this property assigned on this weekday
-  for (const a of assignments) {
-    if (a.source === 'substitution' && sickWorkers.length > 0) {
-      // Use the first sick worker as the original (most common case: single sick worker)
-      a.original_worker_name = sickWorkers[0].name;
-    }
-  }
 
   const dayLabel = formatDateLabel(dateStr);
 
@@ -160,7 +138,7 @@ export async function notifyHalilPlanReady(planId) {
  * Send immediate notification to workers who received extra properties
  * due to a sick worker redistribution.
  */
-export async function notifyWorkersOfRedistribution(details, sickWorkerName) {
+export async function notifyWorkersOfRedistribution(details) {
   // Group by new worker
   const byWorker = new Map();
   for (const d of details) {
@@ -184,7 +162,7 @@ export async function notifyWorkersOfRedistribution(details, sickWorkerName) {
     const lines = worker.properties.map((p, i) =>
       `${i + 1}. ${p.address}, ${p.city} — ${p.standard_tasks}`
     );
-    const msg = `Zusaetzliche Aufgaben (Vertretung fuer ${sickWorkerName}):\n\n${lines.join('\n')}\n\nDruecke "Angekommen" wenn du vor Ort bist.`;
+    const msg = `Zusaetzliche Aufgaben fuer heute:\n\n${lines.join('\n')}\n\nDruecke "Angekommen" wenn du vor Ort bist.`;
 
     await sendWhatsAppButtons(worker.phone, msg, [{ id: 'angekommen', title: 'Angekommen' }]);
   }
