@@ -12,6 +12,7 @@ import sickLeaveRouter from './routes/sickLeave.js';
 import vacationRouter from './routes/vacation.js';
 import reportsRouter from './routes/reports.js';
 import propertiesRouter from './routes/properties.js';
+import teamsRouter from './routes/teams.js';
 import { requireAuth } from './middleware/auth.js';
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/sick-leave', requireAuth, sickLeaveRouter);
 app.use('/api/vacation', requireAuth, vacationRouter);
 app.use('/api/reports', requireAuth, reportsRouter);
 app.use('/api/properties', requireAuth, propertiesRouter);
+app.use('/api/teams', requireAuth, teamsRouter);
 
 // Serve built client in production
 const __dirname = dirname(fileURLToPath(import.meta.url));
