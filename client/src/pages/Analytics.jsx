@@ -62,6 +62,7 @@ export default function Analytics() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setData(null);
     try {
       let params;
       if (tab === 'properties') {
