@@ -227,6 +227,28 @@ export const translations = {
     // Days short
     'day.0': 'So', 'day.1': 'Mo', 'day.2': 'Di', 'day.3': 'Mi',
     'day.4': 'Do', 'day.5': 'Fr', 'day.6': 'Sa',
+
+    // Daily Plan
+    'nav.dailyPlan': 'Tagesplan',
+    'plan.title': 'Tagesplan',
+    'plan.generatePlan': 'Plan erstellen',
+    'plan.approveSend': 'Freigeben & Senden',
+    'plan.status.draft': 'Entwurf',
+    'plan.status.approved': 'Freigegeben',
+    'plan.status.in_progress': 'In Bearbeitung',
+    'plan.status.completed': 'Abgeschlossen',
+    'plan.noAssignments': 'Keine Zuweisungen fuer diesen Tag.',
+    'plan.unassigned': 'Nicht zugewiesene Objekte',
+    'plan.assignedTo': 'Zugewiesen an',
+    'plan.reassign': 'Umzuweisen',
+    'plan.worker': 'Mitarbeiter',
+    'plan.properties': 'Objekte',
+    'plan.selectWorker': 'Mitarbeiter auswählen',
+    'plan.approvedAt': 'Freigegeben am',
+    'plan.messagesSent': 'Nachrichten gesendet',
+    'plan.generating': 'Plan wird erstellt...',
+    'plan.approving': 'Plan wird freigegeben...',
+    'plan.gap': 'Lücke — kein Mitarbeiter verfügbar',
   },
 
   en: {
@@ -457,5 +479,27 @@ export const translations = {
     // Days short
     'day.0': 'Sun', 'day.1': 'Mon', 'day.2': 'Tue', 'day.3': 'Wed',
     'day.4': 'Thu', 'day.5': 'Fri', 'day.6': 'Sat',
+
+    // Daily Plan
+    'nav.dailyPlan': 'Daily Plan',
+    'plan.title': 'Daily Plan',
+    'plan.generatePlan': 'Generate Plan',
+    'plan.approveSend': 'Approve & Send',
+    'plan.status.draft': 'Draft',
+    'plan.status.approved': 'Approved',
+    'plan.status.in_progress': 'In Progress',
+    'plan.status.completed': 'Completed',
+    'plan.noAssignments': 'No assignments for this day.',
+    'plan.unassigned': 'Unassigned Properties',
+    'plan.assignedTo': 'Assigned to',
+    'plan.reassign': 'Reassign',
+    'plan.worker': 'Worker',
+    'plan.properties': 'Properties',
+    'plan.selectWorker': 'Select worker',
+    'plan.approvedAt': 'Approved at',
+    'plan.messagesSent': 'Messages sent',
+    'plan.generating': 'Generating plan...',
+    'plan.approving': 'Approving plan...',
+    'plan.gap': 'Gap — no worker available',
   },
 };
