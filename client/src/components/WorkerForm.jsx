@@ -3,9 +3,18 @@ import { useLang } from '../context/LanguageContext';
 
 export default function WorkerForm({ worker, onSave, onCancel }) {
   const { t } = useLang();
-  const [form, setForm] = useState(worker || {
-    name: '', phone_number: '', worker_type: 'fulltime', hourly_rate: '', monthly_salary: '',
-    registration_date: '', vacation_entitlement: '',
+  const [form, setForm] = useState(() => {
+    if (!worker) return {
+      name: '', phone_number: '', worker_type: 'fulltime', hourly_rate: '', monthly_salary: '',
+      registration_date: '', vacation_entitlement: '',
+    };
+    return {
+      ...worker,
+      registration_date: worker.registration_date ? worker.registration_date.split('T')[0] : '',
+      hourly_rate: worker.hourly_rate || '',
+      monthly_salary: worker.monthly_salary || '',
+      vacation_entitlement: worker.vacation_entitlement || '',
+    };
   });
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
