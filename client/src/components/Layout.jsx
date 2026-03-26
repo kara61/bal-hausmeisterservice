@@ -11,6 +11,7 @@ const navItems = [
   { path: '/properties', label: 'Objekte' },
   { path: '/daily-tasks', label: 'Tagesansicht' },
   { path: '/extra-jobs', label: 'Zusatzauftraege' },
+  { path: '/garbage', label: 'Muellplan' },
 ];
 
 export default function Layout() {

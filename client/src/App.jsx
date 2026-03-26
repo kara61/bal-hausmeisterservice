@@ -11,6 +11,7 @@ import Reports from './pages/Reports';
 import Properties from './pages/Properties';
 import DailyTasks from './pages/DailyTasks';
 import ExtraJobs from './pages/ExtraJobs';
+import GarbageSchedule from './pages/GarbageSchedule';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="properties" element={<Properties />} />
             <Route path="daily-tasks" element={<DailyTasks />} />
             <Route path="extra-jobs" element={<ExtraJobs />} />
+            <Route path="garbage" element={<GarbageSchedule />} />
           </Route>
         </Routes>
       </BrowserRouter>
