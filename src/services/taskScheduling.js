@@ -1,4 +1,5 @@
 import { pool } from '../db/pool.js';
+import { generateGarbageTasks } from './garbageScheduling.js';
 
 const DAY_NAMES = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
@@ -54,7 +55,10 @@ export async function generateDailyTasks(dateStr) {
       created.push(rows[0]);
     }
   }
-  return created;
+
+  // Generate garbage tasks for the day
+  const garbageTasks = await generateGarbageTasks(dateStr);
+  return [...created, ...garbageTasks.map(gt => ({ ...gt, is_garbage: true }))];
 }
 
 export async function carryOverTasks(fromDate, toDate) {
