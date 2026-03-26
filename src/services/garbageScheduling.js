@@ -83,9 +83,10 @@ export async function importScheduleFromPdf(propertyId, dates, sourcePdf) {
  */
 export async function generateGarbageTasks(dateStr) {
   const [year, month, day] = dateStr.split('-').map(Number);
-  const today = new Date(year, month - 1, day);
   const tomorrow = new Date(year, month - 1, day + 1);
   const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+  const created = [];
 
   // "raus" tasks: collection is tomorrow, task due today
   const { rows: rausSchedules } = await pool.query(
@@ -96,7 +97,8 @@ export async function generateGarbageTasks(dateStr) {
   );
 
   for (const schedule of rausSchedules) {
-    await createGarbageTask(schedule, 'raus', dateStr);
+    const result = await createGarbageTask(schedule, 'raus', dateStr);
+    if (result) created.push(result);
   }
 
   // "rein" tasks: collection is today, task due today
@@ -108,8 +110,11 @@ export async function generateGarbageTasks(dateStr) {
   );
 
   for (const schedule of reinSchedules) {
-    await createGarbageTask(schedule, 'rein', dateStr);
+    const result = await createGarbageTask(schedule, 'rein', dateStr);
+    if (result) created.push(result);
   }
+
+  return created;
 }
 
 /**
@@ -123,7 +128,7 @@ async function createGarbageTask(schedule, taskType, dueDate) {
     [schedule.id, taskType]
   );
 
-  if (exists > 0) return; // Skip if already exists
+  if (exists > 0) return null; // Skip if already exists
 
   const description = formatGarbageTaskDescription(schedule.trash_type, taskType);
 
@@ -161,12 +166,14 @@ async function createGarbageTask(schedule, taskType, dueDate) {
   }
 
   // Create garbage_task record
-  await pool.query(
+  const { rows: gtRows } = await pool.query(
     `INSERT INTO garbage_tasks (garbage_schedule_id, task_type, due_date, task_assignment_id, status)
      VALUES ($1, $2, $3, $4, 'pending')
-     ON CONFLICT (garbage_schedule_id, task_type) DO NOTHING`,
+     ON CONFLICT (garbage_schedule_id, task_type) DO NOTHING
+     RETURNING *`,
     [schedule.id, taskType, dueDate, taskAssignmentId]
   );
+  return gtRows.length > 0 ? gtRows[0] : null;
 }
 
 /**
