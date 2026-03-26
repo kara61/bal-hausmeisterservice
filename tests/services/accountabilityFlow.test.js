@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { formatPropertyPrompt, formatDaySummary, getNextAssignment } from '../../src/services/accountabilityFlow.js';
+import { describeWithDb, cleanDb, createTestWorker, createTestProperty, createTestPlan, createTestAssignment } from '../helpers.js';
+import { pool } from '../../src/db/pool.js';
+import {
+  createVisitsFromPlan,
+  markArrived,
+  markCompleted,
+  getWorkerVisitsForDate,
+  getWorkerFlowState,
+} from '../../src/services/accountabilityFlow.js';
 
 describe('formatPropertyPrompt', () => {
   it('formats arrival prompt with address and tasks', () => {
@@ -49,5 +58,66 @@ describe('getNextAssignment', () => {
 
   it('returns null for empty array', () => {
     expect(getNextAssignment([])).toBeNull();
+  });
+});
+
+describeWithDb('accountability flow DB functions', () => {
+  beforeEach(async () => { await cleanDb(); });
+  afterEach(async () => { await cleanDb(); });
+
+  it('createVisitsFromPlan creates visits from plan assignments', async () => {
+    const worker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const prop = await createTestProperty({ address: 'Mozartstraße 12' });
+    const plan = await createTestPlan({ plan_date: '2026-03-26', status: 'approved' });
+    const assignment = await createTestAssignment(plan.id, worker.id, prop.id);
+
+    const visits = await createVisitsFromPlan(plan.id);
+    expect(visits).toHaveLength(1);
+    expect(visits[0].worker_id).toBe(worker.id);
+    expect(visits[0].property_id).toBe(prop.id);
+    expect(visits[0].status).toBe('assigned');
+  });
+
+  it('markArrived sets arrived_at and status to in_progress', async () => {
+    const worker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const prop = await createTestProperty();
+    const plan = await createTestPlan({ plan_date: '2026-03-26' });
+    await createTestAssignment(plan.id, worker.id, prop.id);
+    const [visit] = await createVisitsFromPlan(plan.id);
+
+    const updated = await markArrived(visit.id);
+    expect(updated.status).toBe('in_progress');
+    expect(updated.arrived_at).toBeTruthy();
+  });
+
+  it('markCompleted sets completed_at, duration, and status', async () => {
+    const worker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const prop = await createTestProperty();
+    const plan = await createTestPlan({ plan_date: '2026-03-26' });
+    await createTestAssignment(plan.id, worker.id, prop.id);
+    const [visit] = await createVisitsFromPlan(plan.id);
+
+    await markArrived(visit.id);
+    const completed = await markCompleted(visit.id);
+    expect(completed.status).toBe('completed');
+    expect(completed.completed_at).toBeTruthy();
+    expect(completed.duration_minutes).toBeDefined();
+  });
+
+  it('getWorkerFlowState returns current visit and next assignment', async () => {
+    const worker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const prop1 = await createTestProperty({ address: 'Straße 1', assigned_weekday: 4 });
+    const prop2 = await createTestProperty({ address: 'Straße 2', assigned_weekday: 4 });
+    const plan = await createTestPlan({ plan_date: '2026-03-26', status: 'approved' });
+    await createTestAssignment(plan.id, worker.id, prop1.id, { assignment_order: 1 });
+    await createTestAssignment(plan.id, worker.id, prop2.id, { assignment_order: 2 });
+    await createVisitsFromPlan(plan.id);
+
+    const state = await getWorkerFlowState(worker.id, '2026-03-26');
+    expect(state.visits).toHaveLength(2);
+    expect(state.currentVisit).toBeNull();
+    expect(state.nextVisit).toBeTruthy();
+    expect(state.nextVisit.address).toBe('Straße 1');
+    expect(state.allDone).toBe(false);
   });
 });
