@@ -8,6 +8,8 @@ export const describeWithDb = dbAvailable
 
 export async function cleanDb() {
   await pool.query(`
+    DELETE FROM analytics_property_monthly;
+    DELETE FROM analytics_daily;
     DELETE FROM property_visit_photos;
     DELETE FROM property_visits;
     DELETE FROM plan_assignments;
