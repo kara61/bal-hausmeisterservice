@@ -8,6 +8,8 @@ export const describeWithDb = dbAvailable
 
 export async function cleanDb() {
   await pool.query(`
+    DELETE FROM property_visit_photos;
+    DELETE FROM property_visits;
     DELETE FROM plan_assignments;
     DELETE FROM daily_plans;
     DELETE FROM worker_preferences;
@@ -87,6 +89,32 @@ export async function createTestAssignment(planId, workerId, propertyId, overrid
     `INSERT INTO plan_assignments (daily_plan_id, worker_id, property_id, assignment_order, source, status)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
     [planId, workerId, propertyId, a.assignment_order, a.source, a.status]
+  );
+  return result.rows[0];
+}
+
+export async function createTestVisit(overrides = {}) {
+  const defaults = {
+    worker_id: null,
+    property_id: null,
+    plan_assignment_id: null,
+    visit_date: new Date().toISOString().split('T')[0],
+    status: 'assigned',
+    photo_required: false,
+  };
+  const v = { ...defaults, ...overrides };
+  const result = await pool.query(
+    `INSERT INTO property_visits (plan_assignment_id, worker_id, property_id, visit_date, status, photo_required)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    [v.plan_assignment_id, v.worker_id, v.property_id, v.visit_date, v.status, v.photo_required]
+  );
+  return result.rows[0];
+}
+
+export async function createTestVisitPhoto(visitId, photoUrl = 'https://example.com/photo.jpg') {
+  const result = await pool.query(
+    `INSERT INTO property_visit_photos (property_visit_id, photo_url) VALUES ($1, $2) RETURNING *`,
+    [visitId, photoUrl]
   );
   return result.rows[0];
 }
