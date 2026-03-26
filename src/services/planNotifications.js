@@ -1,6 +1,7 @@
 import { pool } from '../db/pool.js';
-import { sendWhatsAppMessage } from './whatsapp.js';
+import { sendWhatsAppMessage, sendWhatsAppButtons } from './whatsapp.js';
 import { config } from '../config.js';
+import { createVisitsFromPlan } from './accountabilityFlow.js';
 
 const DAY_NAMES = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
@@ -29,6 +30,9 @@ export async function sendPlanAssignments(planId) {
   const weekday = new Date(year, month - 1, day).getDay();
   const dayLabel = `${DAY_NAMES[weekday]}, ${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}`;
 
+  // Create property visits for the accountability flow
+  await createVisitsFromPlan(planId);
+
   const byWorker = new Map();
   for (const a of assignments) {
     if (!byWorker.has(a.worker_id)) {
@@ -48,7 +52,7 @@ export async function sendPlanAssignments(planId) {
     );
     const message = `Deine Aufgaben fuer heute (${dayLabel}):\n\n${lines.join('\n')}\n\nDruecke "Einchecken" wenn du loslegst.`;
 
-    await sendWhatsAppMessage(worker.phone, message);
+    await sendWhatsAppButtons(worker.phone, message, [{ id: 'einchecken', title: 'Einchecken' }]);
     sent++;
   }
 
