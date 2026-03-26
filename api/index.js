@@ -40,6 +40,10 @@ import garbageUpcomingHandler from './_handlers/garbage/upcoming.js';
 import garbageSchedulePropertyHandler from './_handlers/garbage/schedule/[propertyId].js';
 import cronNightlyHandler from './_handlers/cron/nightly.js';
 import cronMorningHandler from './_handlers/cron/morning.js';
+import dailyPlansIndexHandler from './_handlers/daily-plans/index.js';
+import dailyPlansIdHandler from './_handlers/daily-plans/[id].js';
+import dailyPlansApproveHandler from './_handlers/daily-plans/approve.js';
+import planAssignmentsIdHandler from './_handlers/plan-assignments/[id].js';
 
 // Route definitions: [pattern, handler, paramNames]
 // Order matters — more specific routes first
@@ -92,6 +96,9 @@ const routes = [
   // Cron
   ['cron/nightly', cronNightlyHandler],
   ['cron/morning', cronMorningHandler],
+
+  // Daily Plans
+  ['daily-plans', dailyPlansIndexHandler],
 ];
 
 // Dynamic routes: [pattern, handler, paramMap]
@@ -127,6 +134,12 @@ const dynamicRoutes = [
   [/^extra-jobs\/([^/]+)$/, extraJobsIdHandler, { id: 1 }],
   // /garbage/schedule/:propertyId
   [/^garbage\/schedule\/([^/]+)$/, garbageSchedulePropertyHandler, { propertyId: 1 }],
+  // /daily-plans/:id/approve
+  [/^daily-plans\/([^/]+)\/approve$/, dailyPlansApproveHandler, { id: 1 }],
+  // /daily-plans/:id
+  [/^daily-plans\/([^/]+)$/, dailyPlansIdHandler, { id: 1 }],
+  // /plan-assignments/:id
+  [/^plan-assignments\/([^/]+)$/, planAssignmentsIdHandler, { id: 1 }],
 ];
 
 // Disable body parser so formidable (file uploads) works.
