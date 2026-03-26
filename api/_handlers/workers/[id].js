@@ -14,6 +14,7 @@ export default withErrorHandler(async (req, res) => {
 
   if (req.method === 'PUT') {
     const fields = ['name', 'phone_number', 'worker_type', 'hourly_rate', 'monthly_salary', 'vacation_entitlement', 'registration_date'];
+    const numericFields = new Set(['hourly_rate', 'monthly_salary', 'vacation_entitlement']);
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -21,7 +22,11 @@ export default withErrorHandler(async (req, res) => {
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         updates.push(`${field} = $${paramIndex}`);
-        values.push(req.body[field]);
+        let val = req.body[field];
+        if (numericFields.has(field) && (val === '' || val === null)) {
+          val = null;
+        }
+        values.push(val);
         paramIndex++;
       }
     }

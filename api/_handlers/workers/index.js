@@ -27,7 +27,7 @@ export default withErrorHandler(async (req, res) => {
       const result = await pool.query(
         `INSERT INTO workers (name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement)
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [name, phone_number, worker_type, hourly_rate, monthly_salary || null, registration_date, vacation_entitlement || 0]
+        [name, phone_number, worker_type, hourly_rate || null, monthly_salary || null, registration_date || null, vacation_entitlement || 0]
       );
       return res.status(201).json(result.rows[0]);
     } catch (err) {
