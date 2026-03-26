@@ -1,8 +1,7 @@
 import PDFDocument from 'pdfkit';
-import { createWriteStream, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
 import { pool } from '../db/pool.js';
+import { config } from '../config.js';
 import {
   calculateDailyHours,
   calculateMonthlyHours,
@@ -10,8 +9,14 @@ import {
   splitOfficialAndUnofficial,
 } from './timeCalculation.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPORTS_DIR = join(__dirname, '../../uploads/reports');
+let supabase;
+
+function getSupabase() {
+  if (!supabase) {
+    supabase = createClient(config.supabaseUrl, config.supabaseServiceKey);
+  }
+  return supabase;
+}
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'Maerz', 'April', 'Mai', 'Juni',
@@ -19,8 +24,6 @@ const MONTH_NAMES = [
 ];
 
 export async function generateMonthlyReport(month, year) {
-  mkdirSync(REPORTS_DIR, { recursive: true });
-
   const workers = await pool.query(
     'SELECT * FROM workers WHERE is_active = true ORDER BY name'
   );
@@ -74,12 +77,15 @@ export async function generateMonthlyReport(month, year) {
   });
 
   const filename = `Gehaltsbericht_${MONTH_NAMES[month - 1]}_${year}.pdf`;
-  const filepath = join(REPORTS_DIR, filename);
+  const storagePath = `reports/${filename}`;
 
-  return new Promise((resolve, reject) => {
+  // Generate PDF to buffer
+  const pdfBuffer = await new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    const stream = createWriteStream(filepath);
-    doc.pipe(stream);
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
 
     doc.fontSize(20).font('Helvetica-Bold')
       .text('Bal Hausmeisterservice', { align: 'center' });
@@ -132,17 +138,29 @@ export async function generateMonthlyReport(month, year) {
       .text(`Erstellt am ${new Date().toLocaleDateString('de-DE')} — Bal Hausmeisterservice`, 50, 780, { align: 'center' });
 
     doc.end();
+  });
 
-    stream.on('finish', async () => {
-      await pool.query(
-        `INSERT INTO monthly_reports (month, year, generated_at, pdf_path, status)
-         VALUES ($1, $2, NOW(), $3, 'draft')
-         ON CONFLICT (month, year) DO UPDATE SET generated_at = NOW(), pdf_path = $3, status = 'draft'`,
-        [month, year, filepath]
-      );
-      resolve({ filepath, filename });
+  // Upload to Supabase Storage
+  const { error } = await getSupabase().storage
+    .from('photos')
+    .upload(storagePath, pdfBuffer, {
+      contentType: 'application/pdf',
+      upsert: true,
     });
 
-    stream.on('error', reject);
-  });
+  if (error) throw new Error(`Report upload failed: ${error.message}`);
+
+  const { data: { publicUrl } } = getSupabase().storage
+    .from('photos')
+    .getPublicUrl(storagePath);
+
+  // Save to database
+  await pool.query(
+    `INSERT INTO monthly_reports (month, year, generated_at, pdf_path, status)
+     VALUES ($1, $2, NOW(), $3, 'draft')
+     ON CONFLICT (month, year) DO UPDATE SET generated_at = NOW(), pdf_path = $3, status = 'draft'`,
+    [month, year, publicUrl]
+  );
+
+  return { filepath: publicUrl, filename };
 }

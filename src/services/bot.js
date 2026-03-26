@@ -4,7 +4,33 @@ import { notifyHalilPostponedTask } from './taskNotifications.js';
 import { savePhotoFromTwilio } from './photoStorage.js';
 import { postponeTask } from './taskScheduling.js';
 
-const conversationState = new Map();
+// --- Conversation state helpers (DB-backed) ---
+
+async function getState(phone) {
+  const { rows } = await pool.query(
+    'SELECT state FROM conversation_state WHERE phone_number = $1',
+    [phone]
+  );
+  return rows[0]?.state || null;
+}
+
+async function setState(phone, state) {
+  await pool.query(
+    `INSERT INTO conversation_state (phone_number, state, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (phone_number) DO UPDATE SET state = $2, updated_at = NOW()`,
+    [phone, state]
+  );
+}
+
+async function clearState(phone) {
+  await pool.query(
+    'DELETE FROM conversation_state WHERE phone_number = $1',
+    [phone]
+  );
+}
+
+// --- Main handler ---
 
 export async function handleIncomingMessage(phoneNumber, messageBody, media = {}) {
   const phone = phoneNumber.replace('whatsapp:', '');
@@ -24,7 +50,7 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
   const worker = workerResult.rows[0];
   const text = messageBody.trim();
 
-  const state = conversationState.get(phone);
+  const state = await getState(phone);
   if (state === 'awaiting_sick_days') {
     return handleSickDayCount(worker, text);
   }
@@ -32,13 +58,13 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
   // Handle photo state
   if (state && state.startsWith('awaiting_photo_')) {
     const taskId = parseInt(state.replace('awaiting_photo_', ''), 10);
-    conversationState.delete(phone);
+    await clearState(phone);
 
     if (media && media.numMedia > 0 && media.mediaUrl) {
-      const photoPath = await savePhotoFromTwilio(media.mediaUrl, media.mediaContentType);
+      const photoUrl = await savePhotoFromTwilio(media.mediaUrl, media.mediaContentType);
       await pool.query(
         'UPDATE task_assignments SET photo_url = $1, updated_at = NOW() WHERE id = $2',
-        [photoPath, taskId]
+        [photoUrl, taskId]
       );
       return { type: 'photo_saved', response: 'Foto gespeichert. Weiter zur naechsten Aufgabe!' };
     }
@@ -66,7 +92,7 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
   }
 
   if (command === 'krank melden') {
-    conversationState.set(phone, 'awaiting_sick_days');
+    await setState(phone, 'awaiting_sick_days');
     return {
       type: 'sick_prompt',
       response: 'Wie viele Tage wirst du krank sein?\n\n> 1\n> 2\n> 3\n> 4\n> 5\n> Mehr',
@@ -184,7 +210,7 @@ async function handleErledigt(worker) {
     [task.id]
   );
 
-  conversationState.set(worker.phone_number, `awaiting_photo_${task.id}`);
+  await setState(worker.phone_number, `awaiting_photo_${task.id}`);
 
   return {
     type: 'task_done',
@@ -215,7 +241,7 @@ async function handleNichtMoeglich(worker) {
   }
 
   const task = taskResult.rows[0];
-  conversationState.set(worker.phone_number, `awaiting_postpone_reason_${task.id}`);
+  await setState(worker.phone_number, `awaiting_postpone_reason_${task.id}`);
 
   return {
     type: 'postpone_prompt',
@@ -224,9 +250,9 @@ async function handleNichtMoeglich(worker) {
 }
 
 async function handlePostponeReason(worker, reasonText) {
-  const stateKey = conversationState.get(worker.phone_number);
+  const stateKey = await getState(worker.phone_number);
   const taskId = parseInt(stateKey.replace('awaiting_postpone_reason_', ''), 10);
-  conversationState.delete(worker.phone_number);
+  await clearState(worker.phone_number);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -242,7 +268,7 @@ async function handlePostponeReason(worker, reasonText) {
 }
 
 async function handleSickDayCount(worker, text) {
-  conversationState.delete(worker.phone_number);
+  await clearState(worker.phone_number);
 
   let days;
   if (text.toLowerCase() === 'mehr') {
