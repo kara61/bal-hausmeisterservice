@@ -4,7 +4,10 @@ import {
   computePropertyMonthlyStats,
   computeOperationsOverview,
   computeCostInsights,
+  computeDailyAnalyticsForDate,
 } from '../../src/services/analytics.js';
+import { describeWithDb, cleanDb, createTestWorker, createTestProperty, createTestPlan, createTestAssignment, createTestVisit, createTestVisitPhoto } from '../helpers.js';
+import { pool } from '../../src/db/pool.js';
 
 describe('computeWorkerDailyStats', () => {
   it('aggregates daily rows into worker performance summary', () => {
@@ -113,5 +116,67 @@ describe('computeCostInsights', () => {
 
   it('handles empty input', () => {
     expect(computeCostInsights([], 160)).toEqual([]);
+  });
+});
+
+describeWithDb('computeDailyAnalyticsForDate', () => {
+  beforeEach(async () => { await cleanDb(); });
+  afterEach(async () => { await cleanDb(); });
+
+  it('computes and stores daily analytics from plan data', async () => {
+    const today = '2026-03-26';
+    const worker = await createTestWorker({ name: 'Ali' });
+    const prop1 = await createTestProperty({ address: 'Mozartstraße 12', assigned_weekday: 4, photo_required: true });
+    const prop2 = await createTestProperty({ address: 'Am Stadtpark 5', assigned_weekday: 4 });
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
+    await createTestAssignment(plan.id, worker.id, prop1.id, { status: 'completed', assignment_order: 1 });
+    await createTestAssignment(plan.id, worker.id, prop2.id, { status: 'completed', assignment_order: 2 });
+
+    await pool.query(
+      `INSERT INTO time_entries (worker_id, date, check_in, check_out) VALUES ($1, $2, '2026-03-26T07:00:00Z', '2026-03-26T15:30:00Z')`,
+      [worker.id, today]
+    );
+
+    const visit1 = await createTestVisit({ plan_assignment_id: (await pool.query(`SELECT id FROM plan_assignments WHERE property_id = $1`, [prop1.id])).rows[0].id, worker_id: worker.id, property_id: prop1.id, visit_date: today, status: 'completed', photo_required: true });
+    await createTestVisitPhoto(visit1.id);
+
+    await computeDailyAnalyticsForDate(today);
+
+    const { rows } = await pool.query(
+      `SELECT * FROM analytics_daily WHERE date = $1 AND worker_id = $2`,
+      [today, worker.id]
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].properties_completed).toBe(2);
+    expect(rows[0].properties_scheduled).toBe(2);
+    expect(rows[0].photos_submitted).toBe(1);
+    expect(rows[0].photos_required).toBe(1);
+    expect(rows[0].check_in_time).toBeTruthy();
+    expect(rows[0].check_out_time).toBeTruthy();
+  });
+
+  it('is idempotent — re-running replaces existing data', async () => {
+    const today = '2026-03-26';
+    const worker = await createTestWorker({ name: 'Ali' });
+    const prop = await createTestProperty({ assigned_weekday: 4 });
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
+    await createTestAssignment(plan.id, worker.id, prop.id, { status: 'completed' });
+    await pool.query(
+      `INSERT INTO time_entries (worker_id, date, check_in, check_out) VALUES ($1, $2, '2026-03-26T07:00:00Z', '2026-03-26T15:00:00Z')`,
+      [worker.id, today]
+    );
+
+    await computeDailyAnalyticsForDate(today);
+    await computeDailyAnalyticsForDate(today);
+
+    const { rows } = await pool.query(`SELECT * FROM analytics_daily WHERE date = $1`, [today]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('handles day with no plan', async () => {
+    await computeDailyAnalyticsForDate('2026-03-26');
+    const { rows } = await pool.query(`SELECT * FROM analytics_daily WHERE date = '2026-03-26'`);
+    expect(rows).toHaveLength(0);
   });
 });

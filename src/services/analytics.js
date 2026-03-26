@@ -126,3 +126,99 @@ export function computeCostInsights(rows, standardHoursPerMonth) {
     };
   });
 }
+
+/**
+ * Computes and upserts daily analytics for a given date.
+ * Called by the nightly cron for yesterday's data.
+ * Idempotent — deletes existing rows then re-inserts.
+ * @param {string} dateStr - YYYY-MM-DD
+ */
+export async function computeDailyAnalyticsForDate(dateStr) {
+  const { rows: plans } = await pool.query(
+    `SELECT id FROM daily_plans WHERE plan_date = $1`,
+    [dateStr]
+  );
+  if (plans.length === 0) return;
+
+  const planId = plans[0].id;
+
+  const { rows: workerStats } = await pool.query(
+    `SELECT
+       pa.worker_id,
+       COUNT(*) FILTER (WHERE pa.status = 'completed') AS properties_completed,
+       COUNT(*) AS properties_scheduled,
+       te.check_in AS check_in_time,
+       te.check_out AS check_out_time,
+       COALESCE(EXTRACT(EPOCH FROM (te.check_out - te.check_in)) / 60, 0)::int AS total_duration_minutes,
+       COALESCE(photo_stats.submitted, 0) AS photos_submitted,
+       COALESCE(photo_stats.required, 0) AS photos_required
+     FROM plan_assignments pa
+     LEFT JOIN time_entries te ON te.worker_id = pa.worker_id AND te.date = $2
+     LEFT JOIN LATERAL (
+       SELECT
+         COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM property_visit_photos pvp WHERE pvp.property_visit_id = pv.id)) AS submitted,
+         COUNT(*) FILTER (WHERE pv.photo_required = true) AS required
+       FROM property_visits pv
+       WHERE pv.worker_id = pa.worker_id AND pv.visit_date = $2
+     ) photo_stats ON true
+     WHERE pa.daily_plan_id = $1
+     GROUP BY pa.worker_id, te.check_in, te.check_out, photo_stats.submitted, photo_stats.required`,
+    [planId, dateStr]
+  );
+
+  const { rows: sickWorkers } = await pool.query(
+    `SELECT worker_id FROM sick_leave
+     WHERE start_date <= $1 AND start_date + declared_days > $1::date
+     AND status IN ('pending', 'approved')`,
+    [dateStr]
+  );
+  const sickWorkerIds = new Set(sickWorkers.map(s => s.worker_id));
+
+  await pool.query(`DELETE FROM analytics_daily WHERE date = $1`, [dateStr]);
+
+  for (const ws of workerStats) {
+    const overtimeMinutes = Math.max(0, ws.total_duration_minutes - 480);
+
+    await pool.query(
+      `INSERT INTO analytics_daily (date, worker_id, properties_completed, properties_scheduled, total_duration_minutes, photos_submitted, photos_required, tasks_completed, tasks_postponed, overtime_minutes, check_in_time, check_out_time, sick_leave_declared)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $3, 0, $8, $9, $10, $11)`,
+      [dateStr, ws.worker_id, ws.properties_completed, ws.properties_scheduled, ws.total_duration_minutes, ws.photos_submitted, ws.photos_required, overtimeMinutes, ws.check_in_time, ws.check_out_time, sickWorkerIds.has(ws.worker_id)]
+    );
+  }
+
+  for (const swId of sickWorkerIds) {
+    if (!workerStats.some(ws => ws.worker_id === swId)) {
+      await pool.query(
+        `INSERT INTO analytics_daily (date, worker_id, sick_leave_declared) VALUES ($1, $2, true)`,
+        [dateStr, swId]
+      );
+    }
+  }
+}
+
+/**
+ * Computes and upserts monthly property analytics for a given month.
+ * @param {string} monthStr - YYYY-MM-01 (first of month)
+ */
+export async function computePropertyMonthlyForMonth(monthStr) {
+  await pool.query(`DELETE FROM analytics_property_monthly WHERE month = $1`, [monthStr]);
+
+  await pool.query(
+    `INSERT INTO analytics_property_monthly (month, property_id, avg_duration_minutes, completion_rate, visit_count, postponement_count, top_worker_id)
+     SELECT
+       $1::date AS month,
+       pv.property_id,
+       AVG(pv.duration_minutes)::int AS avg_duration_minutes,
+       CASE WHEN COUNT(*) > 0 THEN ROUND(COUNT(*) FILTER (WHERE pv.status = 'completed')::numeric / COUNT(*) * 100, 2) ELSE 0 END AS completion_rate,
+       COUNT(*) AS visit_count,
+       COUNT(*) FILTER (WHERE pv.status NOT IN ('completed', 'assigned')) AS postponement_count,
+       (SELECT pv2.worker_id FROM property_visits pv2
+        WHERE pv2.property_id = pv.property_id
+        AND pv2.visit_date >= $1::date AND pv2.visit_date < ($1::date + INTERVAL '1 month')
+        GROUP BY pv2.worker_id ORDER BY COUNT(*) DESC LIMIT 1) AS top_worker_id
+     FROM property_visits pv
+     WHERE pv.visit_date >= $1::date AND pv.visit_date < ($1::date + INTERVAL '1 month')
+     GROUP BY pv.property_id`,
+    [monthStr]
+  );
+}
