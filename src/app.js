@@ -15,6 +15,7 @@ import propertiesRouter from './routes/properties.js';
 import teamsRouter from './routes/teams.js';
 import tasksRouter from './routes/tasks.js';
 import extraJobsRouter from './routes/extraJobs.js';
+import garbageRouter from './routes/garbage.js';
 import { requireAuth } from './middleware/auth.js';
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/properties', requireAuth, propertiesRouter);
 app.use('/api/teams', requireAuth, teamsRouter);
 app.use('/api/tasks', requireAuth, tasksRouter);
 app.use('/api/extra-jobs', requireAuth, extraJobsRouter);
+app.use('/api/garbage', requireAuth, garbageRouter);
 
 // Serve built client in production
 const __dirname = dirname(fileURLToPath(import.meta.url));
