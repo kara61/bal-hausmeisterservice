@@ -34,7 +34,10 @@ export default function DailyTasks() {
   };
 
   const handleCarryover = async () => {
-    await api.post('/tasks/carryover', { date });
+    const prev = new Date(date);
+    prev.setDate(prev.getDate() - 1);
+    const from_date = prev.toISOString().slice(0, 10);
+    await api.post('/tasks/carryover', { from_date, to_date: date });
     load();
   };
 
@@ -100,7 +103,7 @@ export default function DailyTasks() {
             {teams.map(t => (
               <div key={t.id} style={{ padding: '0.5rem 1rem', background: '#edf2f7', borderRadius: '4px' }}>
                 <strong>{t.name}</strong>
-                {t.workers && <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem' }}>({t.workers})</span>}
+                {t.members && <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem' }}>({t.members.map(m => m.name).join(', ')})</span>}
               </div>
             ))}
           </div>

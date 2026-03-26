@@ -27,12 +27,12 @@ export default function ExtraJobs() {
   };
 
   const loadTeams = async () => {
-    const data = await api.get('/teams');
+    const d = dateFilter || new Date().toISOString().split('T')[0];
+    const data = await api.get(`/teams?date=${d}`);
     setTeams(data);
   };
 
-  useEffect(() => { loadJobs(); }, [dateFilter]);
-  useEffect(() => { loadTeams(); }, []);
+  useEffect(() => { loadJobs(); loadTeams(); }, [dateFilter]);
 
   const handleSubmit = async (form) => {
     await api.post('/extra-jobs', form);

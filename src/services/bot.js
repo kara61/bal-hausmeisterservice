@@ -2,6 +2,7 @@ import { pool } from '../db/pool.js';
 import { notifyHalilSickDeclaration } from './notifications.js';
 import { notifyHalilPostponedTask } from './taskNotifications.js';
 import { savePhotoFromTwilio } from './photoStorage.js';
+import { postponeTask } from './taskScheduling.js';
 
 const conversationState = new Map();
 
@@ -227,22 +228,12 @@ async function handlePostponeReason(worker, reasonText) {
   const taskId = parseInt(stateKey.replace('awaiting_postpone_reason_', ''), 10);
   conversationState.delete(worker.phone_number);
 
-  const reason = reasonText;
-
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const result = await pool.query(
-    `UPDATE task_assignments
-     SET status = 'postponed', postpone_reason = $1, postponed_to = $2, updated_at = NOW()
-     WHERE id = $3 RETURNING *`,
-    [reason, tomorrowStr, taskId]
-  );
-
-  if (result.rows.length > 0) {
-    await notifyHalilPostponedTask(result.rows[0], reason);
-  }
+  const task = await postponeTask(taskId, reasonText, tomorrowStr);
+  await notifyHalilPostponedTask(task, reasonText);
 
   return {
     type: 'postponed',

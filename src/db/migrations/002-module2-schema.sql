@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS task_assignments (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_task_assignments_date ON task_assignments(date);
+CREATE INDEX IF NOT EXISTS idx_task_assignments_property_date ON task_assignments(property_id, date);
+
 CREATE TABLE IF NOT EXISTS extra_jobs (
   id SERIAL PRIMARY KEY,
   description TEXT NOT NULL,
