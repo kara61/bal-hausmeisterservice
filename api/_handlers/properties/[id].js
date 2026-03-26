@@ -13,7 +13,7 @@ export default withErrorHandler(async (req, res) => {
   }
 
   if (req.method === 'PUT') {
-    const fields = ['address', 'city', 'standard_tasks', 'assigned_weekday'];
+    const fields = ['address', 'city', 'standard_tasks', 'assigned_weekday', 'photo_required'];
     const updates = [];
     const values = [];
     let paramIndex = 1;
