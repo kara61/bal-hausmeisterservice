@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { deriveWorkerStatus, computeStatsSummary } from '../../src/services/commandCenter.js';
+import { deriveWorkerStatus, computeStatsSummary, getCommandCenterData } from '../../src/services/commandCenter.js';
+import { describeWithDb, cleanDb, createTestWorker, createTestProperty, createTestPlan, createTestAssignment } from '../helpers.js';
+import { pool } from '../../src/db/pool.js';
 
 describe('deriveWorkerStatus', () => {
   it('returns "not_started" when no time entry exists', () => {
@@ -57,5 +59,47 @@ describe('computeStatsSummary', () => {
     const stats = computeStatsSummary([], [], 0);
     expect(stats.workersActive).toBe(0);
     expect(stats.propertiesTotal).toBe(0);
+  });
+});
+
+describeWithDb('getCommandCenterData', () => {
+  beforeEach(async () => { await cleanDb(); });
+  afterEach(async () => { await cleanDb(); });
+
+  it('returns combined payload for a date with plan and workers', async () => {
+    const today = '2026-03-26';
+    const worker = await createTestWorker({ name: 'Ali' });
+    const property = await createTestProperty({ assigned_weekday: 4 });
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
+    await createTestAssignment(plan.id, worker.id, property.id);
+
+    await pool.query(
+      `INSERT INTO time_entries (worker_id, date, check_in) VALUES ($1, $2, NOW())`,
+      [worker.id, today]
+    );
+
+    const data = await getCommandCenterData(today);
+
+    expect(data.date).toBe(today);
+    expect(data.planStatus).toBe('approved');
+    expect(data.planId).toBe(plan.id);
+    expect(data.workers).toHaveLength(1);
+    expect(data.workers[0].name).toBe('Ali');
+    expect(data.workers[0].status).toBe('checked_in');
+    expect(data.workers[0].assignments).toHaveLength(1);
+    expect(data.stats.workersActive).toBe(1);
+    expect(data.stats.workersTotal).toBe(1);
+    expect(data.stats.propertiesTotal).toBe(1);
+    expect(data.alerts).toBeDefined();
+    expect(data.timeline).toBeDefined();
+  });
+
+  it('returns empty state when no plan exists', async () => {
+    const data = await getCommandCenterData('2026-03-26');
+
+    expect(data.planStatus).toBe('none');
+    expect(data.planId).toBeNull();
+    expect(data.workers).toEqual([]);
+    expect(data.stats.workersTotal).toBe(0);
   });
 });
