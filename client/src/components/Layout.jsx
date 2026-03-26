@@ -8,6 +8,9 @@ const navItems = [
   { path: '/sick-leave', label: 'Krankmeldungen' },
   { path: '/vacation', label: 'Urlaub' },
   { path: '/reports', label: 'Berichte' },
+  { path: '/properties', label: 'Objekte' },
+  { path: '/daily-tasks', label: 'Tagesansicht' },
+  { path: '/extra-jobs', label: 'Zusatzauftraege' },
 ];
 
 export default function Layout() {

@@ -8,6 +8,9 @@ import TimeEntries from './pages/TimeEntries';
 import SickLeave from './pages/SickLeave';
 import Vacation from './pages/Vacation';
 import Reports from './pages/Reports';
+import Properties from './pages/Properties';
+import DailyTasks from './pages/DailyTasks';
+import ExtraJobs from './pages/ExtraJobs';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -27,6 +30,9 @@ export default function App() {
             <Route path="sick-leave" element={<SickLeave />} />
             <Route path="vacation" element={<Vacation />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="properties" element={<Properties />} />
+            <Route path="daily-tasks" element={<DailyTasks />} />
+            <Route path="extra-jobs" element={<ExtraJobs />} />
           </Route>
         </Routes>
       </BrowserRouter>
