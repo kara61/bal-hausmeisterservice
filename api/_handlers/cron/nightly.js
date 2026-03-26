@@ -4,6 +4,7 @@ import { sendWhatsAppMessage } from '../../../src/services/whatsapp.js';
 import { config } from '../../../src/config.js';
 import { generateDraftPlan } from '../../../src/services/planGeneration.js';
 import { notifyHalilPlanGaps } from '../../../src/services/planNotifications.js';
+import { computeDailyAnalyticsForDate, computePropertyMonthlyForMonth } from '../../../src/services/analytics.js';
 
 export default async function handler(req, res) {
   // Verify cron secret
@@ -39,7 +40,18 @@ export default async function handler(req, res) {
     const plan = await generateDraftPlan(tomorrow);
     await notifyHalilPlanGaps(plan.id);
 
-    res.json({ ok: true, flagged: missing.length, plan_date: tomorrow, plan_id: plan.id });
+    // Compute analytics for yesterday
+    await computeDailyAnalyticsForDate(yesterday);
+
+    // On first of month, compute previous month's property analytics
+    const today = new Date();
+    if (today.getDate() === 1) {
+      const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const monthStr = prevMonth.toISOString().split('T')[0];
+      await computePropertyMonthlyForMonth(monthStr);
+    }
+
+    res.json({ ok: true, flagged: missing.length, plan_date: tomorrow, plan_id: plan.id, analytics_computed: yesterday });
   } catch (err) {
     console.error('Nightly cron error:', err);
     res.status(500).json({ error: 'Cron failed' });
