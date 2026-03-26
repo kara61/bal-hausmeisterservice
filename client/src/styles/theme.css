@@ -74,6 +74,76 @@
 }
 
 
+/* ── Light Theme Override ─────────────────────────────── */
+[data-theme="light"] {
+  /* Surface hierarchy — warm parchment */
+  --bg-root:        #eae7e0;
+  --bg-body:        #f3f1ec;
+  --bg-surface:     #ffffff;
+  --bg-surface-2:   #f0eeea;
+  --bg-surface-3:   #e5e2dc;
+  --bg-elevated:    #ffffff;
+  --bg-hover:       #ebe8e2;
+
+  /* Borders — warm gray */
+  --border-subtle:  #ddd9d1;
+  --border-default: #ccc8bf;
+  --border-strong:  #b5b0a6;
+
+  /* Text — warm charcoal */
+  --text-primary:   #1a1816;
+  --text-secondary: #5e5850;
+  --text-muted:     #928c84;
+  --text-inverse:   #ffffff;
+
+  /* Accent — deeper amber for light-bg contrast */
+  --accent:         #c48a12;
+  --accent-hover:   #a87610;
+  --accent-soft:    rgba(196, 138, 18, 0.10);
+  --accent-border:  rgba(196, 138, 18, 0.28);
+
+  /* Status — richer tones for readability on light */
+  --success:        #0d8c5e;
+  --success-soft:   rgba(13, 140, 94, 0.08);
+  --success-border: rgba(13, 140, 94, 0.22);
+
+  --warning:        #a67c00;
+  --warning-soft:   rgba(166, 124, 0, 0.08);
+  --warning-border: rgba(166, 124, 0, 0.22);
+
+  --danger:         #c83232;
+  --danger-soft:    rgba(200, 50, 50, 0.07);
+  --danger-border:  rgba(200, 50, 50, 0.20);
+
+  --info:           #2563eb;
+  --info-soft:      rgba(37, 99, 235, 0.07);
+  --info-border:    rgba(37, 99, 235, 0.20);
+
+  /* Shadows — softer, natural */
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md:      0 4px 14px rgba(0,0,0,0.07);
+  --shadow-lg:      0 8px 30px rgba(0,0,0,0.09);
+  --shadow-glow:    0 0 16px rgba(196, 138, 18, 0.18);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+[data-theme="light"] .select {
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23928c84' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+[data-theme="light"] ::selection {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+
 /* ── Reset & Base ──────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;

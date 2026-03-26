@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 function getNavSections(t) {
   return [
@@ -70,6 +71,7 @@ function getNavSections(t) {
 export default function Layout() {
   const { logout } = useAuth();
   const { lang, switchLang, t } = useLang();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -112,8 +114,8 @@ export default function Layout() {
         </div>
 
         <div className="sidebar-footer">
-          {/* Language Toggle */}
-          <div className="flex gap-xs mb-sm" style={{ justifyContent: 'center' }}>
+          {/* Language & Theme Toggles */}
+          <div className="flex gap-xs mb-sm" style={{ justifyContent: 'center', alignItems: 'center' }}>
             <button
               onClick={() => switchLang('de')}
               className={`btn btn-sm ${lang === 'de' ? 'btn-primary' : 'btn-ghost'}`}
@@ -127,6 +129,18 @@ export default function Layout() {
               style={{ minWidth: '42px' }}
             >
               EN
+            </button>
+            <span style={{ width: '1px', height: '18px', background: 'var(--border-default)', margin: '0 0.15rem' }} />
+            <button
+              onClick={toggleTheme}
+              className="btn btn-sm btn-ghost"
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              style={{ padding: '0.3rem 0.5rem' }}
+            >
+              {theme === 'dark'
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              }
             </button>
           </div>
 
