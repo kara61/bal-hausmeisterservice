@@ -3,6 +3,14 @@ import { notifyHalilSickDeclaration } from './notifications.js';
 import { notifyHalilPostponedTask } from './taskNotifications.js';
 import { savePhotoFromTwilio } from './photoStorage.js';
 import { postponeTask } from './taskScheduling.js';
+import {
+  formatPropertyPrompt,
+  formatDaySummary,
+  getWorkerFlowState,
+  markArrived,
+  markCompleted,
+  saveVisitPhoto,
+} from './accountabilityFlow.js';
 
 // --- Conversation state helpers (DB-backed) ---
 
@@ -58,6 +66,14 @@ const POSTPONE_BUTTONS = [
 
 const PHOTO_BUTTONS = [
   { id: 'weiter', title: 'Weiter' },
+];
+
+const ARRIVAL_BUTTONS = [
+  { id: 'angekommen', title: 'Angekommen' },
+];
+
+const COMPLETION_BUTTONS = [
+  { id: 'fertig', title: 'Fertig' },
 ];
 
 // --- Main handler ---
@@ -123,11 +139,78 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
     return handlePostponeReason(worker, text);
   }
 
+  // Handle accountability flow: at property (waiting for photo or "fertig")
+  if (state && state.startsWith('at_property_')) {
+    const visitId = parseInt(state.replace('at_property_', ''), 10);
+
+    // Worker sent a photo while at property
+    if (media && media.numMedia > 0 && media.mediaUrl) {
+      await saveVisitPhoto(visitId, media.mediaUrl, media.mediaContentType);
+      return {
+        type: 'visit_photo_saved',
+        response: 'Foto gespeichert! Druecke "Fertig" wenn du fertig bist.',
+        buttons: COMPLETION_BUTTONS,
+      };
+    }
+
+    // Worker pressed "fertig"
+    if (text.toLowerCase() === 'fertig') {
+      await clearState(phone);
+      const visit = await markCompleted(visitId);
+
+      const today = new Date().toISOString().split('T')[0];
+      const flowState = await getWorkerFlowState(worker.id, today);
+
+      if (flowState.allDone) {
+        // All properties done — show day summary
+        const summaryVisits = flowState.visits.map(v => ({
+          address: v.address,
+          arrived_at: v.arrived_at,
+          completed_at: v.completed_at,
+          hasPhoto: v.photo_count > 0,
+        }));
+        return {
+          type: 'day_complete',
+          response: formatDaySummary(summaryVisits),
+          buttons: [{ id: 'auschecken', title: 'Auschecken' }],
+        };
+      }
+
+      // More properties — show next one
+      const next = flowState.nextVisit;
+      return {
+        type: 'visit_completed',
+        response: `✅ ${visit.address || 'Objekt'} abgeschlossen!\n\nWeiter zu:\n${formatPropertyPrompt({ address: next.address, city: next.city, standardTasks: next.standard_tasks })}`,
+        buttons: ARRIVAL_BUTTONS,
+      };
+    }
+
+    // Unrecognized input while at property
+    return {
+      type: 'at_property_prompt',
+      response: 'Sende ein Foto oder druecke "Fertig" wenn du fertig bist.',
+      buttons: COMPLETION_BUTTONS,
+    };
+  }
+
   // Normalize command — handle both typed text and button IDs
   const command = text.toLowerCase().replace(/\s+/g, '_');
 
   if (command === 'einchecken') {
     return handleCheckIn(worker);
+  }
+
+  if (command === 'angekommen') {
+    return handleAngekommen(worker);
+  }
+
+  if (command === 'fertig') {
+    // If not in at_property state but pressed fertig, treat as no-op
+    return {
+      type: 'no_active_visit',
+      response: 'Kein aktives Objekt. Druecke "Angekommen" wenn du vor Ort bist.',
+      buttons: ARRIVAL_BUTTONS,
+    };
   }
 
   if (command === 'auschecken') {
@@ -210,6 +293,18 @@ async function handleCheckIn(worker) {
   );
 
   const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  // Check if worker has accountability visits for today
+  const flowState = await getWorkerFlowState(worker.id, today);
+  if (flowState.nextVisit) {
+    const next = flowState.nextVisit;
+    return {
+      type: 'checkin_with_flow',
+      response: `✅ Eingecheckt um ${timeStr}\n\nDeine erste Aufgabe:\n${formatPropertyPrompt({ address: next.address, city: next.city, standardTasks: next.standard_tasks })}`,
+      buttons: ARRIVAL_BUTTONS,
+    };
+  }
+
   return {
     type: 'checkin',
     response: `Eingecheckt um ${timeStr}. Guten Arbeitstag!`,
@@ -382,5 +477,32 @@ async function handleSickDayCount(worker, text) {
   return {
     type: 'sick_recorded',
     response: `Krankmeldung fuer ${dayText} erfasst. Gute Besserung!`,
+  };
+}
+
+async function handleAngekommen(worker) {
+  const today = new Date().toISOString().split('T')[0];
+  const flowState = await getWorkerFlowState(worker.id, today);
+
+  if (!flowState.nextVisit) {
+    return {
+      type: 'no_visits',
+      response: 'Keine weiteren Objekte fuer heute.',
+      buttons: [{ id: 'auschecken', title: 'Auschecken' }],
+    };
+  }
+
+  const visit = await markArrived(flowState.nextVisit.id);
+
+  await setState(worker.phone_number, `at_property_${visit.id}`);
+
+  const photoHint = flowState.nextVisit.photo_required
+    ? '\n\n📷 Foto erforderlich fuer dieses Objekt!'
+    : '\n\nWenn du fertig bist, mach ein Foto oder druecke "Fertig".';
+
+  return {
+    type: 'arrived',
+    response: `📍 ${flowState.nextVisit.address}, ${flowState.nextVisit.city} — Los geht's!${photoHint}`,
+    buttons: COMPLETION_BUTTONS,
   };
 }
