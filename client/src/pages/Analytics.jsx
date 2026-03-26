@@ -94,7 +94,7 @@ export default function Analytics() {
   const tabs = ['workers', 'properties', 'operations', 'costs'];
 
   return (
-    <div className="analytics-page">
+    <div className="analytics-page animate-fade-in">
       <div className="analytics-header">
         <h1>{t('analytics.title')}</h1>
         <button className="btn btn-primary analytics-export-btn" onClick={handleExport}>
@@ -115,7 +115,7 @@ export default function Analytics() {
         ))}
       </div>
 
-      <div className="analytics-controls" style={{ marginTop: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
+      <div className="analytics-controls">
         {tab === 'properties' ? (
           <input
             type="month"
