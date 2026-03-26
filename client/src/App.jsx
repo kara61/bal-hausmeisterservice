@@ -15,6 +15,7 @@ import DailyTasks from './pages/DailyTasks';
 import ExtraJobs from './pages/ExtraJobs';
 import GarbageSchedule from './pages/GarbageSchedule';
 import DailyPlan from './pages/DailyPlan';
+import CommandCenter from './pages/CommandCenter';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -30,7 +31,9 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<CommandCenter />} />
+            <Route path="command-center" element={<CommandCenter />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="workers" element={<Workers />} />
             <Route path="time-entries" element={<TimeEntries />} />
             <Route path="sick-leave" element={<SickLeave />} />
