@@ -7,6 +7,7 @@ export default function Workers() {
   const [workers, setWorkers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [error, setError] = useState(null);
   const { t } = useLang();
 
   const loadWorkers = async () => {
@@ -17,20 +18,30 @@ export default function Workers() {
   useEffect(() => { loadWorkers(); }, []);
 
   const handleSave = async (form) => {
-    if (editing) {
-      await api.put(`/workers/${editing.id}`, form);
-    } else {
-      await api.post('/workers', form);
+    try {
+      setError(null);
+      if (editing) {
+        await api.put(`/workers/${editing.id}`, form);
+      } else {
+        await api.post('/workers', form);
+      }
+      setShowForm(false);
+      setEditing(null);
+      loadWorkers();
+    } catch (err) {
+      setError(err.message || t('common.error'));
     }
-    setShowForm(false);
-    setEditing(null);
-    loadWorkers();
   };
 
   const handleDelete = async (id) => {
     if (confirm(t('workers.confirmDeactivate'))) {
-      await api.delete(`/workers/${id}`);
-      loadWorkers();
+      try {
+        setError(null);
+        await api.delete(`/workers/${id}`);
+        loadWorkers();
+      } catch (err) {
+        setError(err.message || t('common.error'));
+      }
     }
   };
 
@@ -38,11 +49,17 @@ export default function Workers() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t('workers.title')}</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn btn-primary">
+        <button onClick={() => { setEditing(null); setShowForm(true); setError(null); }} className="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {t('workers.new')}
         </button>
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       {showForm && (
         <div className="mb-lg animate-slide-in">
