@@ -11,16 +11,22 @@ export default function TimeEntries() {
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [error, setError] = useState(null);
   const { t, lang } = useLang();
 
   const load = async () => {
-    const data = await api.get(`/time-entries?month=${month}&year=${year}`);
-    setEntries(data);
+    try {
+      const data = await api.get(`/time-entries?month=${month}&year=${year}`);
+      setEntries(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { load(); }, [month, year]);
 
   const startEdit = (entry) => {
+    setError(null);
     setEditingId(entry.id);
     setEditForm({
       check_in: entry.check_in ? entry.check_in.slice(0, 16) : '',
@@ -29,9 +35,14 @@ export default function TimeEntries() {
   };
 
   const saveEdit = async () => {
-    await api.put(`/time-entries/${editingId}`, { ...editForm, resolved: true });
-    setEditingId(null);
-    load();
+    try {
+      setError(null);
+      await api.put(`/time-entries/${editingId}`, { ...editForm, resolved: true });
+      setEditingId(null);
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const locale = lang === 'en' ? 'en-GB' : 'de-DE';
@@ -44,6 +55,12 @@ export default function TimeEntries() {
         <h1 className="page-title">{t('timeEntries.title')}</h1>
         <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       <div className="data-table-wrapper">
         <table className="data-table">

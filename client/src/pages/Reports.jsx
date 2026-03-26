@@ -9,11 +9,16 @@ export default function Reports() {
   const [year, setYear] = useState(now.getFullYear());
   const [reports, setReports] = useState([]);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState(null);
   const { t, lang } = useLang();
 
   const load = async () => {
-    const data = await api.get('/reports');
-    setReports(data);
+    try {
+      const data = await api.get('/reports');
+      setReports(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -21,8 +26,11 @@ export default function Reports() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
+      setError(null);
       await api.post('/reports/generate', { month, year });
       load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
     } finally {
       setGenerating(false);
     }
@@ -34,8 +42,13 @@ export default function Reports() {
   };
 
   const handleStatusUpdate = async (id, status) => {
-    await api.put(`/reports/${id}`, { status });
-    load();
+    try {
+      setError(null);
+      await api.put(`/reports/${id}`, { status });
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const statusBadge = { draft: 'badge-warning', reviewed: 'badge-info', sent: 'badge-success' };
@@ -46,6 +59,12 @@ export default function Reports() {
       <div className="page-header">
         <h1 className="page-title">{t('reports.title')}</h1>
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       <div className="card mb-lg">
         <div className="card-title mb-md">{t('reports.createNew')}</div>

@@ -15,6 +15,10 @@ export default withErrorHandler(async (req, res) => {
   if (req.method === 'POST') {
     const { name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement } = req.body;
 
+    if (!name || !phone_number) {
+      return res.status(400).json({ error: 'name and phone_number are required' });
+    }
+
     if (!['fulltime', 'minijob'].includes(worker_type)) {
       return res.status(400).json({ error: 'worker_type must be fulltime or minijob' });
     }

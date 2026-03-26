@@ -7,30 +7,45 @@ export default function Properties() {
   const [properties, setProperties] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [error, setError] = useState(null);
   const { t } = useLang();
 
   const loadProperties = async () => {
-    const data = await api.get('/properties');
-    setProperties(data);
+    try {
+      const data = await api.get('/properties');
+      setProperties(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { loadProperties(); }, []);
 
   const handleSubmit = async (form) => {
-    if (editing) {
-      await api.put(`/properties/${editing.id}`, form);
-    } else {
-      await api.post('/properties', form);
+    try {
+      setError(null);
+      if (editing) {
+        await api.put(`/properties/${editing.id}`, form);
+      } else {
+        await api.post('/properties', form);
+      }
+      setShowForm(false);
+      setEditing(null);
+      loadProperties();
+    } catch (err) {
+      setError(err.message || t('common.error'));
     }
-    setShowForm(false);
-    setEditing(null);
-    loadProperties();
   };
 
   const handleDelete = async (id) => {
     if (confirm(t('properties.confirmDeactivate'))) {
-      await api.delete(`/properties/${id}`);
-      loadProperties();
+      try {
+        setError(null);
+        await api.delete(`/properties/${id}`);
+        loadProperties();
+      } catch (err) {
+        setError(err.message || t('common.error'));
+      }
     }
   };
 
@@ -38,11 +53,17 @@ export default function Properties() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t('properties.title')}</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn btn-primary">
+        <button onClick={() => { setEditing(null); setShowForm(true); setError(null); }} className="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {t('properties.new')}
         </button>
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       {showForm && (
         <div className="mb-lg animate-slide-in">

@@ -36,6 +36,10 @@ export default withErrorHandler(async (req, res) => {
       return res.status(400).json({ error: 'description, address, team_id, and date are required' });
     }
 
+    if (!Number.isInteger(Number(team_id))) {
+      return res.status(400).json({ error: 'team_id must be a valid integer' });
+    }
+
     const result = await pool.query(
       `INSERT INTO extra_jobs (description, address, team_id, date)
        VALUES ($1, $2, $3, $4) RETURNING *`,

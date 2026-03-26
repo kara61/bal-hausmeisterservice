@@ -64,6 +64,9 @@ export default withErrorHandler(async (req, res) => {
       return res.status(201).json(result.rows[0]);
     } catch (err) {
       await client.query('ROLLBACK');
+      if (err.code === '23505') {
+        return res.status(409).json({ error: 'A team with this name already exists for the given date' });
+      }
       throw err;
     } finally {
       client.release();

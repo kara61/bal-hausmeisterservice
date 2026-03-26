@@ -12,23 +12,33 @@ export default function GarbageSchedule() {
   const [detail, setDetail] = useState(null);
   const [detailPropertyId, setDetailPropertyId] = useState(null);
   const [mappingPropertyId, setMappingPropertyId] = useState('');
+  const [error, setError] = useState(null);
   const { t } = useLang();
 
   const trashLabel = (type) => t(`garbage.${type}`) || type;
   const trashBadge = { restmuell: 'badge-neutral', bio: 'badge-success', papier: 'badge-info', gelb: 'badge-warning' };
 
   const loadProperties = async () => {
-    try { setProperties(await api.get('/properties')); } catch (e) { console.error(e); }
+    try {
+      setProperties(await api.get('/properties'));
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const loadSummary = async () => {
-    try { setSummary(await api.get('/garbage/summary')); } catch (e) { console.error(e); }
+    try {
+      setSummary(await api.get('/garbage/summary'));
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { loadProperties(); loadSummary(); }, []);
 
   const handleUpload = async () => {
     if (!file) return;
+    setError(null);
     const formData = new FormData();
     formData.append('pdf', file);
     formData.append('year', year);
@@ -44,14 +54,16 @@ export default function GarbageSchedule() {
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       setUploadResult(data);
       loadSummary();
-    } catch (e) {
-      setUploadResult({ error: e.message });
+    } catch (err) {
+      setError(err.message || t('common.error'));
+      setUploadResult({ error: err.message });
     }
   };
 
   const handleMap = async () => {
     if (!mappingPropertyId || !uploadResult) return;
     try {
+      setError(null);
       await api.post('/garbage/map', {
         property_id: parseInt(mappingPropertyId, 10),
         dates: uploadResult.dates,
@@ -60,22 +72,32 @@ export default function GarbageSchedule() {
       setUploadResult({ message: t('garbage.mappingSuccess') });
       setMappingPropertyId('');
       loadSummary();
-    } catch (e) {
-      setUploadResult({ error: e.message });
+    } catch (err) {
+      setError(err.message || t('common.error'));
+      setUploadResult({ error: err.message });
     }
   };
 
   const handleShowDetail = async (pid) => {
-    try { setDetail(await api.get(`/garbage/schedule/${pid}`)); setDetailPropertyId(pid); } catch (e) { console.error(e); }
+    try {
+      setError(null);
+      setDetail(await api.get(`/garbage/schedule/${pid}`));
+      setDetailPropertyId(pid);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleDelete = async (pid) => {
     if (!confirm(t('garbage.confirmDelete'))) return;
     try {
+      setError(null);
       await api.delete(`/garbage/schedule/${pid}`);
       loadSummary();
       if (detailPropertyId === pid) { setDetail(null); setDetailPropertyId(null); }
-    } catch (e) { console.error(e); }
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   return (
@@ -83,6 +105,12 @@ export default function GarbageSchedule() {
       <div className="page-header">
         <h1 className="page-title">{t('garbage.title')}</h1>
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       <div className="card mb-lg">
         <div className="card-title mb-md">{t('garbage.uploadPdf')}</div>

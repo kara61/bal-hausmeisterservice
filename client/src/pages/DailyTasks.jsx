@@ -15,37 +15,57 @@ export default function DailyTasks() {
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [selectedWorkers, setSelectedWorkers] = useState([]);
+  const [error, setError] = useState(null);
   const { t } = useLang();
 
   const load = async () => {
-    const [tk, tm, w] = await Promise.all([
-      api.get(`/tasks/daily?date=${date}`),
-      api.get(`/teams?date=${date}`),
-      api.get('/workers'),
-    ]);
-    setTasks(tk);
-    setTeams(tm);
-    setWorkers(w);
+    try {
+      const [tk, tm, w] = await Promise.all([
+        api.get(`/tasks/daily?date=${date}`),
+        api.get(`/teams?date=${date}`),
+        api.get('/workers'),
+      ]);
+      setTasks(tk);
+      setTeams(tm);
+      setWorkers(w);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { load(); }, [date]);
 
   const handleGenerate = async () => {
-    await api.post('/tasks/generate', { date });
-    load();
+    try {
+      setError(null);
+      await api.post('/tasks/generate', { date });
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleCarryover = async () => {
-    const prev = new Date(date);
-    prev.setDate(prev.getDate() - 1);
-    const from_date = prev.toISOString().slice(0, 10);
-    await api.post('/tasks/carryover', { from_date, to_date: date });
-    load();
+    try {
+      setError(null);
+      const prev = new Date(date);
+      prev.setDate(prev.getDate() - 1);
+      const from_date = prev.toISOString().slice(0, 10);
+      await api.post('/tasks/carryover', { from_date, to_date: date });
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleAssign = async (taskId, teamId) => {
-    await api.put(`/tasks/${taskId}/assign`, { team_id: teamId });
-    load();
+    try {
+      setError(null);
+      await api.put(`/tasks/${taskId}/assign`, { team_id: teamId });
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handlePostpone = async (taskId) => {
@@ -53,17 +73,27 @@ export default function DailyTasks() {
     if (reason === null) return;
     const newDate = prompt(t('tasks.newDate'), date);
     if (!newDate) return;
-    await api.put(`/tasks/${taskId}/postpone`, { reason, new_date: newDate });
-    load();
+    try {
+      setError(null);
+      await api.put(`/tasks/${taskId}/postpone`, { reason, new_date: newDate });
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleCreateTeam = async (e) => {
     e.preventDefault();
-    await api.post('/teams', { name: teamName, date, worker_ids: selectedWorkers });
-    setTeamName('');
-    setSelectedWorkers([]);
-    setShowTeamForm(false);
-    load();
+    try {
+      setError(null);
+      await api.post('/teams', { name: teamName, date, worker_ids: selectedWorkers });
+      setTeamName('');
+      setSelectedWorkers([]);
+      setShowTeamForm(false);
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const toggleWorker = (id) => {
@@ -88,10 +118,16 @@ export default function DailyTasks() {
         </div>
       </div>
 
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
+
       <div className="card mb-lg">
         <div className="card-header">
           <div className="card-title">{t('tasks.teams')} ({date})</div>
-          <button onClick={() => setShowTeamForm(!showTeamForm)} className="btn btn-primary btn-sm">{t('tasks.createTeam')}</button>
+          <button onClick={() => { setShowTeamForm(!showTeamForm); setError(null); }} className="btn btn-primary btn-sm">{t('tasks.createTeam')}</button>
         </div>
 
         {teams.length > 0 ? (

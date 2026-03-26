@@ -19,12 +19,19 @@ export default withErrorHandler(async (req, res) => {
       return res.status(400).json({ error: 'address and city are required' });
     }
 
-    const result = await pool.query(
-      `INSERT INTO properties (address, city, standard_tasks, assigned_weekday)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [address, city, standard_tasks || '', assigned_weekday ?? null]
-    );
-    return res.status(201).json(result.rows[0]);
+    try {
+      const result = await pool.query(
+        `INSERT INTO properties (address, city, standard_tasks, assigned_weekday)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [address, city, standard_tasks || '', assigned_weekday ?? null]
+      );
+      return res.status(201).json(result.rows[0]);
+    } catch (err) {
+      if (err.code === '23505') {
+        return res.status(409).json({ error: 'Property with this address already exists' });
+      }
+      throw err;
+    }
   }
 
   return res.status(405).json({ error: 'Method not allowed' });

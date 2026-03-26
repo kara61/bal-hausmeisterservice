@@ -8,40 +8,64 @@ export default function ExtraJobs() {
   const [teams, setTeams] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState(null);
   const { t } = useLang();
 
   const statusBadge = { pending: 'badge-neutral', in_progress: 'badge-info', done: 'badge-success' };
   const statusLabel = (s) => s === 'pending' ? t('common.open') : s === 'in_progress' ? t('common.inProgress') : t('common.done');
 
   const loadJobs = async () => {
-    const query = dateFilter ? `?date=${dateFilter}` : '';
-    const data = await api.get(`/extra-jobs${query}`);
-    setJobs(data);
+    try {
+      const query = dateFilter ? `?date=${dateFilter}` : '';
+      const data = await api.get(`/extra-jobs${query}`);
+      setJobs(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const loadTeams = async () => {
-    const d = dateFilter || new Date().toISOString().split('T')[0];
-    const data = await api.get(`/teams?date=${d}`);
-    setTeams(data);
+    try {
+      const d = dateFilter || new Date().toISOString().split('T')[0];
+      const data = await api.get(`/teams?date=${d}`);
+      setTeams(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { loadJobs(); loadTeams(); }, [dateFilter]);
 
   const handleSubmit = async (form) => {
-    await api.post('/extra-jobs', form);
-    setShowForm(false);
-    loadJobs();
+    try {
+      setError(null);
+      await api.post('/extra-jobs', form);
+      setShowForm(false);
+      loadJobs();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleDone = async (id) => {
-    await api.put(`/extra-jobs/${id}`, { status: 'done' });
-    loadJobs();
+    try {
+      setError(null);
+      await api.put(`/extra-jobs/${id}`, { status: 'done' });
+      loadJobs();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleDelete = async (id) => {
     if (confirm(t('extraJobs.confirmDelete'))) {
-      await api.delete(`/extra-jobs/${id}`);
-      loadJobs();
+      try {
+        setError(null);
+        await api.delete(`/extra-jobs/${id}`);
+        loadJobs();
+      } catch (err) {
+        setError(err.message || t('common.error'));
+      }
     }
   };
 
@@ -49,11 +73,17 @@ export default function ExtraJobs() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t('extraJobs.title')}</h1>
-        <button onClick={() => setShowForm(true)} className="btn btn-primary">
+        <button onClick={() => { setShowForm(true); setError(null); }} className="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {t('extraJobs.new')}
         </button>
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-sm items-center mb-lg">
         <span className="form-label" style={{ marginBottom: 0 }}>{t('common.filterByDate')}</span>

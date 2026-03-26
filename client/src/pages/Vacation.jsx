@@ -5,11 +5,16 @@ import { useLang } from '../context/LanguageContext';
 export default function Vacation() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [balances, setBalances] = useState([]);
+  const [error, setError] = useState(null);
   const { t } = useLang();
 
   const load = async () => {
-    const data = await api.get(`/vacation?year=${year}`);
-    setBalances(data);
+    try {
+      const data = await api.get(`/vacation?year=${year}`);
+      setBalances(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { load(); }, [year]);
@@ -26,6 +31,12 @@ export default function Vacation() {
         <h1 className="page-title">{t('vacation.title')}</h1>
         <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} className="input" style={{ width: '100px' }} />
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       <div className="data-table-wrapper">
         <table className="data-table">

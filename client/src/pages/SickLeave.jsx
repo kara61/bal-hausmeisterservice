@@ -6,16 +6,22 @@ export default function SickLeave() {
   const [records, setRecords] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [error, setError] = useState(null);
   const { t, lang } = useLang();
 
   const load = async () => {
-    const data = await api.get('/sick-leave');
-    setRecords(data);
+    try {
+      const data = await api.get('/sick-leave');
+      setRecords(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const startEdit = (record) => {
+    setError(null);
     setEditingId(record.id);
     setEditForm({
       aok_approved_days: record.aok_approved_days || '',
@@ -26,9 +32,14 @@ export default function SickLeave() {
   };
 
   const saveEdit = async () => {
-    await api.put(`/sick-leave/${editingId}`, editForm);
-    setEditingId(null);
-    load();
+    try {
+      setError(null);
+      await api.put(`/sick-leave/${editingId}`, editForm);
+      setEditingId(null);
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const statusBadge = { pending: 'badge-warning', approved: 'badge-success', overridden: 'badge-danger' };
@@ -39,6 +50,12 @@ export default function SickLeave() {
       <div className="page-header">
         <h1 className="page-title">{t('sickLeave.title')}</h1>
       </div>
+
+      {error && (
+        <div className="alert alert-danger mb-md animate-fade-in">
+          {error}
+        </div>
+      )}
 
       <div className="data-table-wrapper">
         <table className="data-table">
