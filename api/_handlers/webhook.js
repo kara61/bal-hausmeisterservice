@@ -1,7 +1,7 @@
 import twilio from 'twilio';
 import { config } from '../../src/config.js';
 import { handleIncomingMessage } from '../../src/services/bot.js';
-import { sendWhatsAppMessage } from '../../src/services/whatsapp.js';
+import { sendWhatsAppMessage, sendWhatsAppButtons } from '../../src/services/whatsapp.js';
 
 export default async function handler(req, res) {
   try {
@@ -20,18 +20,28 @@ export default async function handler(req, res) {
       }
     }
 
-    const { From, Body, NumMedia, MediaUrl0, MediaContentType0 } = req.body;
+    const { From, Body, ButtonPayload, NumMedia, MediaUrl0, MediaContentType0 } = req.body;
 
     if (!From) {
       return res.status(400).send('Missing From');
     }
 
-    const result = await handleIncomingMessage(From, Body || '', {
+    // Use ButtonPayload (from interactive button clicks) if available, otherwise Body
+    const messageText = ButtonPayload || Body || '';
+
+    const result = await handleIncomingMessage(From, messageText, {
       numMedia: parseInt(NumMedia || '0', 10),
       mediaUrl: MediaUrl0,
       mediaContentType: MediaContentType0,
     });
-    await sendWhatsAppMessage(From, result.response);
+
+    // Send with buttons if the response includes them
+    if (result.buttons && result.buttons.length > 0) {
+      await sendWhatsAppButtons(From, result.response, result.buttons);
+    } else {
+      await sendWhatsAppMessage(From, result.response);
+    }
+
     res.status(200).send('<Response></Response>');
   } catch (err) {
     console.error(err);

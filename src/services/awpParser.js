@@ -1,12 +1,12 @@
 import { createRequire } from 'module';
 
-let _pdfParse;
-function getPdfParse() {
-  if (!_pdfParse) {
+let _PDFParse;
+function getPDFParse() {
+  if (!_PDFParse) {
     const require = createRequire(import.meta.url);
-    _pdfParse = require('pdf-parse');
+    _PDFParse = require('pdf-parse').PDFParse;
   }
-  return _pdfParse;
+  return _PDFParse;
 }
 
 const TRASH_TYPE_KEYWORDS = {
@@ -93,8 +93,12 @@ export function parseCollectionDates(text, year) {
  * @returns {Promise<Array<{trash_type: string, collection_date: string}>>}
  */
 export async function parseAwpPdf(pdfBuffer, year) {
-  const data = await getPdfParse()(pdfBuffer);
-  return parseCollectionDates(data.text, year);
+  const PDFParse = getPDFParse();
+  const uint8 = pdfBuffer instanceof Uint8Array ? pdfBuffer : new Uint8Array(pdfBuffer);
+  const parser = new PDFParse(uint8);
+  const result = await parser.getText();
+  const text = result.pages.map(p => p.text).join('\n');
+  return parseCollectionDates(text, year);
 }
 
 /**

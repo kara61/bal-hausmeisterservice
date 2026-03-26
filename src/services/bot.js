@@ -30,6 +30,36 @@ async function clearState(phone) {
   );
 }
 
+// --- Button definitions ---
+
+const MAIN_MENU_BUTTONS = [
+  { id: 'einchecken', title: 'Einchecken' },
+  { id: 'auschecken', title: 'Auschecken' },
+  { id: 'krank_melden', title: 'Krank melden' },
+];
+
+const TASK_BUTTONS = [
+  { id: 'erledigt', title: 'Erledigt' },
+  { id: 'nicht_moeglich', title: 'Nicht moeglich' },
+  { id: 'auschecken', title: 'Auschecken' },
+];
+
+const SICK_DAY_BUTTONS = [
+  { id: 'sick_1', title: '1 Tag' },
+  { id: 'sick_2', title: '2 Tage' },
+  { id: 'sick_3', title: '3+ Tage' },
+];
+
+const POSTPONE_BUTTONS = [
+  { id: 'postpone_zugang', title: 'Kein Zugang' },
+  { id: 'postpone_material', title: 'Material fehlt' },
+  { id: 'postpone_sonstiges', title: 'Sonstiges' },
+];
+
+const PHOTO_BUTTONS = [
+  { id: 'weiter', title: 'Weiter' },
+];
+
 // --- Main handler ---
 
 export async function handleIncomingMessage(phoneNumber, messageBody, media = {}) {
@@ -66,14 +96,26 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
         'UPDATE task_assignments SET photo_url = $1, updated_at = NOW() WHERE id = $2',
         [photoUrl, taskId]
       );
-      return { type: 'photo_saved', response: 'Foto gespeichert. Weiter zur naechsten Aufgabe!' };
+      return {
+        type: 'photo_saved',
+        response: 'Foto gespeichert!',
+        buttons: TASK_BUTTONS,
+      };
     }
 
     if (text.toLowerCase() === 'weiter') {
-      return { type: 'photo_skipped', response: 'OK, weiter zur naechsten Aufgabe.' };
+      return {
+        type: 'photo_skipped',
+        response: 'OK, weiter gehts!',
+        buttons: TASK_BUTTONS,
+      };
     }
 
-    return { type: 'photo_skipped', response: 'Kein Foto erkannt. Weiter zur naechsten Aufgabe.' };
+    return {
+      type: 'photo_skipped',
+      response: 'Kein Foto erkannt. Weiter gehts!',
+      buttons: TASK_BUTTONS,
+    };
   }
 
   // Handle postpone reason state
@@ -81,7 +123,8 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
     return handlePostponeReason(worker, text);
   }
 
-  const command = text.toLowerCase();
+  // Normalize command — handle both typed text and button IDs
+  const command = text.toLowerCase().replace(/\s+/g, '_');
 
   if (command === 'einchecken') {
     return handleCheckIn(worker);
@@ -91,11 +134,12 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
     return handleCheckOut(worker);
   }
 
-  if (command === 'krank melden') {
+  if (command === 'krank_melden' || command === 'krank melden') {
     await setState(phone, 'awaiting_sick_days');
     return {
       type: 'sick_prompt',
-      response: 'Wie viele Tage wirst du krank sein?\n\n> 1\n> 2\n> 3\n> 4\n> 5\n> Mehr',
+      response: 'Wie viele Tage wirst du krank sein?',
+      buttons: SICK_DAY_BUTTONS,
     };
   }
 
@@ -103,13 +147,38 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
     return handleErledigt(worker);
   }
 
-  if (command === 'nicht moeglich') {
+  if (command === 'nicht_moeglich' || command === 'nicht moeglich') {
     return handleNichtMoeglich(worker);
   }
 
+  // Postpone reason button IDs
+  if (command.startsWith('postpone_')) {
+    const stateKey = await getState(phone);
+    if (stateKey && stateKey.startsWith('awaiting_postpone_reason_')) {
+      const reasons = {
+        postpone_zugang: 'Zugang nicht moeglich',
+        postpone_material: 'Material fehlt',
+        postpone_sonstiges: 'Sonstiges',
+      };
+      return handlePostponeReason(worker, reasons[command] || text);
+    }
+  }
+
+  // Sick day button IDs
+  if (command.startsWith('sick_')) {
+    const stateKey = await getState(phone);
+    if (stateKey === 'awaiting_sick_days') {
+      const dayMap = { sick_1: '1', sick_2: '2', sick_3: 'mehr' };
+      return handleSickDayCount(worker, dayMap[command] || text);
+    }
+  }
+
+  // Default: show main menu with buttons
+  const firstName = worker.name.split(' ')[0];
   return {
     type: 'menu',
-    response: 'Ich kann nur diese Aktionen ausfuehren:\n\n> Einchecken\n> Auschecken\n> Krank melden\n> Erledigt\n> Nicht moeglich\n\nFuer alles andere bitte direkt Halil kontaktieren.',
+    response: `Hallo ${firstName}! Was moechtest du tun?`,
+    buttons: MAIN_MENU_BUTTONS,
   };
 }
 
@@ -128,6 +197,7 @@ async function handleCheckIn(worker) {
     return {
       type: 'already_checked_in',
       response: `Du bist bereits eingecheckt seit ${checkInTime}.`,
+      buttons: TASK_BUTTONS,
     };
   }
 
@@ -143,6 +213,7 @@ async function handleCheckIn(worker) {
   return {
     type: 'checkin',
     response: `Eingecheckt um ${timeStr}. Guten Arbeitstag!`,
+    buttons: TASK_BUTTONS,
   };
 }
 
@@ -158,6 +229,7 @@ async function handleCheckOut(worker) {
     return {
       type: 'not_checked_in',
       response: 'Du bist heute nicht eingecheckt.',
+      buttons: MAIN_MENU_BUTTONS,
     };
   }
 
@@ -199,7 +271,10 @@ async function handleErledigt(worker) {
   if (taskResult.rows.length === 0) {
     return {
       type: 'no_tasks',
-      response: 'Du hast keine offenen Aufgaben fuer heute.',
+      response: 'Keine offenen Aufgaben fuer heute.',
+      buttons: [
+        { id: 'auschecken', title: 'Auschecken' },
+      ],
     };
   }
 
@@ -214,7 +289,8 @@ async function handleErledigt(worker) {
 
   return {
     type: 'task_done',
-    response: `${task.address}, ${task.city} als erledigt markiert.\nBitte sende ein Foto als Bestaetigung (oder "weiter" um zu ueberspringen).`,
+    response: `${task.address}, ${task.city} erledigt!\nBitte sende ein Foto oder druecke Weiter.`,
+    buttons: PHOTO_BUTTONS,
   };
 }
 
@@ -236,7 +312,10 @@ async function handleNichtMoeglich(worker) {
   if (taskResult.rows.length === 0) {
     return {
       type: 'no_tasks',
-      response: 'Du hast keine offenen Aufgaben fuer heute.',
+      response: 'Keine offenen Aufgaben fuer heute.',
+      buttons: [
+        { id: 'auschecken', title: 'Auschecken' },
+      ],
     };
   }
 
@@ -245,7 +324,8 @@ async function handleNichtMoeglich(worker) {
 
   return {
     type: 'postpone_prompt',
-    response: `Warum kann ${task.address} nicht erledigt werden?\n\n> Zugang nicht moeglich\n> Verantwortlicher nicht da\n> Material fehlt\n> Sonstiges`,
+    response: `Warum kann ${task.address} nicht erledigt werden?`,
+    buttons: POSTPONE_BUTTONS,
   };
 }
 
@@ -263,7 +343,8 @@ async function handlePostponeReason(worker, reasonText) {
 
   return {
     type: 'postponed',
-    response: 'Aufgabe wurde verschoben. Halil wird benachrichtigt.',
+    response: 'Aufgabe verschoben. Halil wird benachrichtigt.',
+    buttons: TASK_BUTTONS,
   };
 }
 
@@ -271,14 +352,18 @@ async function handleSickDayCount(worker, text) {
   await clearState(worker.phone_number);
 
   let days;
-  if (text.toLowerCase() === 'mehr') {
+  const command = text.toLowerCase();
+  if (command === 'mehr' || command === '3+_tage' || command === 'sick_3') {
     days = null;
   } else {
-    days = parseInt(text, 10);
+    // Handle button IDs like "1_tag", "2_tage"
+    const cleaned = command.replace(/_?tage?/, '').replace('sick_', '').trim();
+    days = parseInt(cleaned, 10);
     if (isNaN(days) || days < 1 || days > 30) {
       return {
-        type: 'menu',
-        response: 'Ungueltige Eingabe. Bitte waehle eine Option:\n\n> 1\n> 2\n> 3\n> 4\n> 5\n> Mehr',
+        type: 'sick_prompt',
+        response: 'Bitte waehle eine Option:',
+        buttons: SICK_DAY_BUTTONS,
       };
     }
   }
@@ -296,6 +381,6 @@ async function handleSickDayCount(worker, text) {
   const dayText = days ? `${days} Tage` : 'unbestimmte Zeit';
   return {
     type: 'sick_recorded',
-    response: `Krankmeldung fuer ${dayText} wurde erfasst. Halil wird benachrichtigt. Gute Besserung!`,
+    response: `Krankmeldung fuer ${dayText} erfasst. Gute Besserung!`,
   };
 }
