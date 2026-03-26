@@ -19,7 +19,9 @@
       "Bash(npm init:*)",
       "Bash(npm install:*)",
       "Bash(timeout 5 node src/index.js)",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(node -e \"import\\(''./src/config.js''\\).then\\(m => console.log\\(''config ok, port:'', m.config.port\\)\\)\")",
+      "Bash(npx vitest:*)"
     ]
   }
 }
