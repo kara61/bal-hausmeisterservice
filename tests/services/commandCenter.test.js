@@ -103,3 +103,64 @@ describeWithDb('getCommandCenterData', () => {
     expect(data.stats.workersTotal).toBe(0);
   });
 });
+
+describeWithDb('getCommandCenterData - full integration', () => {
+  beforeEach(async () => { await cleanDb(); });
+  afterEach(async () => { await cleanDb(); });
+
+  it('returns correct stats, workers, alerts, and timeline for a working day', async () => {
+    const today = '2026-03-26';
+
+    // Set up 2 workers, 3 properties, 1 plan with assignments
+    const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const worker2 = await createTestWorker({ name: 'Mehmet', phone_number: '+4917600000002' });
+    const prop1 = await createTestProperty({ address: 'Mozartstraße 12', assigned_weekday: 4 });
+    const prop2 = await createTestProperty({ address: 'Beethoven Residenz', assigned_weekday: 4 });
+    const prop3 = await createTestProperty({ address: 'Am Stadtpark 5', assigned_weekday: 4 });
+
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
+    await createTestAssignment(plan.id, worker1.id, prop1.id, { status: 'completed', assignment_order: 1 });
+    await createTestAssignment(plan.id, worker1.id, prop2.id, { status: 'started', assignment_order: 2 });
+    await createTestAssignment(plan.id, worker2.id, prop3.id, { status: 'assigned', assignment_order: 1 });
+
+    // Worker 1 checked in, Worker 2 not yet
+    await pool.query(
+      `INSERT INTO time_entries (worker_id, date, check_in) VALUES ($1, $2, '2026-03-26T07:00:00Z')`,
+      [worker1.id, today]
+    );
+
+    const data = await getCommandCenterData(today);
+
+    // Plan
+    expect(data.planStatus).toBe('approved');
+    expect(data.planId).toBe(plan.id);
+
+    // Stats
+    expect(data.stats.workersActive).toBe(1);
+    expect(data.stats.workersTotal).toBe(2);
+    expect(data.stats.propertiesCompleted).toBe(1);
+    expect(data.stats.propertiesInProgress).toBe(1);
+    expect(data.stats.propertiesRemaining).toBe(1);
+    expect(data.stats.propertiesTotal).toBe(3);
+
+    // Workers
+    expect(data.workers).toHaveLength(2);
+    const ali = data.workers.find(w => w.name === 'Ali');
+    expect(ali.status).toBe('working');
+    expect(ali.completedCount).toBe(1);
+    expect(ali.totalCount).toBe(2);
+    expect(ali.checkIn).toBeTruthy();
+
+    const mehmet = data.workers.find(w => w.name === 'Mehmet');
+    expect(mehmet.status).toBe('not_started');
+    expect(mehmet.completedCount).toBe(0);
+
+    // Timeline
+    expect(data.timeline).toHaveLength(1);
+    expect(data.timeline[0].worker_name).toBe('Ali');
+
+    // Alerts
+    expect(data.alerts).toBeDefined();
+    expect(Array.isArray(data.alerts)).toBe(true);
+  });
+});
