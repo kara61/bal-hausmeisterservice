@@ -10,7 +10,10 @@ export default async function handler(req, res) {
     // Validate Twilio signature
     if (process.env.NODE_ENV !== 'test' && config.twilioAuthToken) {
       const signature = req.headers['x-twilio-signature'];
-      const url = `https://${req.headers.host}/api/webhook`;
+      // Use x-forwarded-* headers to reconstruct original URL (before Vercel rewrite)
+      const proto = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const url = `${proto}://${host}/api/webhook`;
 
       if (!twilio.validateRequest(config.twilioAuthToken, signature, url, req.body)) {
         return res.status(403).send('Invalid Twilio signature');
