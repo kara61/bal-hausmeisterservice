@@ -4,7 +4,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+
 import Workers from './pages/Workers';
 import TimeEntries from './pages/TimeEntries';
 import SickLeave from './pages/SickLeave';
@@ -34,7 +34,7 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<CommandCenter />} />
             <Route path="command-center" element={<CommandCenter />} />
-            <Route path="dashboard" element={<Dashboard />} />
+
             <Route path="workers" element={<Workers />} />
             <Route path="time-entries" element={<TimeEntries />} />
             <Route path="sick-leave" element={<SickLeave />} />
