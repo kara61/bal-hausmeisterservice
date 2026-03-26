@@ -21,7 +21,15 @@
       "Bash(timeout 5 node src/index.js)",
       "Bash(echo \"Exit code: $?\")",
       "Bash(node -e \"import\\(''./src/config.js''\\).then\\(m => console.log\\(''config ok, port:'', m.config.port\\)\\)\")",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(gh repo:*)",
+      "Bash(grep -E \"^[^/]*/\\(src|client\\)/.*\\\\.\\(js|jsx\\)$\")",
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(rm src/app.js src/index.js src/services/scheduler.js)",
+      "Bash(rm src/routes/auth.js src/routes/workers.js src/routes/timeEntries.js src/routes/sickLeave.js src/routes/vacation.js src/routes/reports.js src/routes/properties.js src/routes/teams.js src/routes/tasks.js src/routes/extraJobs.js src/routes/garbage.js src/routes/webhook.js)",
+      "Bash(rmdir src/routes)",
+      "Bash(rm tests/routes/workers.test.js tests/routes/properties.test.js)",
+      "Bash(rmdir tests/routes)"
     ]
   }
 }
