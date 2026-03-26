@@ -2,6 +2,8 @@ import { pool } from '../../../src/db/pool.js';
 import { detectMissingCheckouts, flagMissingCheckout } from '../../../src/services/anomaly.js';
 import { sendWhatsAppMessage } from '../../../src/services/whatsapp.js';
 import { config } from '../../../src/config.js';
+import { generateDraftPlan } from '../../../src/services/planGeneration.js';
+import { notifyHalilPlanGaps } from '../../../src/services/planNotifications.js';
 
 export default async function handler(req, res) {
   // Verify cron secret
@@ -32,7 +34,12 @@ export default async function handler(req, res) {
       `DELETE FROM conversation_state WHERE updated_at < NOW() - INTERVAL '24 hours'`
     );
 
-    res.json({ ok: true, flagged: missing.length });
+    // Generate draft plan for tomorrow
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const plan = await generateDraftPlan(tomorrow);
+    await notifyHalilPlanGaps(plan.id);
+
+    res.json({ ok: true, flagged: missing.length, plan_date: tomorrow, plan_id: plan.id });
   } catch (err) {
     console.error('Nightly cron error:', err);
     res.status(500).json({ error: 'Cron failed' });

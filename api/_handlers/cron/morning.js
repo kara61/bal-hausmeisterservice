@@ -1,5 +1,6 @@
 import { carryOverTasks, generateDailyTasks } from '../../../src/services/taskScheduling.js';
 import { sendDailyTaskLists } from '../../../src/services/taskNotifications.js';
+import { redistributeSickWorkers } from '../../../src/services/planGeneration.js';
 
 export default async function handler(req, res) {
   // Verify cron secret
@@ -14,13 +15,16 @@ export default async function handler(req, res) {
     // Carry over unfinished tasks
     await carryOverTasks(yesterday, today);
 
+    // Redistribute plan if sick workers detected
+    const redistribution = await redistributeSickWorkers(today);
+
     // Generate daily tasks (includes garbage tasks)
     await generateDailyTasks(today);
 
     // Send task lists to workers
     await sendDailyTaskLists(today);
 
-    res.json({ ok: true, date: today });
+    res.json({ ok: true, date: today, redistributed: redistribution.reassigned });
   } catch (err) {
     console.error('Morning cron error:', err);
     res.status(500).json({ error: 'Cron failed' });
