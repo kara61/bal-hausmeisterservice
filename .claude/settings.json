@@ -65,7 +65,10 @@
       "Bash(npm i:*)",
       "Bash(vercel logs:*)",
       "Bash(vercel link:*)",
-      "Bash(grep '\"\"type\"\"' package.json)"
+      "Bash(grep '\"\"type\"\"' package.json)",
+      "Bash(curl -s \"https://balhausmeister.vercel.app/api/workers\")",
+      "Bash(curl -s \"https://balhausmeister.vercel.app/api/test-path\")",
+      "Bash(curl -s \"https://balhausmeister.vercel.app/api/time-entries/flagged\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\User Computer\\.claude\\plugins\\cache\\claude-plugins-official\\context7\\b10b583de281"
