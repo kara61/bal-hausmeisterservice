@@ -18,6 +18,12 @@ export default function GarbageSchedule() {
   const trashLabel = (type) => t(`garbage.${type}`) || type;
   const trashBadge = { restmuell: 'badge-neutral', bio: 'badge-success', papier: 'badge-info', gelb: 'badge-warning' };
 
+  // Parse date string as local date (avoids UTC timezone shift)
+  const fmtDate = (dateStr) => {
+    const [y, m, d] = String(dateStr).split('T')[0].split('-');
+    return `${d}.${m}.${y}`;
+  };
+
   const loadProperties = async () => {
     try {
       setProperties(await api.get('/properties'));
@@ -181,7 +187,7 @@ export default function GarbageSchedule() {
                     <td style={{ fontWeight: 600 }}>{item.address}, {item.city}</td>
                     <td><span className="mono">{item.total_dates}</span></td>
                     <td>{item.trash_types}</td>
-                    <td><span className="mono text-sm">{new Date(item.earliest_date).toLocaleDateString('de-DE')} — {new Date(item.latest_date).toLocaleDateString('de-DE')}</span></td>
+                    <td><span className="mono text-sm">{fmtDate(item.earliest_date)} — {fmtDate(item.latest_date)}</span></td>
                     <td>
                       <div className="flex gap-xs">
                         <button onClick={() => handleShowDetail(item.property_id)} className="btn btn-secondary btn-sm">{t('common.show')}</button>
@@ -205,7 +211,7 @@ export default function GarbageSchedule() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.5rem' }}>
             {detail.map((entry, i) => (
               <div key={i} style={{ padding: '0.5rem 0.85rem', background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="mono fw-bold">{new Date(entry.collection_date).toLocaleDateString('de-DE')}</span>
+                <span className="mono fw-bold">{fmtDate(entry.collection_date)}</span>
                 <span className={`badge ${trashBadge[entry.trash_type] || 'badge-neutral'}`}>{trashLabel(entry.trash_type)}</span>
               </div>
             ))}
