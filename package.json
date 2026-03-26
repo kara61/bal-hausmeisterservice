@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "build": "cd client && npx vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "migrate": "node src/db/migrate.js"
