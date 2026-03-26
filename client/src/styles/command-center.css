@@ -1,0 +1,237 @@
+/* Stats bar */
+.cc-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.cc-stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+}
+
+.cc-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cc-stat-label {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: var(--space-xs);
+}
+
+.cc-stat-sub {
+  margin-top: 2px;
+}
+
+/* Panels */
+.cc-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  min-height: 200px;
+}
+
+.cc-panel-wide {
+  min-height: 300px;
+}
+
+.cc-panel-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* Main layout grid */
+.cc-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+/* Worker cards */
+.cc-worker-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cc-worker-card {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Kanban */
+.cc-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  height: 100%;
+}
+
+.cc-kanban-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-kanban-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--border-default);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.cc-kanban-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1;
+}
+
+.cc-property-card {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+}
+
+.cc-property-address {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Alerts */
+.cc-alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cc-alert-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.cc-alert-actions {
+  flex-shrink: 0;
+}
+
+/* Timeline */
+.cc-timeline {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.cc-timeline-container {
+  position: relative;
+}
+
+.cc-timeline-hours {
+  position: relative;
+  height: 24px;
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cc-timeline-hour {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.cc-timeline-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 28px;
+}
+
+.cc-timeline-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.cc-timeline-track {
+  position: relative;
+  height: 12px;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.cc-timeline-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  min-width: 4px;
+}
+
+.cc-timeline-bar-active {
+  background: var(--accent);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.cc-timeline-bar-done {
+  background: var(--success);
+  opacity: 0.7;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Plan status badge row */
+.cc-plan-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .cc-grid {
+    grid-template-columns: 1fr;
+  }
+  .cc-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
