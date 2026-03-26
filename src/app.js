@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import workersRouter from './routes/workers.js';
+import webhookRouter from './routes/webhook.js';
 
 const app = express();
 
@@ -13,5 +14,6 @@ app.use(express.urlencoded({ extended: false }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/workers', workersRouter);
+app.use('/api/webhook', webhookRouter);
 
 export default app;
