@@ -29,7 +29,29 @@
       "Bash(rm src/routes/auth.js src/routes/workers.js src/routes/timeEntries.js src/routes/sickLeave.js src/routes/vacation.js src/routes/reports.js src/routes/properties.js src/routes/teams.js src/routes/tasks.js src/routes/extraJobs.js src/routes/garbage.js src/routes/webhook.js)",
       "Bash(rmdir src/routes)",
       "Bash(rm tests/routes/workers.test.js tests/routes/properties.test.js)",
-      "Bash(rmdir tests/routes)"
+      "Bash(rmdir tests/routes)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Bal Hausmeisterservice/$APPDATA/Claude/**)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Bal Hausmeisterservice/$HOME/.claude/**)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Bal Hausmeisterservice/$USERPROFILE/.claude/**)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Bal Hausmeisterservice/$USERPROFILE/**)",
+      "Read(//e/OneDrive - DESCO/Documente/HsN/Halil/Bal Hausmeisterservice/$USERPROFILE/.claude/plugins/cache/claude-plugins-official/**)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:geDdPOBUH7WQJFdT@db.uytcfocsegoixdaiwhmb.supabase.co:5432/postgres\" npm run migrate)",
+      "Bash(nslookup db.uytcfocsegoixdaiwhmb.supabase.co)",
+      "Bash(ping -n 1 supabase.co)",
+      "Bash(NODE_OPTIONS=\"--dns-result-order=ipv4first\" DATABASE_URL=\"postgresql://postgres:geDdPOBUH7WQJFdT@db.uytcfocsegoixdaiwhmb.supabase.co:5432/postgres\" npm run migrate)",
+      "Bash(node -e \"const dns = require\\(''dns''\\); dns.lookup\\(''db.uytcfocsegoixdaiwhmb.supabase.co'', \\(err, addr\\) => console.log\\(err || addr\\)\\)\")",
+      "Bash(node -e \"const dns = require\\(''dns''\\); dns.lookup\\(''db.uytcfocsegoixdaiwhmb.supabase.co'', { family: 6 }, \\(err, addr\\) => console.log\\(err || addr\\)\\)\")",
+      "Bash(curl -s -X POST \"https://uytcfocsegoixdaiwhmb.supabase.co/storage/v1/bucket\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dGNmb2NzZWdvaXhkYWl3aG1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDUyODcwNiwiZXhwIjoyMDkwMTA0NzA2fQ.r1vSCJLVIE66XBuwlZc5m4l81hXniNQhwo6tJqzs7zc\" -H \"Content-Type: application/json\" -d '{\"\"id\"\":\"\"photos\"\",\"\"name\"\":\"\"photos\"\",\"\"public\"\":true}')",
+      "Bash(DATABASE_URL=\"postgresql://postgres.uytcfocsegoixdaiwhmb:geDdPOBUH7WQJFdT@aws-0-eu-central-1.pooler.supabase.com:6543/postgres\" npm run migrate)",
+      "Bash(node -e \":*)",
+      "Bash(mkdir -p api/_handlers)",
+      "Bash(mv api/auth api/cron api/extra-jobs api/garbage api/properties api/reports api/sick-leave api/tasks api/teams api/time-entries api/vacation api/workers api/_handlers/)",
+      "Bash(mv api/health.js api/_handlers/)",
+      "Bash(mv api/webhook.js api/_handlers/)",
+      "Bash(find api/_handlers -name \"*.js\" -exec sed -i \"s|from ''\\\\.\\\\.|from ''../..|g\" {} +)",
+      "Bash(head -5 api/_handlers/tasks/[id]/assign.js)",
+      "Bash(node -e \"import\\(''''./api/[...path].js''''\\).then\\(\\(\\) => console.log\\(''''Import OK''''\\)\\).catch\\(e => console.error\\(''''Import error:'''', e.message\\)\\)\")",
+      "Bash(node -e \"import\\(''./api/[...path].js''\\).then\\(\\(\\) => console.log\\(''Import OK''\\)\\).catch\\(e => console.error\\(e.message\\)\\)\")"
     ]
   }
 }
