@@ -23,12 +23,13 @@
     "dotenv": "^17.3.1",
     "formidable": "^3.5.2",
     "jsonwebtoken": "^9.0.3",
-    "pdf-parse": "^2.4.5",
     "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
-    "twilio": "^5.13.1"
+    "twilio": "^5.13.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "pdf-parse": "^2.4.5",
     "vitest": "^4.1.1"
   }
 }
