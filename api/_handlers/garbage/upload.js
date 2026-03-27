@@ -40,32 +40,40 @@ export default async function handler(req, res) {
       return res.json({ imported: true, property_id: propertyId, dates_count: dates.length });
     }
 
-    // Try auto-match by extracted address
+    // Try auto-match: first from PDF text, then from filename
     const extractedAddress = extractAddressFromPdf(pdfText);
+    // Filename is often the street address (e.g. "am hügel 7.PDF" → "am hügel 7")
+    const fileNameAddress = sourcePdf.replace(/\.pdf$/i, '').trim();
 
-    if (extractedAddress) {
+    const candidates = [extractedAddress, fileNameAddress].filter(Boolean);
+    let matched = null;
+
+    for (const candidate of candidates) {
       const { rows } = await pool.query(
         `SELECT id, address, city FROM properties WHERE address ILIKE $1 LIMIT 1`,
-        [`%${extractedAddress}%`]
+        [`%${candidate}%`]
       );
-
       if (rows.length > 0) {
-        const property = rows[0];
-        await importScheduleFromPdf(property.id, dates, sourcePdf);
-        return res.json({
-          imported: true,
-          property_id: property.id,
-          property_address: property.address,
-          dates_count: dates.length,
-          auto_matched: true,
-        });
+        matched = rows[0];
+        break;
       }
+    }
+
+    if (matched) {
+      await importScheduleFromPdf(matched.id, dates, sourcePdf);
+      return res.json({
+        imported: true,
+        property_id: matched.id,
+        property_address: `${matched.address}, ${matched.city}`,
+        dates_count: dates.length,
+        auto_matched: true,
+      });
     }
 
     // No match — return needs_mapping
     return res.json({
       needs_mapping: true,
-      extracted_address: extractedAddress,
+      extracted_address: extractedAddress || fileNameAddress,
       dates_preview: dates.slice(0, 10),
       total_dates: dates.length,
       source_pdf: sourcePdf,
