@@ -31,7 +31,6 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
   const update = (field, value) => {
     setForm(prev => {
       const next = { ...prev, [field]: value };
-      // Auto-calculate vacation when registration date changes (unless manually set)
       if (field === 'registration_date' && !manualVacation) {
         next.vacation_entitlement = calcVacationDays(value);
       }
@@ -55,7 +54,7 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
     <form onSubmit={handleSubmit} className="form-card">
       <div className="form-card-title">{worker ? t('workers.editTitle') : t('workers.newTitle')}</div>
 
-      <div className="form-row">
+      <div className="form-row-3">
         <div className="form-group">
           <label className="form-label">{t('common.name')} *</label>
           <input className="input" value={form.name} onChange={e => update('name', e.target.value)} required />
@@ -66,6 +65,13 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
           <input className="input" value={form.phone_number} onChange={e => update('phone_number', e.target.value)} placeholder="+49..." required />
         </div>
 
+        <div className="form-group">
+          <label className="form-label">{t('workers.registrationDate')} *</label>
+          <input className="input" type="date" value={form.registration_date} onChange={e => update('registration_date', e.target.value)} required />
+        </div>
+      </div>
+
+      <div className="form-row-3">
         <div className="form-group">
           <label className="form-label">{t('common.type')}</label>
           <select className="select" value={form.worker_type} onChange={e => update('worker_type', e.target.value)}>
@@ -87,7 +93,9 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
           <label className="form-label">{t('workers.hourlyRate')}</label>
           <input className="input" type="number" step="0.01" value={form.hourly_rate} onChange={e => update('hourly_rate', e.target.value)} />
         </div>
+      </div>
 
+      <div className="form-row-3">
         {form.worker_type === 'minijob' && (
           <div className="form-group">
             <label className="form-label">{t('workers.monthlySalary')}</label>
@@ -96,20 +104,24 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
         )}
 
         <div className="form-group">
-          <label className="form-label">{t('workers.registrationDate')} *</label>
-          <input className="input" type="date" value={form.registration_date} onChange={e => update('registration_date', e.target.value)} required />
-        </div>
-
-        <div className="form-group">
           <label className="form-label">{t('workers.vacationEntitlement')}</label>
           <input className="input" type="number" value={form.vacation_entitlement} onChange={e => handleVacationChange(e.target.value)} />
           {form.registration_date && (
-            <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-              Berechnet: {calculatedDays} Tage (1 Tag / 15 Arbeitstage, max. 22)
+            <div className="text-muted text-xs" style={{ marginTop: '4px' }}>
+              {t('workers.vacationCalc')}: {calculatedDays} {t('common.days')}
               {manualVacation && Number(form.vacation_entitlement) !== calculatedDays && (
-                <> — <a href="#" onClick={e => { e.preventDefault(); setManualVacation(false); setForm(prev => ({ ...prev, vacation_entitlement: calculatedDays })); }} style={{ color: 'var(--accent)' }}>Zurücksetzen</a></>
+                <>
+                  {' — '}
+                  <a
+                    href="#"
+                    onClick={e => { e.preventDefault(); setManualVacation(false); setForm(prev => ({ ...prev, vacation_entitlement: calculatedDays })); }}
+                    className="text-accent"
+                  >
+                    {t('workers.vacationReset')}
+                  </a>
+                </>
               )}
-            </small>
+            </div>
           )}
         </div>
       </div>

@@ -111,6 +111,8 @@ export const translations = {
     'workers.filterOffice': 'Büro',
     'workers.lastFieldWorkerWarning': 'Kein Außendienstmitarbeiter mehr vorhanden. Tagespläne können nicht erstellt werden.',
     'workers.futureAssignmentsWarning': 'Dieser Mitarbeiter hat zukünftige Einsätze. Diese werden entfernt.',
+    'workers.vacationCalc': 'Berechnet',
+    'workers.vacationReset': 'Zuruecksetzen',
 
     // Time Entries
     'timeEntries.title': 'Zeiterfassung',
@@ -497,6 +499,8 @@ export const translations = {
     'workers.filterOffice': 'Office',
     'workers.lastFieldWorkerWarning': 'No field workers remaining. Daily plans cannot be generated.',
     'workers.futureAssignmentsWarning': 'This worker has future assignments. They will be removed.',
+    'workers.vacationCalc': 'Calculated',
+    'workers.vacationReset': 'Reset',
 
     // Time Entries
     'timeEntries.title': 'Time Tracking',

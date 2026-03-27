@@ -3,6 +3,12 @@ import { api } from '../api/client';
 import { useLang } from '../context/LanguageContext';
 import WorkerForm from '../components/WorkerForm';
 
+const ROLE_BADGE = {
+  field: 'badge-info',
+  cleaning: 'badge-accent',
+  office: 'badge-neutral',
+};
+
 export default function Workers() {
   const [workers, setWorkers] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -81,27 +87,28 @@ export default function Workers() {
     return w.worker_role === filter;
   });
 
+  const roleCounts = {
+    all: workers.length,
+    field: workers.filter(w => w.worker_role === 'field').length,
+    cleaning: workers.filter(w => w.worker_role === 'cleaning').length,
+    office: workers.filter(w => w.worker_role === 'office').length,
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">{t('workers.title')}</h1>
+        <div>
+          <h1 className="page-title">{t('workers.title')}</h1>
+          <p className="text-secondary text-sm mt-sm">{workers.length} {t('workers.title').toLowerCase()}</p>
+        </div>
         <button onClick={() => { setEditing(null); setShowForm(true); setError(null); setWarning(null); }} className="btn btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
           {t('workers.new')}
         </button>
       </div>
 
-      {error && (
-        <div className="alert alert-danger mb-md animate-fade-in">
-          {error}
-        </div>
-      )}
-
-      {warning && (
-        <div className="alert alert-warning mb-md animate-fade-in">
-          {warning}
-        </div>
-      )}
+      {error && <div className="alert alert-danger mb-md animate-fade-in">{error}</div>}
+      {warning && <div className="alert alert-warning mb-md animate-fade-in">{warning}</div>}
 
       {showForm && (
         <div className="mb-lg animate-slide-in">
@@ -109,14 +116,16 @@ export default function Workers() {
         </div>
       )}
 
-      <div className="flex gap-sm mb-md">
+      {/* Filter tabs */}
+      <div className="worker-filter-tabs mb-md">
         {['all', 'field', 'cleaning', 'office'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
+            className={`worker-filter-tab${filter === f ? ' active' : ''}`}
           >
             {t(`workers.filter${f.charAt(0).toUpperCase() + f.slice(1)}`)}
+            <span className="worker-filter-count">{roleCounts[f]}</span>
           </button>
         ))}
       </div>
@@ -137,9 +146,13 @@ export default function Workers() {
           <tbody>
             {filteredWorkers.map(w => (
               <tr key={w.id}>
-                <td style={{ fontWeight: 600 }}>
-                  {w.name}
-                  {w.worker_role !== 'field' && <span className="badge badge-neutral" style={{ marginLeft: '8px', fontSize: '0.75rem' }}>{t(`workers.role.${w.worker_role}`)}</span>}
+                <td>
+                  <div className="worker-name-cell">
+                    <div className="worker-avatar" data-role={w.worker_role}>
+                      {w.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{ fontWeight: 600 }}>{w.name}</span>
+                  </div>
                 </td>
                 <td><span className="mono">{w.phone_number}</span></td>
                 <td>
@@ -147,14 +160,19 @@ export default function Workers() {
                     {w.worker_type === 'fulltime' ? t('common.fulltime') : t('common.minijob')}
                   </span>
                 </td>
-                <td><span className="mono">{w.hourly_rate ? `${w.hourly_rate} EUR/h` : '—'}</span></td>
-                <td><span className="mono">{w.vacation_entitlement} {t('common.days')}</span></td>
+                <td>
+                  <span className="mono">
+                    {w.hourly_rate ? `${Number(w.hourly_rate).toFixed(2)} €/h` : '—'}
+                  </span>
+                </td>
+                <td>
+                  <span className="mono">{w.vacation_entitlement} {t('common.days')}</span>
+                </td>
                 <td>
                   <select
-                    className="select"
+                    className="select worker-role-select"
                     value={w.worker_role}
                     onChange={e => handleRoleChange(w, e.target.value)}
-                    style={{ minWidth: '100px' }}
                   >
                     <option value="field">{t('workers.role.field')}</option>
                     <option value="cleaning">{t('workers.role.cleaning')}</option>
@@ -163,14 +181,26 @@ export default function Workers() {
                 </td>
                 <td>
                   <div className="flex gap-xs">
-                    <button onClick={() => { setEditing(w); setShowForm(true); }} className="btn btn-secondary btn-sm">{t('common.edit')}</button>
+                    <button onClick={() => { setEditing(w); setShowForm(true); }} className="btn btn-secondary btn-sm">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      {t('common.edit')}
+                    </button>
                     <button onClick={() => handleDelete(w.id)} className="btn btn-danger btn-sm">{t('common.deactivate')}</button>
                   </div>
                 </td>
               </tr>
             ))}
             {filteredWorkers.length === 0 && (
-              <tr><td colSpan={7}><div className="empty-state"><div className="empty-state-text">{t('workers.none')}</div></div></td></tr>
+              <tr>
+                <td colSpan={7}>
+                  <div className="empty-state">
+                    <div className="empty-state-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div className="empty-state-text">{t('workers.none')}</div>
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

@@ -1138,6 +1138,96 @@ h1, h2, h3, h4 {
 }
 
 
+/* ── Worker Page ───────────────────────────────────────── */
+.worker-filter-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  width: fit-content;
+}
+
+.worker-filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.worker-filter-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-2);
+}
+
+.worker-filter-tab.active {
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.worker-filter-count {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+}
+
+.worker-filter-tab.active .worker-filter-count {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.worker-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.worker-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.worker-avatar[data-role="cleaning"] {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.worker-avatar[data-role="office"] {
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
+}
+
+.worker-role-select {
+  min-width: 110px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.82rem;
+}
+
+
 /* ── Utility ───────────────────────────────────────────── */
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
