@@ -41,6 +41,7 @@ import garbageUpcomingHandler from './_handlers/garbage/upcoming.js';
 import garbageSchedulePropertyHandler from './_handlers/garbage/schedule/[propertyId].js';
 import cronNightlyHandler from './_handlers/cron/nightly.js';
 import cronMorningHandler from './_handlers/cron/morning.js';
+import cronEveningHandler from './_handlers/cron/evening.js';
 import dailyPlansIndexHandler from './_handlers/daily-plans/index.js';
 import dailyPlansIdHandler from './_handlers/daily-plans/[id].js';
 import dailyPlansApproveHandler from './_handlers/daily-plans/approve.js';
@@ -105,6 +106,7 @@ const routes = [
   // Cron
   ['cron/nightly', cronNightlyHandler],
   ['cron/morning', cronMorningHandler],
+  ['cron/evening', cronEveningHandler],
 
   // Daily Plans
   ['daily-plans', dailyPlansIndexHandler],
