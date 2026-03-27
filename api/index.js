@@ -7,7 +7,7 @@ import webhookHandler from './_handlers/webhook.js';
 import authLoginHandler from './_handlers/auth/login.js';
 import workersIndexHandler from './_handlers/workers/index.js';
 import workersIdHandler from './_handlers/workers/[id].js';
-import workersFieldStatusHandler from './_handlers/workers/field-status.js';
+import workersRoleHandler from './_handlers/workers/role.js';
 import propertiesIndexHandler from './_handlers/properties/index.js';
 import propertiesIdHandler from './_handlers/properties/[id].js';
 import timeEntriesIndexHandler from './_handlers/time-entries/index.js';
@@ -60,7 +60,7 @@ const routes = [
   ['auth/login', authLoginHandler],
 
   // Workers
-  ['workers/field-status', workersFieldStatusHandler],
+  ['workers/role', workersRoleHandler],
   ['workers', workersIndexHandler],
 
   // Properties
