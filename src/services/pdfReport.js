@@ -35,10 +35,13 @@ export async function generateMonthlyReport(month, year) {
     [month, year]
   );
 
+  const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, month, 0).toISOString().slice(0, 10);
   const sickLeaves = await pool.query(
     `SELECT * FROM sick_leave
-     WHERE EXTRACT(MONTH FROM start_date) = $1 AND EXTRACT(YEAR FROM start_date) = $2`,
-    [month, year]
+     WHERE start_date <= $2::date
+       AND start_date + declared_days * interval '1 day' >= $1::date`,
+    [firstDay, lastDay]
   );
 
   const vacations = await pool.query(
@@ -56,7 +59,7 @@ export async function generateMonthlyReport(month, year) {
     const harcirah = calculateMonthlyHarcirah(workerEntries);
 
     const workerSick = sickLeaves.rows.filter(s => s.worker_id === worker.id);
-    const sickDays = workerSick.reduce((sum, s) => sum + (s.aok_approved_days || s.declared_days), 0);
+    const sickDays = workerSick.reduce((sum, s) => sum + (s.aok_approved_days ?? s.declared_days), 0);
     const vacDeducted = workerSick.reduce((sum, s) => sum + s.vacation_deducted_days, 0);
     const unpaid = workerSick.reduce((sum, s) => sum + s.unpaid_days, 0);
 

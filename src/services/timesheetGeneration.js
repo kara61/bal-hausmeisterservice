@@ -107,7 +107,11 @@ function generateDayEntry(day, hours, index) {
 
 // Build the full month's timesheet entries for one worker
 export function generateTimesheetEntries(workerId, monthlySalary, hourlyRate, month, year) {
-  const totalHours = Math.round((Number(monthlySalary) / Number(hourlyRate)) * 100) / 100;
+  const rate = Number(hourlyRate);
+  if (!rate || !isFinite(rate)) {
+    throw new Error(`Invalid hourly_rate (${hourlyRate}) for worker ${workerId} — cannot generate timesheet`);
+  }
+  const totalHours = Math.round((Number(monthlySalary) / rate) * 100) / 100;
   const daysInMonth = getDaysInMonth(month, year);
 
   // Choose work-day pattern

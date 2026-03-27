@@ -29,8 +29,19 @@ export default withErrorHandler(async (req, res) => {
     // Delete PDF from Supabase Storage if it exists
     if (report.pdf_path) {
       const supabase = createClient(config.supabaseUrl, config.supabaseServiceKey);
-      const storagePath = `reports/Gehaltsbericht_${String(report.month).padStart(2, '0')}_${report.year}.pdf`;
-      await supabase.storage.from('photos').remove([storagePath]);
+      // Extract storage path from the public URL stored in pdf_path
+      // Supabase public URL format: {host}/storage/v1/object/public/{bucket}/{storagePath}
+      const marker = '/photos/';
+      const idx = report.pdf_path.indexOf(marker);
+      const storagePath = idx !== -1
+        ? decodeURIComponent(report.pdf_path.slice(idx + marker.length))
+        : null;
+      if (!storagePath) {
+        console.warn(`Could not extract storage path from pdf_path: ${report.pdf_path}`);
+      }
+      if (storagePath) {
+        await supabase.storage.from('photos').remove([storagePath]);
+      }
     }
 
     await pool.query('DELETE FROM monthly_reports WHERE id = $1', [req.query.id]);
