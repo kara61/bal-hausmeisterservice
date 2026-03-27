@@ -1,0 +1,278 @@
+/* Weekly Planner */
+.weekly-planner {
+  padding: 1.5rem;
+}
+
+.weekly-planner .top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.weekly-planner .week-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.weekly-planner .week-nav button {
+  padding: 0.25rem 0.6rem;
+}
+
+.weekly-planner .week-label {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.weekly-planner .mode-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.weekly-planner .mode-badge.history {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.weekly-planner .mode-badge.forecast {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+.weekly-planner .mode-badge.current {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+/* Filter bar */
+.weekly-planner .filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  margin-bottom: 1rem;
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+
+.weekly-planner .filter-bar .filter-label {
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.weekly-planner .type-pill {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border: 1px solid;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.weekly-planner .type-pill.inactive {
+  opacity: 0.35;
+}
+
+.weekly-planner .type-pill.field { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #60a5fa; }
+.weekly-planner .type-pill.cleaning { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; color: #4ade80; }
+.weekly-planner .type-pill.garbage { background: rgba(168, 85, 247, 0.1); border-color: #a855f7; color: #c084fc; }
+.weekly-planner .type-pill.extra { background: rgba(234, 179, 8, 0.1); border-color: #eab308; color: #facc15; }
+
+.weekly-planner .filter-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border-default);
+  margin: 0 0.25rem;
+}
+
+.weekly-planner .filter-bar select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Calendar grid */
+.weekly-planner .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.weekly-planner .day-column {
+  border-right: 1px solid var(--border-default);
+}
+
+.weekly-planner .day-column:last-child {
+  border-right: none;
+}
+
+.weekly-planner .day-header {
+  font-weight: 700;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.weekly-planner .day-header.today {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+}
+
+.weekly-planner .day-header .forecast-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.weekly-planner .day-body {
+  padding: 0.5rem;
+  min-height: 120px;
+}
+
+.weekly-planner .day-body.today-bg {
+  background: rgba(59, 130, 246, 0.03);
+}
+
+.weekly-planner .day-body.forecast-bg {
+  opacity: 0.7;
+}
+
+/* Task cards */
+.weekly-planner .task-card {
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+  border-left: 3px solid;
+  font-size: 0.75rem;
+  border-width: 1px;
+  border-left-width: 3px;
+}
+
+.weekly-planner .task-card.field {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(30, 58, 95, 0.6);
+  border-left-color: #3b82f6;
+}
+
+.weekly-planner .task-card.cleaning {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(22, 101, 52, 0.6);
+  border-left-color: #22c55e;
+}
+
+.weekly-planner .task-card.garbage {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(76, 29, 149, 0.6);
+  border-left-color: #a855f7;
+}
+
+.weekly-planner .task-card.extra {
+  background: rgba(234, 179, 8, 0.08);
+  border-color: rgba(146, 64, 14, 0.6);
+  border-left-color: #eab308;
+}
+
+.weekly-planner .task-card.forecast-card {
+  border-style: dashed;
+  border-left-style: solid;
+}
+
+.weekly-planner .task-card .card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.weekly-planner .task-card .type-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.weekly-planner .task-card .type-label.field { color: #60a5fa; }
+.weekly-planner .task-card .type-label.cleaning { color: #4ade80; }
+.weekly-planner .task-card .type-label.garbage { color: #c084fc; }
+.weekly-planner .task-card .type-label.extra { color: #facc15; }
+
+.weekly-planner .task-card .status-icon { font-size: 0.7rem; }
+.weekly-planner .task-card .status-icon.done { color: #22c55e; }
+.weekly-planner .task-card .status-icon.postponed { color: #f59e0b; }
+.weekly-planner .task-card .status-icon.missed { color: #ef4444; }
+.weekly-planner .task-card .status-icon.in_progress { color: #3b82f6; }
+
+.weekly-planner .task-card .property-name {
+  font-weight: 600;
+  margin: 0.15rem 0;
+}
+
+.weekly-planner .task-card .task-name {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.weekly-planner .task-card .worker-name {
+  font-size: 0.7rem;
+  margin-top: 0.15rem;
+}
+
+.weekly-planner .task-card .worker-name.field { color: #60a5fa; }
+.weekly-planner .task-card .worker-name.cleaning { color: #4ade80; }
+
+.weekly-planner .task-card .postpone-note {
+  font-size: 0.65rem;
+  color: #f59e0b;
+  margin-top: 0.15rem;
+}
+
+.weekly-planner .no-tasks {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 1.5rem 0;
+  font-style: italic;
+}
+
+/* Legend */
+.weekly-planner .legend {
+  display: flex;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.weekly-planner .legend .dashed-hint {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .weekly-planner .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+  .weekly-planner .day-column {
+    border-right: none;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .weekly-planner .day-column:last-child {
+    border-bottom: none;
+  }
+}
