@@ -13,7 +13,7 @@ export default withErrorHandler(async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    const { name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement } = req.body;
+    const { name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement, worker_role } = req.body;
 
     if (!name || !phone_number) {
       return res.status(400).json({ error: 'name and phone_number are required' });
@@ -23,11 +23,16 @@ export default withErrorHandler(async (req, res) => {
       return res.status(400).json({ error: 'worker_type must be fulltime or minijob' });
     }
 
+    const role = worker_role || 'field';
+    if (!['field', 'cleaning', 'office'].includes(role)) {
+      return res.status(400).json({ error: 'worker_role must be field, cleaning, or office' });
+    }
+
     try {
       const result = await pool.query(
-        `INSERT INTO workers (name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [name, phone_number, worker_type, hourly_rate || null, monthly_salary || null, registration_date || null, vacation_entitlement || 0]
+        `INSERT INTO workers (name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement, worker_role)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [name, phone_number, worker_type, hourly_rate || null, monthly_salary || null, registration_date || null, vacation_entitlement || 0, role]
       );
       const response = { ...result.rows[0] };
       const nameDup = await pool.query(
