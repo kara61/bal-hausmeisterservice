@@ -250,4 +250,20 @@ describeWithDb('Analytics query functions', () => {
     expect(result[0].name).toBe('Ali');
     expect(result[0].totalHours).toBe(17);
   });
+
+  it('getWorkerAnalytics excludes non-field workers', async () => {
+    const fieldWorker = await createTestWorker({ name: 'Ali', is_field_worker: true });
+    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', is_field_worker: false });
+
+    await pool.query(
+      `INSERT INTO analytics_daily (date, worker_id, properties_completed, properties_scheduled, total_duration_minutes, photos_submitted, photos_required, tasks_completed, tasks_postponed, overtime_minutes, check_in_time, sick_leave_declared)
+       VALUES ('2026-03-20', $1, 3, 4, 180, 2, 3, 3, 0, 0, '2026-03-20T07:00:00Z', false),
+              ('2026-03-20', $2, 1, 1, 60, 0, 0, 1, 0, 0, '2026-03-20T08:00:00Z', false)`,
+      [fieldWorker.id, officeWorker.id]
+    );
+
+    const result = await getWorkerAnalytics('2026-03-01', '2026-03-31');
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Ali');
+  });
 });
