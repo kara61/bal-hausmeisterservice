@@ -33,6 +33,8 @@ export default function GarbageSchedule() {
     papier: { background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.25)' },
   };
 
+  const toLocalDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
   const fmtDate = (dateStr) => {
     const [y, m, d] = String(dateStr).split('T')[0].split('-');
     return `${d}.${m}.${y}`;
@@ -89,13 +91,13 @@ export default function GarbageSchedule() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = toLocalDateStr(d);
       const dayNum = d.getDay();
 
       // Tomorrow's date (collections tomorrow → take out today)
       const tomorrow = new Date(d);
       tomorrow.setDate(d.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const tomorrowStr = toLocalDateStr(tomorrow);
 
       const takeIn = groupByProperty(upcomingByDate.get(dateStr) || []);
       const takeOut = groupByProperty(upcomingByDate.get(tomorrowStr) || []);
@@ -104,7 +106,7 @@ export default function GarbageSchedule() {
         dateStr,
         dayName: dayNames[dayNum],
         shortDate: fmtShortDate(dateStr),
-        isToday: dateStr === new Date().toISOString().split('T')[0],
+        isToday: dateStr === toLocalDateStr(new Date()),
         isWeekend: dayNum === 0 || dayNum === 6,
         takeOut,
         takeIn,
