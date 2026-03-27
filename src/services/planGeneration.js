@@ -99,12 +99,9 @@ export async function generateDraftPlan(dateStr) {
   );
   const sickIds = sickWorkers.map(s => s.worker_id);
 
-  const { rows: vacationWorkers } = await pool.query(
-    `SELECT worker_id FROM vacation_balances
-     WHERE start_date <= $1 AND end_date >= $1`,
-    [dateStr]
-  );
-  const vacationIds = vacationWorkers.map(v => v.worker_id);
+  // vacation_balances only tracks yearly entitlement/used counts, not date ranges.
+  // TODO: add a vacation_periods table with start_date/end_date to support exclusion.
+  const vacationIds = [];
 
   const { rows: allWorkers } = await pool.query(
     `SELECT w.id, w.name, w.phone_number, w.worker_role,
