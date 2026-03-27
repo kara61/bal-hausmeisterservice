@@ -250,6 +250,7 @@ export default function GarbageSchedule() {
                 padding: '0.75rem',
                 background: day.isToday ? 'var(--accent-soft)' : day.isWeekend ? 'var(--bg-surface-2)' : 'var(--bg-surface)',
                 opacity: day.isWeekend && day.takeOut.length === 0 && day.takeIn.length === 0 ? 0.5 : 1,
+                overflow: 'hidden',
               }}
             >
               <div className="flex justify-between items-center mb-sm">
@@ -272,9 +273,9 @@ export default function GarbageSchedule() {
                         </span>
                       </div>
                       {day.takeOut.map((prop, j) => (
-                        <div key={`out-${j}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.2rem 0', borderBottom: j < day.takeOut.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                          <span className="text-sm" style={{ fontWeight: 500 }}>{prop.address}</span>
-                          <div className="flex gap-xs flex-wrap" style={{ flexShrink: 0 }}>
+                        <div key={`out-${j}`} style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', padding: '0.2rem 0', borderBottom: j < day.takeOut.length - 1 ? '1px solid var(--border-subtle)' : 'none', flexWrap: 'wrap' }}>
+                          <span className="text-sm" style={{ fontWeight: 500, minWidth: 0 }}>{prop.address}</span>
+                          <div className="flex gap-xs flex-wrap" style={{ marginLeft: 'auto' }}>
                             {prop.types.map(type => (
                               <span key={type} className={`badge ${trashBadgeClass[type] || ''}`} style={{ ...trashBadgeStyle[type], fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>{trashLabel(type)}</span>
                             ))}
@@ -292,9 +293,9 @@ export default function GarbageSchedule() {
                         </span>
                       </div>
                       {day.takeIn.map((prop, j) => (
-                        <div key={`in-${j}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.2rem 0', borderBottom: j < day.takeIn.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                          <span className="text-sm" style={{ fontWeight: 500 }}>{prop.address}</span>
-                          <div className="flex gap-xs flex-wrap" style={{ flexShrink: 0 }}>
+                        <div key={`in-${j}`} style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', padding: '0.2rem 0', borderBottom: j < day.takeIn.length - 1 ? '1px solid var(--border-subtle)' : 'none', flexWrap: 'wrap' }}>
+                          <span className="text-sm" style={{ fontWeight: 500, minWidth: 0 }}>{prop.address}</span>
+                          <div className="flex gap-xs flex-wrap" style={{ marginLeft: 'auto' }}>
                             {prop.types.map(type => (
                               <span key={type} className={`badge ${trashBadgeClass[type] || ''}`} style={{ ...trashBadgeStyle[type], fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>{trashLabel(type)}</span>
                             ))}
