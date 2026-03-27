@@ -13,7 +13,8 @@
     "test:smoke": "vitest run tests/api/",
     "test:coverage": "vitest run --coverage",
     "test:all": "vitest run",
-    "migrate": "node src/db/migrate.js"
+    "migrate": "node src/db/migrate.js",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +33,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "pdf-parse": "^2.4.5",
     "vitest": "^4.1.1"
   }
