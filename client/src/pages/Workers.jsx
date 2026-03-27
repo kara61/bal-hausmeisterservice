@@ -52,14 +52,13 @@ export default function Workers() {
     }
   };
 
-  const handleFieldToggle = async (worker, force = false) => {
-    const newValue = !worker.is_field_worker;
+  const handleRoleChange = async (worker, newRole, force = false) => {
     try {
       setError(null);
       setWarning(null);
-      const result = await api.put('/workers/field-status', {
+      const result = await api.put('/workers/role', {
         worker_id: worker.id,
-        is_field_worker: newValue,
+        role: newRole,
         force,
       });
       if (result?._warnings) {
@@ -67,7 +66,7 @@ export default function Workers() {
         if (result._warnings.includes('last_field_worker')) messages.push(t('workers.lastFieldWorkerWarning'));
         if (result._warnings.includes('future_assignments')) messages.push(t('workers.futureAssignmentsWarning'));
         if (confirm(messages.join('\n\n'))) {
-          await handleFieldToggle(worker, true);
+          await handleRoleChange(worker, newRole, true);
         }
         return;
       }
@@ -78,9 +77,8 @@ export default function Workers() {
   };
 
   const filteredWorkers = workers.filter(w => {
-    if (filter === 'field') return w.is_field_worker;
-    if (filter === 'office') return !w.is_field_worker;
-    return true;
+    if (filter === 'all') return true;
+    return w.worker_role === filter;
   });
 
   return (
@@ -112,7 +110,7 @@ export default function Workers() {
       )}
 
       <div className="flex gap-sm mb-md">
-        {['all', 'field', 'office'].map(f => (
+        {['all', 'field', 'cleaning', 'office'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -132,7 +130,7 @@ export default function Workers() {
               <th>{t('common.type')}</th>
               <th>{t('common.rate')}</th>
               <th>{t('workers.vacationDays')}</th>
-              <th>{t('workers.fieldWorker')}</th>
+              <th>{t('workers.role')}</th>
               <th>{t('common.actions')}</th>
             </tr>
           </thead>
@@ -141,7 +139,7 @@ export default function Workers() {
               <tr key={w.id}>
                 <td style={{ fontWeight: 600 }}>
                   {w.name}
-                  {!w.is_field_worker && <span className="badge badge-neutral" style={{ marginLeft: '8px', fontSize: '0.75rem' }}>{t('workers.office')}</span>}
+                  {w.worker_role !== 'field' && <span className="badge badge-neutral" style={{ marginLeft: '8px', fontSize: '0.75rem' }}>{t(`workers.role.${w.worker_role}`)}</span>}
                 </td>
                 <td><span className="mono">{w.phone_number}</span></td>
                 <td>
@@ -151,7 +149,18 @@ export default function Workers() {
                 </td>
                 <td><span className="mono">{w.hourly_rate ? `${w.hourly_rate} EUR/h` : '—'}</span></td>
                 <td><span className="mono">{w.vacation_entitlement} {t('common.days')}</span></td>
-                <td><input type="checkbox" checked={w.is_field_worker} onChange={() => handleFieldToggle(w)} style={{ cursor: 'pointer' }} /></td>
+                <td>
+                  <select
+                    className="select"
+                    value={w.worker_role}
+                    onChange={e => handleRoleChange(w, e.target.value)}
+                    style={{ minWidth: '100px' }}
+                  >
+                    <option value="field">{t('workers.role.field')}</option>
+                    <option value="cleaning">{t('workers.role.cleaning')}</option>
+                    <option value="office">{t('workers.role.office')}</option>
+                  </select>
+                </td>
                 <td>
                   <div className="flex gap-xs">
                     <button onClick={() => { setEditing(w); setShowForm(true); }} className="btn btn-secondary btn-sm">{t('common.edit')}</button>
