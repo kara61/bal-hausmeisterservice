@@ -1,13 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { parseCollectionDates, extractAddressFromPdf } from '../../src/services/awpParser.js';
 
-describe('parseCollectionDates', () => {
-  it('should parse dates with trash type context for multiple types', () => {
+describe('parseCollectionDates (text fallback)', () => {
+  it('should parse dates from text and default to restmuell', () => {
     const text = `
-Restmüll / grau
 Di 07.01.  Mo 20.01.  Di 04.02.
-
-Biomüll / braun
 Mi 08.01.  Fr 24.01.  Mi 05.02.
     `;
 
@@ -17,47 +14,41 @@ Mi 08.01.  Fr 24.01.  Mi 05.02.
       { trash_type: 'restmuell', collection_date: '2025-01-07' },
       { trash_type: 'restmuell', collection_date: '2025-01-20' },
       { trash_type: 'restmuell', collection_date: '2025-02-04' },
-      { trash_type: 'bio', collection_date: '2025-01-08' },
-      { trash_type: 'bio', collection_date: '2025-01-24' },
-      { trash_type: 'bio', collection_date: '2025-02-05' },
+      { trash_type: 'restmuell', collection_date: '2025-01-08' },
+      { trash_type: 'restmuell', collection_date: '2025-01-24' },
+      { trash_type: 'restmuell', collection_date: '2025-02-05' },
     ]);
   });
 
   it('should parse dates without day abbreviation', () => {
-    const text = `
-Papier / grün
-03.03.  17.03.  31.03.
-    `;
+    const text = `03.03.  17.03.  31.03.`;
 
     const results = parseCollectionDates(text, 2025);
 
     expect(results).toEqual([
-      { trash_type: 'papier', collection_date: '2025-03-03' },
-      { trash_type: 'papier', collection_date: '2025-03-17' },
-      { trash_type: 'papier', collection_date: '2025-03-31' },
+      { trash_type: 'restmuell', collection_date: '2025-03-03' },
+      { trash_type: 'restmuell', collection_date: '2025-03-17' },
+      { trash_type: 'restmuell', collection_date: '2025-03-31' },
     ]);
   });
 
   it('should skip invalid dates', () => {
-    const text = `
-Gelber Sack
-32.01.  15.13.  29.02.  10.04.
-    `;
+    const text = `32.01.  15.13.  29.02.  10.04.`;
 
     // 2025 is not a leap year, so 29.02 is invalid
     const results = parseCollectionDates(text, 2025);
 
-    expect(results).toContainEqual({ trash_type: 'gelb', collection_date: '2025-04-10' });
+    expect(results).toContainEqual({ trash_type: 'restmuell', collection_date: '2025-04-10' });
     expect(results).not.toContainEqual(expect.objectContaining({ collection_date: '2025-02-29' }));
     expect(results).not.toContainEqual(expect.objectContaining({ collection_date: '2025-01-32' }));
     expect(results).not.toContainEqual(expect.objectContaining({ collection_date: '2025-13-15' }));
 
     // 2024 IS a leap year, so 29.02 should be valid
     const leapResults = parseCollectionDates(text, 2024);
-    expect(leapResults).toContainEqual({ trash_type: 'gelb', collection_date: '2024-02-29' });
+    expect(leapResults).toContainEqual({ trash_type: 'restmuell', collection_date: '2024-02-29' });
   });
 
-  it('should default to restmuell if no context found', () => {
+  it('should default to restmuell for all text-parsed dates', () => {
     const text = `Di 14.01.  Mo 27.01.`;
 
     const results = parseCollectionDates(text, 2025);

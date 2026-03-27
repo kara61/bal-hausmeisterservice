@@ -1,32 +1,34 @@
-import { createRequire } from 'module';
+/**
+ * AWP Garbage PDF Parser
+ *
+ * AWP PDFs use 4 columns of dates, each column representing a trash type.
+ * Columns are identified by the X-position of date text items:
+ *   Column 1 (X≈80):  Restmüll (residual waste)
+ *   Column 2 (X≈184): Bio (organic waste)
+ *   Column 3 (X≈289): Papier (paper/cardboard)
+ *   Column 4 (X≈394): Gelber Sack (yellow bag/packaging)
+ *
+ * Uses pdfjs-dist to extract text positions from the PDF.
+ */
 
-let _PDFParse;
-function getPDFParse() {
-  if (!_PDFParse) {
-    const require = createRequire(import.meta.url);
-    _PDFParse = require('pdf-parse').PDFParse;
-  }
-  return _PDFParse;
-}
+// Column center X-positions and their trash types (left to right)
+const COLUMNS = [
+  { center: 80,  type: 'restmuell', tolerance: 30 },
+  { center: 184, type: 'bio',       tolerance: 30 },
+  { center: 289, type: 'papier',    tolerance: 30 },
+  { center: 394, type: 'gelb',      tolerance: 30 },
+];
 
-const TRASH_TYPE_KEYWORDS = {
-  restmuell: ['restmüll', 'restmuell', 'grau', 'restabfall'],
-  bio: ['biomüll', 'biomuell', 'braun', 'bio'],
-  papier: ['papier', 'grün', 'gruen', 'karton'],
-  gelb: ['gelb', 'yellow', 'sack', 'gelber'],
-};
+// Date pattern: DD.MM.YYYY or DD.MM.
+const DATE_REGEX = /^(\d{1,2})\.(\d{1,2})\.(\d{4})?$/;
 
 /**
- * Detect trash type from a line of text.
- * Returns the trash_type string or null if no match.
+ * Match an X-position to a trash type column.
  */
-function detectTrashType(line) {
-  const lower = line.toLowerCase();
-  for (const [type, keywords] of Object.entries(TRASH_TYPE_KEYWORDS)) {
-    for (const kw of keywords) {
-      if (lower.includes(kw)) {
-        return type;
-      }
+function getTrashTypeForX(x) {
+  for (const col of COLUMNS) {
+    if (Math.abs(x - col.center) <= col.tolerance) {
+      return col.type;
     }
   }
   return null;
@@ -42,7 +44,55 @@ function isValidDate(month, day, year = 2024) {
 }
 
 /**
- * Parse AWP PDF text to extract collection dates.
+ * Parse an AWP PDF buffer using pdfjs-dist to extract dates with X-positions,
+ * then map each date to a trash type based on its column.
+ *
+ * @param {Buffer} pdfBuffer - PDF file buffer
+ * @param {number} year - The year for the schedule (used as fallback if PDF dates lack year)
+ * @returns {Promise<Array<{trash_type: string, collection_date: string}>>}
+ */
+export async function parseAwpPdf(pdfBuffer, year) {
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+
+  const data = new Uint8Array(pdfBuffer.buffer || pdfBuffer);
+  const doc = await getDocument({ data }).promise;
+  const results = [];
+
+  for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+    const page = await doc.getPage(pageNum);
+    const content = await page.getTextContent();
+
+    for (const item of content.items) {
+      const str = item.str.trim();
+      if (!str) continue;
+
+      const match = str.match(DATE_REGEX);
+      if (!match) continue;
+
+      const day = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const dateYear = match[3] ? parseInt(match[3], 10) : year;
+
+      if (!isValidDate(month, day, dateYear)) continue;
+
+      const x = item.transform[4];
+      const trashType = getTrashTypeForX(x);
+      if (!trashType) continue;
+
+      const dateStr = `${dateYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      results.push({
+        trash_type: trashType,
+        collection_date: dateStr,
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Parse AWP PDF text to extract collection dates (legacy text-based fallback).
+ * Used by tests that pass plain text strings.
  *
  * @param {string} text - Raw text from PDF
  * @param {number} year - The year for the schedule
@@ -52,20 +102,10 @@ export function parseCollectionDates(text, year) {
   if (!text || !text.trim()) return [];
 
   const results = [];
-  let currentType = 'restmuell';
+  const dateRegex = /(?:[A-Za-zäöü]{2}\s+)?(\d{1,2})\.(\d{1,2})\./g;
   const lines = text.split('\n');
 
-  // Date pattern: optional day abbreviation + DD.MM. (with optional trailing year)
-  const dateRegex = /(?:[A-Za-zäöü]{2}\s+)?(\d{1,2})\.(\d{1,2})\./g;
-
   for (const line of lines) {
-    // Check if this line sets a new trash type context
-    const detected = detectTrashType(line);
-    if (detected) {
-      currentType = detected;
-    }
-
-    // Extract all dates from this line
     let match;
     dateRegex.lastIndex = 0;
     while ((match = dateRegex.exec(line)) !== null) {
@@ -76,7 +116,7 @@ export function parseCollectionDates(text, year) {
 
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       results.push({
-        trash_type: currentType,
+        trash_type: 'restmuell',
         collection_date: dateStr,
       });
     }
@@ -86,25 +126,7 @@ export function parseCollectionDates(text, year) {
 }
 
 /**
- * Parse an AWP PDF buffer to extract collection dates.
- *
- * @param {Buffer} pdfBuffer - PDF file buffer
- * @param {number} year - The year for the schedule
- * @returns {Promise<Array<{trash_type: string, collection_date: string}>>}
- */
-export async function parseAwpPdf(pdfBuffer, year) {
-  const PDFParse = getPDFParse();
-  const uint8 = pdfBuffer instanceof Uint8Array ? pdfBuffer : new Uint8Array(pdfBuffer);
-  const parser = new PDFParse(uint8);
-  const result = await parser.getText();
-  const text = result.pages.map(p => p.text).join('\n');
-  return parseCollectionDates(text, year);
-}
-
-/**
  * Extract a German street address from PDF text.
- *
- * Looks for patterns like "Straßenname 123", "Musterstr. 45", "Am Wald 7a"
  *
  * @param {string} text - Raw text from PDF
  * @returns {string|null} The found address or null
@@ -112,15 +134,9 @@ export async function parseAwpPdf(pdfBuffer, year) {
 export function extractAddressFromPdf(text) {
   if (!text) return null;
 
-  // Match German street address patterns:
-  // - Word(s) + "straße/strasse/str." + optional space + house number
-  // - Word(s) + house number (at least one letter word before the number)
   const patterns = [
-    // "Musterstraße 12" or "Musterstrasse 12" or "Musterstr. 12"
     /[A-ZÄÖÜ][a-zäöüß]+(?:straße|strasse|str\.)\s*\d+[a-zA-Z]?/,
-    // "Am Waldweg 7" or "Lange Gasse 42a"
     /(?:[A-ZÄÖÜ][a-zäöüß]+\s+){1,3}(?:Weg|Gasse|Platz|Ring|Allee|Damm|Ufer|Chaussee|Pfad)\s+\d+[a-zA-Z]?/,
-    // Generic: "Wordword 123" where word starts with uppercase
     /[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*\s+\d+[a-zA-Z]?(?=\s|,|$)/m,
   ];
 
