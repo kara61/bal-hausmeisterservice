@@ -1,4 +1,5 @@
 import { pool } from '../db/pool.js';
+import { shouldTaskRunOnDate } from './taskScheduling.js';
 
 // --- Pure functions ---
 
@@ -53,29 +54,42 @@ export async function generateDraftPlan(dateStr) {
     [dateStr]
   );
 
-  // Get weekday for the date
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const weekday = new Date(year, month - 1, day).getDay();
-
-  // Get active properties for this weekday
-  const { rows: properties } = await pool.query(
-    `SELECT id, standard_tasks FROM properties
-     WHERE assigned_weekday = $1 AND is_active = true`,
-    [weekday]
+  // Step 1: Find tasks that need to run today
+  const { rows: propertyTaskRows } = await pool.query(
+    `SELECT p.id AS property_id, p.assigned_weekday,
+            pt.id AS task_id, pt.task_name, pt.worker_role,
+            pt.schedule_type, pt.schedule_day, pt.biweekly_start_date
+     FROM properties p
+     JOIN property_tasks pt ON pt.property_id = p.id
+     WHERE p.is_active = true AND pt.is_active = true`
   );
 
-  // Get active workers with preferences
-  const { rows: workers } = await pool.query(
-    `SELECT w.id, w.name, w.phone_number,
-            COALESCE(wp.is_flex_worker, false) AS is_flex,
-            COALESCE(wp.max_properties_per_day, 4) AS max_properties,
-            COALESCE(wp.preferred_properties, '{}') AS preferred_properties
-     FROM workers w
-     LEFT JOIN worker_preferences wp ON wp.worker_id = w.id
-     WHERE w.is_active = true AND w.worker_role = 'field'`
-  );
+  // Filter by schedule
+  const todaysTasks = [];
+  for (const row of propertyTaskRows) {
+    const property = { assigned_weekday: row.assigned_weekday };
+    const task = {
+      schedule_type: row.schedule_type,
+      schedule_day: row.schedule_day,
+      biweekly_start_date: row.biweekly_start_date,
+    };
+    if (shouldTaskRunOnDate(task, property, dateStr)) {
+      todaysTasks.push(row);
+    }
+  }
 
-  // Get sick workers for this date
+  if (todaysTasks.length === 0) return plan;
+
+  // Group tasks by property
+  const tasksByProperty = new Map();
+  for (const t of todaysTasks) {
+    if (!tasksByProperty.has(t.property_id)) {
+      tasksByProperty.set(t.property_id, []);
+    }
+    tasksByProperty.get(t.property_id).push(t);
+  }
+
+  // Step 2: Find available workers, grouped by role
   const { rows: sickWorkers } = await pool.query(
     `SELECT worker_id FROM sick_leave
      WHERE start_date <= $1
@@ -85,7 +99,6 @@ export async function generateDraftPlan(dateStr) {
   );
   const sickIds = sickWorkers.map(s => s.worker_id);
 
-  // Get workers on vacation for this date
   const { rows: vacationWorkers } = await pool.query(
     `SELECT worker_id FROM vacation_balances
      WHERE start_date <= $1 AND end_date >= $1`,
@@ -93,75 +106,70 @@ export async function generateDraftPlan(dateStr) {
   );
   const vacationIds = vacationWorkers.map(v => v.worker_id);
 
-  const available = getAvailableWorkers(workers, sickIds, vacationIds);
-
-  // Get existing team assignments for this date to follow default patterns
-  const { rows: teamAssignments } = await pool.query(
-    `SELECT DISTINCT tm.worker_id, ta.property_id
-     FROM task_assignments ta
-     JOIN teams t ON t.id = ta.team_id
-     JOIN team_members tm ON tm.team_id = t.id
-     WHERE ta.date = $1`,
-    [dateStr]
+  const { rows: allWorkers } = await pool.query(
+    `SELECT w.id, w.name, w.phone_number, w.worker_role,
+            COALESCE(wp.is_flex_worker, false) AS is_flex,
+            COALESCE(wp.max_properties_per_day, 4) AS max_properties
+     FROM workers w
+     LEFT JOIN worker_preferences wp ON wp.worker_id = w.id
+     WHERE w.is_active = true AND w.worker_role IN ('field', 'cleaning')`
   );
 
-  // Build default worker→property map from team assignments
-  const defaultMap = new Map();
-  for (const ta of teamAssignments) {
-    if (!defaultMap.has(ta.property_id)) {
-      defaultMap.set(ta.property_id, []);
-    }
-    defaultMap.get(ta.property_id).push(ta.worker_id);
-  }
+  const available = getAvailableWorkers(allWorkers, sickIds, vacationIds);
 
-  // Track assignment counts per worker
-  const assignmentCounts = new Map();
-  const availableIds = new Set(available.map(w => w.id));
+  // Track property count per worker (for max_properties_per_day)
+  const propertyCountPerWorker = new Map();
 
   let order = 1;
-  for (const prop of properties) {
-    // Try default workers first
-    const defaultWorkers = defaultMap.get(prop.id) || [];
-    let assignedWorkerId = null;
+  for (const [propertyId, tasks] of tasksByProperty) {
+    // Determine which roles are needed at this property
+    const neededRoles = [...new Set(tasks.map(t => t.worker_role))];
 
-    for (const wid of defaultWorkers) {
-      if (availableIds.has(wid)) {
-        const count = assignmentCounts.get(wid) || 0;
-        const worker = available.find(w => w.id === wid);
-        if (count < worker.max_properties) {
-          assignedWorkerId = wid;
-          break;
-        }
-      }
-    }
+    // For each role, find 2 best workers
+    const assignedWorkersByRole = new Map();
+    for (const role of neededRoles) {
+      const roleWorkers = available.filter(w => w.worker_role === role);
 
-    // If no default worker available, find the best alternative
-    if (!assignedWorkerId) {
-      const withCounts = available.map(w => ({
-        ...w,
-        assignment_count: assignmentCounts.get(w.id) || 0,
-      }));
-
-      // Get property history
+      // Get property history for this role
       const { rows: history } = await pool.query(
         `SELECT DISTINCT worker_id FROM plan_assignments
-         WHERE property_id = $1 AND status = 'completed'`,
-        [prop.id]
+         WHERE property_id = $1 AND status IN ('completed', 'done')`,
+        [propertyId]
       );
       const propertyHistory = history.map(h => h.worker_id);
 
-      const best = findBestWorkerForProperty(withCounts, prop.id, propertyHistory);
-      if (best) assignedWorkerId = best.id;
+      // Pick up to 2 workers
+      const picked = [];
+      for (let i = 0; i < 2; i++) {
+        const withCounts = roleWorkers
+          .filter(w => !picked.includes(w.id))
+          .map(w => ({
+            ...w,
+            assignment_count: propertyCountPerWorker.get(w.id) || 0,
+          }));
+
+        const best = findBestWorkerForProperty(withCounts, propertyId, propertyHistory);
+        if (best) {
+          picked.push(best.id);
+          propertyCountPerWorker.set(best.id, (propertyCountPerWorker.get(best.id) || 0) + 1);
+        }
+      }
+
+      assignedWorkersByRole.set(role, picked);
     }
 
-    if (assignedWorkerId) {
-      await pool.query(
-        `INSERT INTO plan_assignments (daily_plan_id, worker_id, property_id, assignment_order, source)
-         VALUES ($1, $2, $3, $4, 'auto')`,
-        [plan.id, assignedWorkerId, prop.id, order]
-      );
-      assignmentCounts.set(assignedWorkerId, (assignmentCounts.get(assignedWorkerId) || 0) + 1);
-      order++;
+    // Create plan_assignment rows: one per worker × task
+    for (const task of tasks) {
+      const workerIds = assignedWorkersByRole.get(task.worker_role) || [];
+      for (const workerId of workerIds) {
+        await pool.query(
+          `INSERT INTO plan_assignments
+           (daily_plan_id, worker_id, property_id, assignment_order, source, status, task_name, worker_role)
+           VALUES ($1, $2, $3, $4, 'auto', 'pending', $5, $6)`,
+          [plan.id, workerId, propertyId, order, task.task_name, task.worker_role]
+        );
+        order++;
+      }
     }
   }
 
@@ -177,7 +185,7 @@ export async function getPlanWithAssignments(planId) {
 
   const { rows: assignments } = await pool.query(
     `SELECT pa.*, w.name AS worker_name, w.phone_number AS worker_phone,
-            p.address, p.city, p.standard_tasks
+            p.address, p.city
      FROM plan_assignments pa
      JOIN workers w ON w.id = pa.worker_id
      JOIN properties p ON p.id = pa.property_id
@@ -186,19 +194,40 @@ export async function getPlanWithAssignments(planId) {
     [planId]
   );
 
-  // Get unassigned properties (gap detection)
+  // Get unassigned properties: properties with tasks today but no assignments
   const planDate = plan.plan_date instanceof Date
     ? plan.plan_date.toISOString().split('T')[0]
     : plan.plan_date;
-  const [year, month, day] = planDate.split('-').map(Number);
-  const weekday = new Date(year, month - 1, day).getDay();
-  const assignedPropertyIds = assignments.map(a => a.property_id);
 
-  const { rows: unassigned } = await pool.query(
-    `SELECT id, address, city, standard_tasks FROM properties
-     WHERE assigned_weekday = $1 AND is_active = true
-       AND id != ALL($2::int[])`,
-    [weekday, assignedPropertyIds.length > 0 ? assignedPropertyIds : [0]]
+  const assignedPropertyIds = [...new Set(assignments.map(a => a.property_id))];
+
+  const { rows: allActiveProperties } = await pool.query(
+    `SELECT DISTINCT p.id, p.address, p.city
+     FROM properties p
+     JOIN property_tasks pt ON pt.property_id = p.id
+     WHERE p.is_active = true AND pt.is_active = true`,
+  );
+
+  // Filter to properties that have tasks running today but aren't assigned
+  const { rows: allPropertyTasks } = await pool.query(
+    `SELECT p.id AS property_id, p.assigned_weekday,
+            pt.schedule_type, pt.schedule_day, pt.biweekly_start_date
+     FROM properties p
+     JOIN property_tasks pt ON pt.property_id = p.id
+     WHERE p.is_active = true AND pt.is_active = true`
+  );
+
+  const propertiesWithTasksToday = new Set();
+  for (const row of allPropertyTasks) {
+    const property = { assigned_weekday: row.assigned_weekday };
+    const task = { schedule_type: row.schedule_type, schedule_day: row.schedule_day, biweekly_start_date: row.biweekly_start_date };
+    if (shouldTaskRunOnDate(task, property, planDate)) {
+      propertiesWithTasksToday.add(row.property_id);
+    }
+  }
+
+  const unassigned = allActiveProperties.filter(
+    p => propertiesWithTasksToday.has(p.id) && !assignedPropertyIds.includes(p.id)
   );
 
   return { ...plan, assignments, unassigned_properties: unassigned };

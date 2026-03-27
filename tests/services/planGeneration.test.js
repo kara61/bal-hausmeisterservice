@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getAvailableWorkers, findBestWorkerForProperty, generateDraftPlan, getPlanWithAssignments, redistributeSickWorkers, approvePlan } from '../../src/services/planGeneration.js';
-import { cleanDb, createTestWorker, createTestProperty, describeWithDb } from '../helpers.js';
+import { cleanDb, createTestWorker, createTestProperty, createTestPropertyTask, createTestPlan, createTestAssignment, describeWithDb } from '../helpers.js';
 import { pool } from '../../src/db/pool.js';
 
 vi.mock('../../src/services/whatsapp.js', () => ({
@@ -87,26 +87,14 @@ describeWithDb('generateDraftPlan', () => {
   it('creates a draft plan with assignments based on property schedule', async () => {
     const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
     const prop1 = await createTestProperty({ assigned_weekday: 1, address: 'Mozartstr 12' });
-
-    // Create team with worker assigned to property for 2026-03-30 (Monday = weekday 1)
-    const { rows: [team] } = await pool.query(
-      `INSERT INTO teams (name, date) VALUES ('Team A', '2026-03-30') RETURNING *`
-    );
-    await pool.query(
-      `INSERT INTO team_members (team_id, worker_id) VALUES ($1, $2)`,
-      [team.id, worker1.id]
-    );
-    await pool.query(
-      `INSERT INTO task_assignments (property_id, team_id, date, task_description, status)
-       VALUES ($1, $2, '2026-03-30', 'Reinigung', 'pending')`,
-      [prop1.id, team.id]
-    );
+    await createTestPropertyTask(prop1.id, { task_name: 'Reinigung', worker_role: 'field' });
 
     const plan = await generateDraftPlan('2026-03-30');
     expect(plan.status).toBe('draft');
 
     const full = await getPlanWithAssignments(plan.id);
     expect(full.assignments.length).toBeGreaterThanOrEqual(1);
+    expect(full.assignments[0].task_name).toBe('Reinigung');
   });
 
   it('does not create duplicate plan for same date', async () => {
@@ -123,6 +111,7 @@ describeWithDb('generateDraftPlan', () => {
     const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', worker_role: 'field' });
     const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', worker_role: 'office' });
     const prop = await createTestProperty({ assigned_weekday: 1, address: 'Teststr 1' });
+    await createTestPropertyTask(prop.id, { task_name: 'Reinigung', worker_role: 'field' });
 
     const plan = await generateDraftPlan('2026-03-30');
     const full = await getPlanWithAssignments(plan.id);
@@ -209,25 +198,12 @@ describeWithDb('full plan flow', () => {
     const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
     const worker2 = await createTestWorker({ name: 'Mehmet', phone_number: '+4917600000002' });
     const prop1 = await createTestProperty({ assigned_weekday: 1, address: 'Mozartstr 12' });
+    await createTestPropertyTask(prop1.id, { task_name: 'Reinigung', worker_role: 'field' });
 
     // Mark worker2 as flex
     await pool.query(
       `INSERT INTO worker_preferences (worker_id, is_flex_worker) VALUES ($1, true)`,
       [worker2.id]
-    );
-
-    // Create team with worker1
-    const { rows: [team] } = await pool.query(
-      `INSERT INTO teams (name, date) VALUES ('Team A', '2026-03-30') RETURNING *`
-    );
-    await pool.query(
-      `INSERT INTO team_members (team_id, worker_id) VALUES ($1, $2)`,
-      [team.id, worker1.id]
-    );
-    await pool.query(
-      `INSERT INTO task_assignments (property_id, team_id, date, task_description, status)
-       VALUES ($1, $2, '2026-03-30', 'Reinigung', 'pending')`,
-      [prop1.id, team.id]
     );
 
     // Step 1: Generate draft plan
@@ -248,5 +224,105 @@ describeWithDb('full plan flow', () => {
     // Step 4: Approve
     const approved = await approvePlan(plan.id, 'halil');
     expect(approved.status).toBe('approved');
+  });
+});
+
+describeWithDb('generateDraftPlan (unified)', () => {
+  beforeEach(async () => { await cleanDb(); });
+
+  it('creates plan_assignments per worker x task from property_tasks', async () => {
+    const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const worker2 = await createTestWorker({ name: 'Mehmet', phone_number: '+4917600000002' });
+    const prop = await createTestProperty({ assigned_weekday: 1, address: 'Mozartstr 12' });
+
+    // Create 2 tasks for the property
+    await createTestPropertyTask(prop.id, { task_name: 'Treppenhausreinigung', worker_role: 'field' });
+    await createTestPropertyTask(prop.id, { task_name: 'Mulltonnen', worker_role: 'field' });
+
+    // Monday 2026-03-30 = weekday 1
+    const plan = await generateDraftPlan('2026-03-30');
+    const full = await getPlanWithAssignments(plan.id);
+
+    // 2 tasks x 2 workers = 4 assignments
+    expect(full.assignments.length).toBe(4);
+
+    // Each assignment should have task_name and worker_role
+    for (const a of full.assignments) {
+      expect(a.task_name).toBeTruthy();
+      expect(a.worker_role).toBe('field');
+      expect(a.status).toBe('pending');
+    }
+
+    // Both workers should be assigned
+    const workerIds = [...new Set(full.assignments.map(a => a.worker_id))];
+    expect(workerIds).toHaveLength(2);
+    expect(workerIds).toContain(worker1.id);
+    expect(workerIds).toContain(worker2.id);
+  });
+
+  it('prefers workers with property history', async () => {
+    const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const worker2 = await createTestWorker({ name: 'Mehmet', phone_number: '+4917600000002' });
+    const worker3 = await createTestWorker({ name: 'Hasan', phone_number: '+4917600000003' });
+    const prop = await createTestProperty({ assigned_weekday: 1, address: 'Mozartstr 12' });
+    await createTestPropertyTask(prop.id, { task_name: 'Reinigung', worker_role: 'field' });
+
+    // Give worker1 and worker3 history at this property
+    const oldPlan = await createTestPlan({ plan_date: '2026-03-23', status: 'approved' });
+    await createTestAssignment(oldPlan.id, worker1.id, prop.id, { status: 'completed', task_name: 'Reinigung' });
+    await createTestAssignment(oldPlan.id, worker3.id, prop.id, { status: 'completed', task_name: 'Reinigung' });
+
+    const plan = await generateDraftPlan('2026-03-30');
+    const full = await getPlanWithAssignments(plan.id);
+
+    const assignedIds = full.assignments.map(a => a.worker_id);
+    // worker1 and worker3 should be preferred (they have history)
+    expect(assignedIds).toContain(worker1.id);
+    expect(assignedIds).toContain(worker3.id);
+    expect(assignedIds).not.toContain(worker2.id);
+  });
+
+  it('assigns only 1 worker when only 1 is available', async () => {
+    const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const prop = await createTestProperty({ assigned_weekday: 1 });
+    await createTestPropertyTask(prop.id, { task_name: 'Reinigung', worker_role: 'field' });
+
+    const plan = await generateDraftPlan('2026-03-30');
+    const full = await getPlanWithAssignments(plan.id);
+
+    expect(full.assignments.length).toBe(1);
+    expect(full.assignments[0].worker_id).toBe(worker1.id);
+  });
+
+  it('uses shouldTaskRunOnDate for schedule filtering', async () => {
+    const worker1 = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
+    const prop = await createTestProperty({ assigned_weekday: 1, address: 'Mozartstr 12' });
+
+    // This task runs on weekday 1 (Monday) — should be included
+    await createTestPropertyTask(prop.id, { task_name: 'Weekly Monday', schedule_type: 'weekly', schedule_day: 1 });
+    // This task runs on weekday 3 (Wednesday) — should NOT be included on Monday
+    await createTestPropertyTask(prop.id, { task_name: 'Weekly Wednesday', schedule_type: 'weekly', schedule_day: 3 });
+
+    const plan = await generateDraftPlan('2026-03-30'); // Monday
+    const full = await getPlanWithAssignments(plan.id);
+
+    const taskNames = full.assignments.map(a => a.task_name);
+    expect(taskNames).toContain('Weekly Monday');
+    expect(taskNames).not.toContain('Weekly Wednesday');
+  });
+
+  it('includes cleaning workers for cleaning tasks', async () => {
+    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', worker_role: 'field' });
+    const cleaningWorker = await createTestWorker({ name: 'Fatma', phone_number: '+4917600000002', worker_role: 'cleaning' });
+    const prop = await createTestProperty({ assigned_weekday: 1 });
+    await createTestPropertyTask(prop.id, { task_name: 'Reinigung', worker_role: 'cleaning' });
+
+    const plan = await generateDraftPlan('2026-03-30');
+    const full = await getPlanWithAssignments(plan.id);
+
+    // Cleaning worker should be assigned to the cleaning task
+    const assignedIds = full.assignments.map(a => a.worker_id);
+    expect(assignedIds).toContain(cleaningWorker.id);
+    expect(assignedIds).not.toContain(fieldWorker.id);
   });
 });
