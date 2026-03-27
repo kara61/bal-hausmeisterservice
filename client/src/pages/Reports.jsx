@@ -51,6 +51,17 @@ export default function Reports() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm(t('reports.confirmDelete'))) return;
+    try {
+      setError(null);
+      await api.delete(`/reports/${id}`);
+      load();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
+  };
+
   const statusBadge = { draft: 'badge-warning', reviewed: 'badge-info', sent: 'badge-success' };
   const statusLabel = (s) => t(`common.${s}`);
 
@@ -110,6 +121,9 @@ export default function Reports() {
                         {t('reports.markSent')}
                       </button>
                     )}
+                    <button onClick={() => handleDelete(r.id)} className="btn btn-danger btn-sm" title={t('common.delete')}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                   </div>
                 </td>
               </tr>

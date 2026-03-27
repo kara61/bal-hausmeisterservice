@@ -186,6 +186,7 @@ export const translations = {
     'reports.markReviewed': 'Als geprueft',
     'reports.markSent': 'Als gesendet',
     'reports.none': 'Keine Berichte vorhanden',
+    'reports.confirmDelete': 'Bericht wirklich loeschen? Die PDF-Datei wird ebenfalls geloescht.',
 
     // Properties
     'properties.title': 'Objekte',
@@ -570,6 +571,7 @@ export const translations = {
     'reports.markReviewed': 'Mark reviewed',
     'reports.markSent': 'Mark sent',
     'reports.none': 'No reports found',
+    'reports.confirmDelete': 'Really delete this report? The PDF file will also be removed.',
 
     // Properties
     'properties.title': 'Properties',
