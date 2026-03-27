@@ -105,13 +105,15 @@ export async function createTestAssignment(planId, workerId, propertyId, overrid
   const defaults = {
     assignment_order: 1,
     source: 'auto',
-    status: 'assigned',
+    status: 'pending',
+    task_name: null,
+    worker_role: null,
   };
   const a = { ...defaults, ...overrides };
   const result = await pool.query(
-    `INSERT INTO plan_assignments (daily_plan_id, worker_id, property_id, assignment_order, source, status)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [planId, workerId, propertyId, a.assignment_order, a.source, a.status]
+    `INSERT INTO plan_assignments (daily_plan_id, worker_id, property_id, assignment_order, source, status, task_name, worker_role)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [planId, workerId, propertyId, a.assignment_order, a.source, a.status, a.task_name, a.worker_role]
   );
   return result.rows[0];
 }
