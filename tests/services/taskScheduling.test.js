@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getWeekday, shouldCarryOver, formatTaskList } from '../../src/services/taskScheduling.js';
+import {
+  getWeekday,
+  shouldCarryOver,
+  formatTaskList,
+  shouldTaskRunOnDate,
+} from '../../src/services/taskScheduling.js';
 
 describe('getWeekday', () => {
   it('returns 1 for Monday (2026-03-23)', () => {
@@ -44,5 +49,72 @@ describe('formatTaskList', () => {
   it('returns "keine Aufgaben" message when tasks are empty', () => {
     const result = formatTaskList([], '2026-03-29');
     expect(result).toBe('Sonntag 29.03 — keine Aufgaben zugewiesen.');
+  });
+});
+
+describe('shouldTaskRunOnDate', () => {
+  it('returns true for property_default when weekday matches', () => {
+    const task = { schedule_type: 'property_default' };
+    const property = { assigned_weekday: 1 };
+    expect(shouldTaskRunOnDate(task, property, '2026-03-23')).toBe(true);
+  });
+
+  it('returns false for property_default when weekday does not match', () => {
+    const task = { schedule_type: 'property_default' };
+    const property = { assigned_weekday: 1 };
+    expect(shouldTaskRunOnDate(task, property, '2026-03-24')).toBe(false);
+  });
+
+  it('returns false for property_default when property has no assigned_weekday', () => {
+    const task = { schedule_type: 'property_default' };
+    const property = { assigned_weekday: null };
+    expect(shouldTaskRunOnDate(task, property, '2026-03-23')).toBe(false);
+  });
+
+  it('returns true for weekly when weekday matches schedule_day', () => {
+    const task = { schedule_type: 'weekly', schedule_day: 3 };
+    expect(shouldTaskRunOnDate(task, {}, '2026-03-25')).toBe(true);
+  });
+
+  it('returns false for weekly when weekday does not match', () => {
+    const task = { schedule_type: 'weekly', schedule_day: 3 };
+    expect(shouldTaskRunOnDate(task, {}, '2026-03-23')).toBe(false);
+  });
+
+  it('returns true for biweekly on the start week', () => {
+    const task = {
+      schedule_type: 'biweekly',
+      schedule_day: 1,
+      biweekly_start_date: '2026-03-23',
+    };
+    expect(shouldTaskRunOnDate(task, {}, '2026-03-23')).toBe(true);
+  });
+
+  it('returns false for biweekly on the off-week', () => {
+    const task = {
+      schedule_type: 'biweekly',
+      schedule_day: 1,
+      biweekly_start_date: '2026-03-23',
+    };
+    expect(shouldTaskRunOnDate(task, {}, '2026-03-30')).toBe(false);
+  });
+
+  it('returns true for biweekly two weeks after start', () => {
+    const task = {
+      schedule_type: 'biweekly',
+      schedule_day: 1,
+      biweekly_start_date: '2026-03-23',
+    };
+    expect(shouldTaskRunOnDate(task, {}, '2026-04-06')).toBe(true);
+  });
+
+  it('returns true for monthly when day-of-month matches', () => {
+    const task = { schedule_type: 'monthly', schedule_day: 15 };
+    expect(shouldTaskRunOnDate(task, {}, '2026-03-15')).toBe(true);
+  });
+
+  it('returns false for monthly when day-of-month does not match', () => {
+    const task = { schedule_type: 'monthly', schedule_day: 15 };
+    expect(shouldTaskRunOnDate(task, {}, '2026-03-16')).toBe(false);
   });
 });

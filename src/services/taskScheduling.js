@@ -29,6 +29,36 @@ export function formatTaskList(tasks, dateStr) {
   return `${header}\n${lines.join('\n')}`;
 }
 
+export function shouldTaskRunOnDate(task, property, dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  const weekday = d.getDay();
+
+  switch (task.schedule_type) {
+    case 'property_default':
+      return property.assigned_weekday !== null &&
+             property.assigned_weekday !== undefined &&
+             weekday === property.assigned_weekday;
+
+    case 'weekly':
+      return weekday === task.schedule_day;
+
+    case 'biweekly': {
+      if (weekday !== task.schedule_day) return false;
+      const start = new Date(task.biweekly_start_date);
+      const diffMs = d.getTime() - start.getTime();
+      const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+      return diffWeeks % 2 === 0;
+    }
+
+    case 'monthly':
+      return day === task.schedule_day;
+
+    default:
+      return false;
+  }
+}
+
 // --- DB functions ---
 
 export async function generateDailyTasks(dateStr) {

@@ -22,6 +22,7 @@ export async function cleanDb() {
     DELETE FROM extra_jobs;
     DELETE FROM team_members;
     DELETE FROM teams;
+    DELETE FROM property_tasks;
     DELETE FROM properties;
     DELETE FROM monthly_reports;
     DELETE FROM sick_leave;
@@ -64,6 +65,24 @@ export async function createTestProperty(overrides = {}) {
     `INSERT INTO properties (address, city, assigned_weekday, standard_tasks, is_active)
      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
     [p.address, p.city, p.assigned_weekday, p.standard_tasks, p.is_active]
+  );
+  return result.rows[0];
+}
+
+export async function createTestPropertyTask(propertyId, overrides = {}) {
+  const defaults = {
+    task_name: 'Treppenhausreinigung',
+    worker_role: 'field',
+    schedule_type: 'property_default',
+    schedule_day: null,
+    biweekly_start_date: null,
+    is_active: true,
+  };
+  const t = { ...defaults, ...overrides };
+  const result = await pool.query(
+    `INSERT INTO property_tasks (property_id, task_name, worker_role, schedule_type, schedule_day, biweekly_start_date, is_active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [propertyId, t.task_name, t.worker_role, t.schedule_type, t.schedule_day, t.biweekly_start_date, t.is_active]
   );
   return result.rows[0];
 }
