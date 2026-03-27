@@ -14,9 +14,9 @@ describe('deriveWorkerStatus', () => {
     expect(deriveWorkerStatus(entry, assignments)).toBe('checked_in');
   });
 
-  it('returns "working" when checked in and at least one assignment started', () => {
+  it('returns "working" when checked in and at least one assignment in_progress', () => {
     const entry = { check_in: '2026-03-26T07:00:00Z', check_out: null };
-    const assignments = [{ status: 'started' }, { status: 'assigned' }];
+    const assignments = [{ status: 'in_progress' }, { status: 'pending' }];
     expect(deriveWorkerStatus(entry, assignments)).toBe('working');
   });
 
@@ -36,9 +36,9 @@ describe('deriveWorkerStatus', () => {
 describe('computeStatsSummary', () => {
   it('computes correct counts from worker and assignment data', () => {
     const workers = [
-      { id: 1, status: 'working', assignments: [{ status: 'completed' }, { status: 'started' }] },
-      { id: 2, status: 'checked_in', assignments: [{ status: 'assigned' }] },
-      { id: 3, status: 'not_started', assignments: [{ status: 'assigned' }] },
+      { id: 1, status: 'working', assignments: [{ status: 'done' }, { status: 'in_progress' }] },
+      { id: 2, status: 'checked_in', assignments: [{ status: 'pending' }] },
+      { id: 3, status: 'not_started', assignments: [{ status: 'pending' }] },
     ];
     const alerts = [{ type: 'flagged_entry' }, { type: 'sick_leave' }];
     const garbageCount = 3;
@@ -47,10 +47,10 @@ describe('computeStatsSummary', () => {
 
     expect(stats.workersActive).toBe(2);
     expect(stats.workersTotal).toBe(3);
-    expect(stats.propertiesCompleted).toBe(1);
-    expect(stats.propertiesInProgress).toBe(1);
-    expect(stats.propertiesRemaining).toBe(2);
-    expect(stats.propertiesTotal).toBe(4);
+    expect(stats.tasksCompleted).toBe(1);
+    expect(stats.tasksInProgress).toBe(1);
+    expect(stats.tasksRemaining).toBe(2);
+    expect(stats.tasksTotal).toBe(4);
     expect(stats.alertCount).toBe(2);
     expect(stats.garbageCount).toBe(3);
   });
@@ -58,7 +58,7 @@ describe('computeStatsSummary', () => {
   it('handles empty inputs', () => {
     const stats = computeStatsSummary([], [], 0);
     expect(stats.workersActive).toBe(0);
-    expect(stats.propertiesTotal).toBe(0);
+    expect(stats.tasksTotal).toBe(0);
   });
 });
 
@@ -89,7 +89,7 @@ describeWithDb('getCommandCenterData', () => {
     expect(data.workers[0].assignments).toHaveLength(1);
     expect(data.stats.workersActive).toBe(1);
     expect(data.stats.workersTotal).toBe(1);
-    expect(data.stats.propertiesTotal).toBe(1);
+    expect(data.stats.tasksTotal).toBe(1);
     expect(data.alerts).toBeDefined();
     expect(data.timeline).toBeDefined();
   });
@@ -140,9 +140,9 @@ describeWithDb('getCommandCenterData - full integration', () => {
     const prop3 = await createTestProperty({ address: 'Am Stadtpark 5', assigned_weekday: 4 });
 
     const plan = await createTestPlan({ plan_date: today, status: 'approved' });
-    await createTestAssignment(plan.id, worker1.id, prop1.id, { status: 'completed', assignment_order: 1 });
-    await createTestAssignment(plan.id, worker1.id, prop2.id, { status: 'started', assignment_order: 2 });
-    await createTestAssignment(plan.id, worker2.id, prop3.id, { status: 'assigned', assignment_order: 1 });
+    await createTestAssignment(plan.id, worker1.id, prop1.id, { status: 'done', assignment_order: 1 });
+    await createTestAssignment(plan.id, worker1.id, prop2.id, { status: 'in_progress', assignment_order: 2 });
+    await createTestAssignment(plan.id, worker2.id, prop3.id, { status: 'pending', assignment_order: 1 });
 
     // Worker 1 checked in, Worker 2 not yet
     await pool.query(
@@ -159,10 +159,10 @@ describeWithDb('getCommandCenterData - full integration', () => {
     // Stats
     expect(data.stats.workersActive).toBe(1);
     expect(data.stats.workersTotal).toBe(2);
-    expect(data.stats.propertiesCompleted).toBe(1);
-    expect(data.stats.propertiesInProgress).toBe(1);
-    expect(data.stats.propertiesRemaining).toBe(1);
-    expect(data.stats.propertiesTotal).toBe(3);
+    expect(data.stats.tasksCompleted).toBe(1);
+    expect(data.stats.tasksInProgress).toBe(1);
+    expect(data.stats.tasksRemaining).toBe(1);
+    expect(data.stats.tasksTotal).toBe(3);
 
     // Workers
     expect(data.workers).toHaveLength(2);

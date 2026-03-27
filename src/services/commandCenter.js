@@ -14,8 +14,8 @@ import { pool } from '../db/pool.js';
 export function deriveWorkerStatus(timeEntry, assignments) {
   if (!timeEntry || !timeEntry.check_in) return 'not_started';
   if (timeEntry.check_out) return 'done';
-  if (assignments.length > 0 && assignments.every(a => a.status === 'completed')) return 'done';
-  if (assignments.some(a => a.status === 'started')) return 'working';
+  if (assignments.length > 0 && assignments.every(a => a.status === 'done' || a.status === 'completed')) return 'done';
+  if (assignments.some(a => a.status === 'in_progress')) return 'working';
   return 'checked_in';
 }
 
@@ -28,34 +28,34 @@ export function deriveWorkerStatus(timeEntry, assignments) {
  * @returns {{
  *   workersActive: number,
  *   workersTotal: number,
- *   propertiesCompleted: number,
- *   propertiesInProgress: number,
- *   propertiesRemaining: number,
- *   propertiesTotal: number,
+ *   tasksCompleted: number,
+ *   tasksInProgress: number,
+ *   tasksRemaining: number,
+ *   tasksTotal: number,
  *   alertCount: number,
  *   garbageCount: number,
  * }}
  */
 export function computeStatsSummary(workers, alerts, garbageCount) {
-  let propertiesCompleted = 0;
-  let propertiesInProgress = 0;
-  let propertiesRemaining = 0;
+  let tasksCompleted = 0;
+  let tasksInProgress = 0;
+  let tasksRemaining = 0;
 
   for (const w of workers) {
     for (const a of w.assignments) {
-      if (a.status === 'completed') propertiesCompleted++;
-      else if (a.status === 'started') propertiesInProgress++;
-      else propertiesRemaining++;
+      if (a.status === 'done' || a.status === 'completed') tasksCompleted++;
+      else if (a.status === 'in_progress') tasksInProgress++;
+      else if (a.status === 'pending') tasksRemaining++;
     }
   }
 
   return {
     workersActive: workers.filter(w => w.status !== 'not_started').length,
     workersTotal: workers.length,
-    propertiesCompleted,
-    propertiesInProgress,
-    propertiesRemaining,
-    propertiesTotal: propertiesCompleted + propertiesInProgress + propertiesRemaining,
+    tasksCompleted,
+    tasksInProgress,
+    tasksRemaining,
+    tasksTotal: tasksCompleted + tasksInProgress + tasksRemaining,
     alertCount: alerts.length,
     garbageCount,
   };
@@ -109,7 +109,8 @@ export async function getCommandCenterData(dateStr) {
       propertyId: row.property_id,
       address: row.address,
       city: row.city,
-      standardTasks: row.standard_tasks,
+      taskName: row.task_name,
+      taskRole: row.task_role,
       assignmentOrder: row.assignment_order,
       source: row.source,
       status: row.assignment_status,
@@ -121,7 +122,7 @@ export async function getCommandCenterData(dateStr) {
     status: deriveWorkerStatus(w.timeEntry, w.assignments),
     checkIn: w.timeEntry?.check_in || null,
     checkOut: w.timeEntry?.check_out || null,
-    completedCount: w.assignments.filter(a => a.status === 'completed').length,
+    completedCount: w.assignments.filter(a => a.status === 'done' || a.status === 'completed').length,
     totalCount: w.assignments.length,
   }));
 
@@ -142,8 +143,9 @@ async function getAssignmentsWithDetails(planId) {
     `SELECT
        pa.id AS assignment_id, pa.worker_id, pa.property_id,
        pa.assignment_order, pa.source, pa.status AS assignment_status,
+       pa.task_name, pa.worker_role AS task_role,
        w.name AS worker_name, w.phone_number,
-       p.address, p.city, p.standard_tasks
+       p.address, p.city
      FROM plan_assignments pa
      JOIN workers w ON w.id = pa.worker_id
      JOIN properties p ON p.id = pa.property_id
@@ -159,7 +161,7 @@ async function getTimeEntries(dateStr) {
     `SELECT te.worker_id, te.check_in, te.check_out, te.is_flagged, te.flag_reason
      FROM time_entries te
      JOIN workers w ON w.id = te.worker_id
-     WHERE te.date = $1 AND w.worker_role = 'field'`,
+     WHERE te.date = $1 AND w.worker_role IN ('field', 'cleaning', 'joker')`,
     [dateStr]
   );
   return rows;
