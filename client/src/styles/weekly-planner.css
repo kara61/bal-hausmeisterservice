@@ -1,278 +1,383 @@
-/* Weekly Planner */
+/* ── Weekly Planner ────────────────────────────────────── */
 .weekly-planner {
-  padding: 1.5rem;
+  padding: 0;
 }
 
-.weekly-planner .top-bar {
+/* Header */
+.wp-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.weekly-planner .week-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.weekly-planner .week-nav button {
-  padding: 0.25rem 0.6rem;
-}
-
-.weekly-planner .week-label {
-  font-weight: 700;
-  font-size: 1.05rem;
-}
-
-.weekly-planner .mode-badge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.weekly-planner .mode-badge.history {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-}
-
-.weekly-planner .mode-badge.forecast {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
-}
-
-.weekly-planner .mode-badge.current {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-}
-
-/* Filter bar */
-.weekly-planner .filter-bar {
+.wp-nav {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 0;
-  margin-bottom: 1rem;
-  border-top: 1px solid var(--border-default);
-  border-bottom: 1px solid var(--border-default);
-  flex-wrap: wrap;
+}
+
+.wp-today-btn {
   font-size: 0.8rem;
 }
 
-.weekly-planner .filter-bar .filter-label {
-  color: var(--text-muted);
-  margin-right: 0.25rem;
-  font-size: 0.75rem;
+.wp-mode-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.weekly-planner .type-pill {
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
+.wp-mode-badge.history  { background: var(--success-soft); color: var(--success); }
+.wp-mode-badge.forecast { background: rgba(168, 85, 247, 0.12); color: #c084fc; }
+.wp-mode-badge.current  { background: var(--info-soft); color: var(--info); }
+
+/* Filter bar */
+.wp-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.wp-type-pills {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.wp-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
   cursor: pointer;
   border: 1px solid;
-  user-select: none;
-  transition: opacity 0.15s;
-}
-
-.weekly-planner .type-pill.inactive {
+  background: none;
+  transition: all 0.15s;
   opacity: 0.35;
 }
 
-.weekly-planner .type-pill.field { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #60a5fa; }
-.weekly-planner .type-pill.cleaning { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; color: #4ade80; }
-.weekly-planner .type-pill.garbage { background: rgba(168, 85, 247, 0.1); border-color: #a855f7; color: #c084fc; }
-.weekly-planner .type-pill.extra { background: rgba(234, 179, 8, 0.1); border-color: #eab308; color: #facc15; }
-
-.weekly-planner .filter-sep {
-  width: 1px;
-  height: 18px;
-  background: var(--border-default);
-  margin: 0 0.25rem;
+.wp-type-pill.active {
+  opacity: 1;
 }
 
-.weekly-planner .filter-bar select {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
+.wp-type-pill.field    { border-color: #3b82f6; color: #60a5fa; }
+.wp-type-pill.field.active    { background: rgba(59, 130, 246, 0.12); }
+.wp-type-pill.cleaning { border-color: #22c55e; color: #4ade80; }
+.wp-type-pill.cleaning.active { background: rgba(34, 197, 94, 0.12); }
+.wp-type-pill.garbage  { border-color: #a855f7; color: #c084fc; }
+.wp-type-pill.garbage.active  { background: rgba(168, 85, 247, 0.12); }
+.wp-type-pill.extra    { border-color: #eab308; color: #facc15; }
+.wp-type-pill.extra.active    { background: rgba(234, 179, 8, 0.12); }
+
+.wp-filter-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-default);
+  margin: 0 0.25rem;
+  flex-shrink: 0;
+}
+
+.wp-filter-select {
+  width: auto !important;
+  min-width: 0;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.5rem;
 }
 
 /* Calendar grid */
-.weekly-planner .calendar-grid {
+.wp-calendar-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   overflow: hidden;
+  background: var(--bg-surface);
 }
 
-.weekly-planner .day-column {
-  border-right: 1px solid var(--border-default);
+.wp-day-column {
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
 }
 
-.weekly-planner .day-column:last-child {
+.wp-day-column:last-child {
   border-right: none;
 }
 
-.weekly-planner .day-header {
-  font-weight: 700;
-  padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid var(--border-default);
-  background: var(--bg-secondary);
+.wp-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-2);
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
-.weekly-planner .day-header.today {
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
+.wp-day-name {
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
 }
 
-.weekly-planner .day-header .forecast-label {
-  font-size: 0.65rem;
+.wp-day-date {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.wp-today-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--info);
+  flex-shrink: 0;
+  animation: wp-pulse 2s ease-in-out infinite;
+}
+
+@keyframes wp-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.wp-day-column.is-today .wp-day-header {
+  background: var(--info-soft);
+  color: var(--info);
+  border-bottom-color: var(--info-border);
+}
+
+.wp-forecast-tag {
+  font-size: 0.6rem;
   color: var(--text-muted);
   font-weight: 400;
-  margin-left: 0.25rem;
+  padding: 1px 4px;
+  background: rgba(168, 85, 247, 0.1);
+  border-radius: 3px;
+  color: #c084fc;
 }
 
-.weekly-planner .day-body {
-  padding: 0.5rem;
-  min-height: 120px;
+.wp-day-body {
+  flex: 1;
+  padding: 0.375rem;
+  min-height: 100px;
 }
 
-.weekly-planner .day-body.today-bg {
-  background: rgba(59, 130, 246, 0.03);
+.wp-day-column.is-today .wp-day-body {
+  background: rgba(96, 165, 250, 0.02);
 }
 
-.weekly-planner .day-body.forecast-bg {
-  opacity: 0.7;
+.wp-day-column.is-forecast .wp-day-body {
+  opacity: 0.75;
+}
+
+.wp-day-footer {
+  padding: 0.25rem 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg-surface-2);
 }
 
 /* Task cards */
-.weekly-planner .task-card {
-  padding: 0.4rem 0.5rem;
-  border-radius: 4px;
-  margin-bottom: 0.4rem;
+.wp-task {
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.375rem;
+  border: 1px solid;
   border-left: 3px solid;
   font-size: 0.75rem;
-  border-width: 1px;
-  border-left-width: 3px;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 
-.weekly-planner .task-card.field {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(30, 58, 95, 0.6);
+.wp-task:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.wp-task:last-child {
+  margin-bottom: 0;
+}
+
+.wp-task.is-done {
+  opacity: 0.6;
+}
+
+.wp-task.field {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(30, 58, 95, 0.4);
   border-left-color: #3b82f6;
 }
 
-.weekly-planner .task-card.cleaning {
-  background: rgba(34, 197, 94, 0.08);
-  border-color: rgba(22, 101, 52, 0.6);
+.wp-task.cleaning {
+  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(22, 101, 52, 0.4);
   border-left-color: #22c55e;
 }
 
-.weekly-planner .task-card.garbage {
-  background: rgba(168, 85, 247, 0.08);
-  border-color: rgba(76, 29, 149, 0.6);
+.wp-task.garbage {
+  background: rgba(168, 85, 247, 0.06);
+  border-color: rgba(76, 29, 149, 0.4);
   border-left-color: #a855f7;
 }
 
-.weekly-planner .task-card.extra {
-  background: rgba(234, 179, 8, 0.08);
-  border-color: rgba(146, 64, 14, 0.6);
+.wp-task.extra {
+  background: rgba(234, 179, 8, 0.06);
+  border-color: rgba(146, 64, 14, 0.4);
   border-left-color: #eab308;
 }
 
-.weekly-planner .task-card.forecast-card {
+.wp-task.forecast {
   border-style: dashed;
   border-left-style: solid;
 }
 
-.weekly-planner .task-card .card-top {
+.wp-task-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.15rem;
 }
 
-.weekly-planner .task-card .type-label {
-  font-size: 0.6rem;
-  text-transform: uppercase;
+.wp-task-type {
+  display: flex;
+  align-items: center;
+}
+
+.wp-task-type.field    { color: #60a5fa; }
+.wp-task-type.cleaning { color: #4ade80; }
+.wp-task-type.garbage  { color: #c084fc; }
+.wp-task-type.extra    { color: #facc15; }
+
+.wp-task-status {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wp-task-status.done        { color: var(--success); }
+.wp-task-status.postponed   { color: var(--warning); }
+.wp-task-status.missed      { color: var(--danger); }
+.wp-task-status.in_progress { color: var(--info); }
+
+.wp-task-property {
   font-weight: 600;
+  font-size: 0.78rem;
+  line-height: 1.3;
 }
 
-.weekly-planner .task-card .type-label.field { color: #60a5fa; }
-.weekly-planner .task-card .type-label.cleaning { color: #4ade80; }
-.weekly-planner .task-card .type-label.garbage { color: #c084fc; }
-.weekly-planner .task-card .type-label.extra { color: #facc15; }
-
-.weekly-planner .task-card .status-icon { font-size: 0.7rem; }
-.weekly-planner .task-card .status-icon.done { color: #22c55e; }
-.weekly-planner .task-card .status-icon.postponed { color: #f59e0b; }
-.weekly-planner .task-card .status-icon.missed { color: #ef4444; }
-.weekly-planner .task-card .status-icon.in_progress { color: #3b82f6; }
-
-.weekly-planner .task-card .property-name {
-  font-weight: 600;
-  margin: 0.15rem 0;
-}
-
-.weekly-planner .task-card .task-name {
+.wp-task-name {
   color: var(--text-muted);
   font-size: 0.7rem;
 }
 
-.weekly-planner .task-card .worker-name {
-  font-size: 0.7rem;
-  margin-top: 0.15rem;
+.wp-task-worker {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  margin-top: 0.2rem;
 }
 
-.weekly-planner .task-card .worker-name.field { color: #60a5fa; }
-.weekly-planner .task-card .worker-name.cleaning { color: #4ade80; }
+.wp-task-worker.field    { color: #60a5fa; }
+.wp-task-worker.cleaning { color: #4ade80; }
+.wp-task-worker.garbage  { color: #c084fc; }
+.wp-task-worker.extra    { color: #facc15; }
 
-.weekly-planner .task-card .postpone-note {
+.wp-task-postpone {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.65rem;
-  color: #f59e0b;
+  color: var(--warning);
   margin-top: 0.15rem;
 }
 
-.weekly-planner .no-tasks {
+.wp-no-tasks {
   color: var(--text-muted);
   font-size: 0.75rem;
   text-align: center;
-  padding: 1.5rem 0;
+  padding: 2rem 0.5rem;
   font-style: italic;
 }
 
 /* Legend */
-.weekly-planner .legend {
+.wp-legend {
   display: flex;
   gap: 1rem;
-  padding: 0.6rem 0;
-  margin-top: 0.5rem;
+  padding: 0.75rem 0;
+  margin-top: 0.75rem;
   flex-wrap: wrap;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
 }
 
-.weekly-planner .legend .dashed-hint {
-  margin-left: auto;
+.wp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
+.wp-legend-dashed {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--border-default);
+  border-radius: 3px;
+  font-size: 0.68rem;
+}
+
+/* Responsive */
 @media (max-width: 900px) {
-  .weekly-planner .calendar-grid {
+  .wp-calendar-grid {
     grid-template-columns: 1fr;
   }
-  .weekly-planner .day-column {
+  .wp-day-column {
     border-right: none;
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
   }
-  .weekly-planner .day-column:last-child {
+  .wp-day-column:last-child {
     border-bottom: none;
   }
+  .wp-day-body {
+    min-height: auto;
+  }
+  .wp-header {
+    flex-direction: column;
+  }
 }
+
+/* Light mode adjustments */
+[data-theme="light"] .wp-type-pill.field    { color: #2563eb; border-color: #3b82f6; }
+[data-theme="light"] .wp-type-pill.cleaning { color: #16a34a; border-color: #22c55e; }
+[data-theme="light"] .wp-type-pill.garbage  { color: #7c3aed; border-color: #a855f7; }
+[data-theme="light"] .wp-type-pill.extra    { color: #ca8a04; border-color: #eab308; }
+
+[data-theme="light"] .wp-task-type.field    { color: #2563eb; }
+[data-theme="light"] .wp-task-type.cleaning { color: #16a34a; }
+[data-theme="light"] .wp-task-type.garbage  { color: #7c3aed; }
+[data-theme="light"] .wp-task-type.extra    { color: #ca8a04; }
+
+[data-theme="light"] .wp-task-worker.field    { color: #2563eb; }
+[data-theme="light"] .wp-task-worker.cleaning { color: #16a34a; }
+[data-theme="light"] .wp-task-worker.garbage  { color: #7c3aed; }
+[data-theme="light"] .wp-task-worker.extra    { color: #ca8a04; }
+
+[data-theme="light"] .wp-task.field    { background: rgba(59, 130, 246, 0.06); border-color: rgba(59, 130, 246, 0.2); border-left-color: #3b82f6; }
+[data-theme="light"] .wp-task.cleaning { background: rgba(34, 197, 94, 0.06); border-color: rgba(34, 197, 94, 0.2); border-left-color: #22c55e; }
+[data-theme="light"] .wp-task.garbage  { background: rgba(168, 85, 247, 0.06); border-color: rgba(168, 85, 247, 0.2); border-left-color: #a855f7; }
+[data-theme="light"] .wp-task.extra    { background: rgba(234, 179, 8, 0.06); border-color: rgba(234, 179, 8, 0.2); border-left-color: #eab308; }
