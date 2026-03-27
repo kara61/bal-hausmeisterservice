@@ -252,8 +252,8 @@ describeWithDb('Analytics query functions', () => {
   });
 
   it('getWorkerAnalytics excludes non-field workers', async () => {
-    const fieldWorker = await createTestWorker({ name: 'Ali', is_field_worker: true });
-    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', is_field_worker: false });
+    const fieldWorker = await createTestWorker({ name: 'Ali', worker_role: 'field' });
+    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', worker_role: 'office' });
 
     await pool.query(
       `INSERT INTO analytics_daily (date, worker_id, properties_completed, properties_scheduled, total_duration_minutes, photos_submitted, photos_required, tasks_completed, tasks_postponed, overtime_minutes, check_in_time, sick_leave_declared)

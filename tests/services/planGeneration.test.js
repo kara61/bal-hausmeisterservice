@@ -120,8 +120,8 @@ describeWithDb('generateDraftPlan', () => {
   });
 
   it('excludes non-field workers from plan generation', async () => {
-    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', is_field_worker: true });
-    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', is_field_worker: false });
+    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', worker_role: 'field' });
+    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', worker_role: 'office' });
     const prop = await createTestProperty({ assigned_weekday: 1, address: 'Teststr 1' });
 
     const plan = await generateDraftPlan('2026-03-30');

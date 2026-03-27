@@ -105,8 +105,8 @@ describeWithDb('getCommandCenterData', () => {
 
   it('excludes non-field worker time entries from timeline', async () => {
     const today = '2026-03-26';
-    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', is_field_worker: true });
-    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', is_field_worker: false });
+    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', worker_role: 'field' });
+    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', worker_role: 'office' });
     const property = await createTestProperty({ assigned_weekday: 4 });
     const plan = await createTestPlan({ plan_date: today, status: 'approved' });
     await createTestAssignment(plan.id, fieldWorker.id, property.id);
