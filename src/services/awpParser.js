@@ -52,6 +52,25 @@ function isValidDate(month, day, year = 2024) {
  * @returns {Promise<Array<{trash_type: string, collection_date: string}>>}
  */
 export async function parseAwpPdf(pdfBuffer, year) {
+  // Polyfill DOM APIs required by pdfjs-dist in serverless environments
+  if (typeof globalThis.DOMMatrix === 'undefined') {
+    globalThis.DOMMatrix = class DOMMatrix {
+      constructor(init) {
+        const v = init || [1, 0, 0, 1, 0, 0];
+        this.a = v[0]; this.b = v[1]; this.c = v[2];
+        this.d = v[3]; this.e = v[4]; this.f = v[5];
+      }
+    };
+  }
+  if (typeof globalThis.ImageData === 'undefined') {
+    globalThis.ImageData = class ImageData {
+      constructor(w, h) { this.width = w; this.height = h; this.data = new Uint8ClampedArray(w * h * 4); }
+    };
+  }
+  if (typeof globalThis.Path2D === 'undefined') {
+    globalThis.Path2D = class Path2D {};
+  }
+
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
   const data = new Uint8Array(pdfBuffer.buffer || pdfBuffer);
