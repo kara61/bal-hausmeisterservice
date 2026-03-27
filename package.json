@@ -10,6 +10,9 @@
     "build": "cd client && npm install && npx vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:smoke": "vitest run tests/api/",
+    "test:coverage": "vitest run --coverage",
+    "test:all": "vitest run",
     "migrate": "node src/db/migrate.js"
   },
   "keywords": [],

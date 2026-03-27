@@ -1,3 +1,6 @@
+import { config as dotenvConfig } from 'dotenv';
+dotenvConfig({ path: '.env.test' });
+
 import { pool } from '../src/db/pool.js';
 
 // Check if database is available before running tests
