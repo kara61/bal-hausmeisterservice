@@ -72,7 +72,7 @@ export async function generateDraftPlan(dateStr) {
             COALESCE(wp.preferred_properties, '{}') AS preferred_properties
      FROM workers w
      LEFT JOIN worker_preferences wp ON wp.worker_id = w.id
-     WHERE w.is_active = true AND w.is_field_worker = true`
+     WHERE w.is_active = true AND w.worker_role = 'field'`
   );
 
   // Get sick workers for this date
@@ -245,7 +245,7 @@ export async function redistributeSickWorkers(dateStr) {
              WHERE pa2.daily_plan_id = $1 AND pa2.worker_id = w.id) AS assignment_count
      FROM workers w
      LEFT JOIN worker_preferences wp ON wp.worker_id = w.id
-     WHERE w.is_active = true AND w.is_field_worker = true AND w.id != ALL($2::int[])`,
+     WHERE w.is_active = true AND w.worker_role = 'field' AND w.id != ALL($2::int[])`,
     [plan.id, [...sickIds]]
   );
 
