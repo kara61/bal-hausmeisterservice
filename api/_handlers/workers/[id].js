@@ -13,8 +13,9 @@ export default withErrorHandler(async (req, res) => {
   }
 
   if (req.method === 'PUT') {
-    const fields = ['name', 'phone_number', 'worker_type', 'hourly_rate', 'monthly_salary', 'vacation_entitlement', 'registration_date'];
+    const fields = ['name', 'phone_number', 'worker_type', 'hourly_rate', 'monthly_salary', 'vacation_entitlement', 'registration_date', 'is_field_worker'];
     const numericFields = new Set(['hourly_rate', 'monthly_salary', 'vacation_entitlement']);
+    const booleanFields = new Set(['is_field_worker']);
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -25,6 +26,9 @@ export default withErrorHandler(async (req, res) => {
         let val = req.body[field];
         if (numericFields.has(field) && (val === '' || val === null)) {
           val = null;
+        }
+        if (booleanFields.has(field)) {
+          val = Boolean(val);
         }
         values.push(val);
         paramIndex++;
