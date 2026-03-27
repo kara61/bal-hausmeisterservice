@@ -22,6 +22,7 @@ export async function cleanDb() {
     DELETE FROM extra_jobs;
     DELETE FROM team_members;
     DELETE FROM teams;
+    DELETE FROM hour_balances;
     DELETE FROM property_tasks;
     DELETE FROM properties;
     DELETE FROM monthly_reports;
@@ -137,6 +138,23 @@ export async function createTestVisitPhoto(visitId, photoUrl = 'https://example.
   const result = await pool.query(
     `INSERT INTO property_visit_photos (property_visit_id, photo_url) VALUES ($1, $2) RETURNING *`,
     [visitId, photoUrl]
+  );
+  return result.rows[0];
+}
+
+export async function createTestHourBalance(workerId, overrides = {}) {
+  const defaults = {
+    year: 2026,
+    month: 1,
+    surplus_hours: 0,
+    payout_hours: 0,
+    note: null,
+  };
+  const h = { ...defaults, ...overrides };
+  const result = await pool.query(
+    `INSERT INTO hour_balances (worker_id, year, month, surplus_hours, payout_hours, note)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    [workerId, h.year, h.month, h.surplus_hours, h.payout_hours, h.note]
   );
   return result.rows[0];
 }
