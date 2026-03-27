@@ -71,10 +71,15 @@ export async function parseAwpPdf(pdfBuffer, year) {
     globalThis.Path2D = class Path2D {};
   }
 
-  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  // Pre-load worker into globalThis so pdfjs-dist doesn't try to import it dynamically
+  // (the .worker.mjs file isn't bundled by Vercel's serverless bundler)
+  if (!globalThis.pdfjsWorker) {
+    globalThis.pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+  }
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
   const data = new Uint8Array(pdfBuffer.buffer || pdfBuffer);
-  const doc = await getDocument({ data }).promise;
+  const doc = await pdfjsLib.getDocument({ data, disableAutoFetch: true, isEvalSupported: false }).promise;
   const results = [];
 
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
