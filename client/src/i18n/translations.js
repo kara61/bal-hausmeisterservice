@@ -220,6 +220,7 @@ export const translations = {
     'properties.dayOfMonth': 'Tag des Monats',
     'properties.taskCount': 'Aufgaben',
     'properties.role': 'Rolle',
+    'properties.noTasks': 'Noch keine Aufgaben. Klicke "Aufgabe hinzufuegen" um zu starten.',
 
     // Extra Jobs
     'extraJobs.title': 'Zusatzauftraege',
@@ -605,6 +606,7 @@ export const translations = {
     'properties.dayOfMonth': 'Day of Month',
     'properties.taskCount': 'Tasks',
     'properties.role': 'Role',
+    'properties.noTasks': 'No tasks yet. Click "Add Task" to get started.',
 
     // Extra Jobs
     'extraJobs.title': 'Extra Jobs',

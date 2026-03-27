@@ -714,6 +714,12 @@ h1, h2, h3, h4 {
   gap: 1rem;
 }
 
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
 .form-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -733,6 +739,82 @@ h1, h2, h3, h4 {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+
+/* ── Property Form Tasks ──────────────────────────────── */
+.prop-tasks-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.prop-tasks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.prop-tasks-header .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.prop-tasks-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: var(--bg-surface-2);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+}
+
+.prop-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.prop-task-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 36px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.prop-task-row:hover {
+  border-color: var(--border-default);
+}
+
+.prop-task-row-header {
+  background: transparent;
+  border-color: transparent;
+  padding-bottom: 0.25rem;
+}
+
+.prop-task-row-header > div {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.prop-task-col-action {
+  display: flex;
+  justify-content: center;
 }
 
 
@@ -1144,10 +1226,18 @@ h1, h2, h3, h4 {
     margin-left: var(--sidebar-collapsed);
     padding: 1rem;
   }
-  .form-row {
+  .form-row,
+  .form-row-3 {
     grid-template-columns: 1fr;
   }
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+  .prop-task-row {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .prop-task-row-header {
+    display: none;
   }
 }

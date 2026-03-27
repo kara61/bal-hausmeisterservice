@@ -77,7 +77,7 @@ export default function PropertyForm({ property, onSubmit, onCancel }) {
     <form onSubmit={handleSubmit} className="form-card">
       <div className="form-card-title">{property ? t('properties.editTitle') : t('properties.newTitle')}</div>
 
-      <div className="form-row">
+      <div className="form-row-3">
         <div className="form-group">
           <label className="form-label">{t('common.address')} *</label>
           <input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="input" />
@@ -102,97 +102,106 @@ export default function PropertyForm({ property, onSubmit, onCancel }) {
       </div>
 
       {/* Tasks Section */}
-      <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-        <div className="flex items-center" style={{ justifyContent: 'space-between', marginBottom: '12px' }}>
-          <label className="form-label" style={{ margin: 0, fontWeight: 600 }}>{t('properties.tasks')}</label>
+      <div className="prop-tasks-section">
+        <div className="prop-tasks-header">
+          <div className="section-title" style={{ marginBottom: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            {t('properties.tasks')} ({tasks.length})
+          </div>
           <button type="button" onClick={addTask} className="btn btn-secondary btn-sm">
-            + {t('properties.addTask')}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {t('properties.addTask')}
           </button>
         </div>
 
         {tasks.length === 0 && (
-          <div className="text-muted" style={{ padding: '12px 0', textAlign: 'center', fontSize: '0.875rem' }}>
-            {t('properties.addTask')}
+          <div className="prop-tasks-empty">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            {t('properties.noTasks')}
           </div>
         )}
 
-        {tasks.map((task, i) => (
-          <div key={i} className="form-row" style={{ alignItems: 'flex-end', marginBottom: '8px', gap: '8px' }}>
-            <div className="form-group" style={{ flex: 2 }}>
-              {i === 0 && <label className="form-label">{t('properties.taskName')}</label>}
-              <input
-                value={task.task_name}
-                onChange={e => updateTask(i, 'task_name', e.target.value)}
-                placeholder={t('properties.taskName')}
-                className="input"
-              />
+        {tasks.length > 0 && (
+          <div className="prop-tasks-list">
+            {/* Column headers */}
+            <div className="prop-task-row prop-task-row-header">
+              <div className="prop-task-col-name">{t('properties.taskName')}</div>
+              <div className="prop-task-col-role">{t('properties.role')}</div>
+              <div className="prop-task-col-schedule">{t('properties.schedule')}</div>
+              <div className="prop-task-col-extra">{t('properties.scheduleDay')}</div>
+              <div className="prop-task-col-action" />
             </div>
 
-            <div className="form-group" style={{ flex: 1 }}>
-              {i === 0 && <label className="form-label">{t('properties.role')}</label>}
-              <select value={task.worker_role} onChange={e => updateTask(i, 'worker_role', e.target.value)} className="select">
-                <option value="field">{t('workers.role.field')}</option>
-                <option value="cleaning">{t('workers.role.cleaning')}</option>
-                <option value="office">{t('workers.role.office')}</option>
-              </select>
-            </div>
+            {tasks.map((task, i) => (
+              <div key={i} className="prop-task-row">
+                <div className="prop-task-col-name">
+                  <input
+                    value={task.task_name}
+                    onChange={e => updateTask(i, 'task_name', e.target.value)}
+                    placeholder={t('properties.taskName')}
+                    className="input"
+                  />
+                </div>
 
-            <div className="form-group" style={{ flex: 1 }}>
-              {i === 0 && <label className="form-label">{t('properties.schedule')}</label>}
-              <select value={task.schedule_type} onChange={e => updateTask(i, 'schedule_type', e.target.value)} className="select">
-                <option value="property_default">{t('properties.scheduleDefault')}</option>
-                <option value="weekly">{t('properties.scheduleWeekly')}</option>
-                <option value="biweekly">{t('properties.scheduleBiweekly')}</option>
-                <option value="monthly">{t('properties.scheduleMonthly')}</option>
-              </select>
-            </div>
+                <div className="prop-task-col-role">
+                  <select value={task.worker_role} onChange={e => updateTask(i, 'worker_role', e.target.value)} className="select">
+                    <option value="field">{t('workers.role.field')}</option>
+                    <option value="cleaning">{t('workers.role.cleaning')}</option>
+                    <option value="office">{t('workers.role.office')}</option>
+                  </select>
+                </div>
 
-            {(task.schedule_type === 'weekly' || task.schedule_type === 'biweekly') && (
-              <div className="form-group" style={{ flex: 1 }}>
-                {i === 0 && <label className="form-label">{t('properties.scheduleDay')}</label>}
-                <select value={task.schedule_day} onChange={e => updateTask(i, 'schedule_day', e.target.value)} className="select">
-                  <option value="">{t('properties.scheduleDay')}</option>
-                  {WEEKDAY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
-                  ))}
-                </select>
+                <div className="prop-task-col-schedule">
+                  <select value={task.schedule_type} onChange={e => updateTask(i, 'schedule_type', e.target.value)} className="select">
+                    <option value="property_default">{t('properties.scheduleDefault')}</option>
+                    <option value="weekly">{t('properties.scheduleWeekly')}</option>
+                    <option value="biweekly">{t('properties.scheduleBiweekly')}</option>
+                    <option value="monthly">{t('properties.scheduleMonthly')}</option>
+                  </select>
+                </div>
+
+                <div className="prop-task-col-extra">
+                  {(task.schedule_type === 'weekly' || task.schedule_type === 'biweekly') && (
+                    <select value={task.schedule_day} onChange={e => updateTask(i, 'schedule_day', e.target.value)} className="select">
+                      <option value="">{t('properties.scheduleDay')}</option>
+                      {WEEKDAY_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
+                      ))}
+                    </select>
+                  )}
+                  {task.schedule_type === 'monthly' && (
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={task.schedule_day}
+                      onChange={e => updateTask(i, 'schedule_day', e.target.value)}
+                      placeholder="1–31"
+                      className="input"
+                    />
+                  )}
+                  {task.schedule_type === 'biweekly' && (
+                    <input
+                      type="date"
+                      value={task.biweekly_start_date}
+                      onChange={e => updateTask(i, 'biweekly_start_date', e.target.value)}
+                      className="input"
+                    />
+                  )}
+                  {task.schedule_type === 'property_default' && (
+                    <span className="text-muted text-sm">—</span>
+                  )}
+                </div>
+
+                <div className="prop-task-col-action">
+                  <button type="button" onClick={() => removeTask(i)} className="btn btn-danger btn-icon btn-sm" title="Remove">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
               </div>
-            )}
-
-            {task.schedule_type === 'monthly' && (
-              <div className="form-group" style={{ flex: 1 }}>
-                {i === 0 && <label className="form-label">{t('properties.dayOfMonth')}</label>}
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={task.schedule_day}
-                  onChange={e => updateTask(i, 'schedule_day', e.target.value)}
-                  placeholder="1-31"
-                  className="input"
-                />
-              </div>
-            )}
-
-            {task.schedule_type === 'biweekly' && (
-              <div className="form-group" style={{ flex: 1 }}>
-                {i === 0 && <label className="form-label">{t('properties.biweeklyStart')}</label>}
-                <input
-                  type="date"
-                  value={task.biweekly_start_date}
-                  onChange={e => updateTask(i, 'biweekly_start_date', e.target.value)}
-                  className="input"
-                />
-              </div>
-            )}
-
-            <div style={{ paddingBottom: '4px' }}>
-              <button type="button" onClick={() => removeTask(i)} className="btn btn-danger btn-sm" title="Remove">
-                ✕
-              </button>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       <div className="form-actions">
