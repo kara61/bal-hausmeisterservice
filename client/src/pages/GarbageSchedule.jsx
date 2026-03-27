@@ -55,11 +55,30 @@ export default function GarbageSchedule() {
 
   useEffect(() => { loadProperties(); loadSummary(); loadUpcoming(); }, []);
 
-  // Build weekly view from upcoming data
+  // Group upcoming entries by date string for quick lookup
+  const upcomingByDate = useMemo(() => {
+    const map = new Map();
+    for (const u of upcoming) {
+      const d = String(u.collection_date).split('T')[0];
+      if (!map.has(d)) map.set(d, []);
+      map.get(d).push(u);
+    }
+    return map;
+  }, [upcoming]);
+
+  const groupByProperty = (entries) => {
+    const map = new Map();
+    for (const e of entries) {
+      if (!map.has(e.property_id)) map.set(e.property_id, { address: e.address, city: e.city, types: [] });
+      map.get(e.property_id).types.push(e.trash_type);
+    }
+    return [...map.values()];
+  };
+
+  // Build weekly view: each day shows "take out" (collection tomorrow) and "take in" (collection today)
   const weekData = useMemo(() => {
     if (upcoming.length === 0) return [];
 
-    // Get start of current week (Monday)
     const now = new Date();
     const dayOfWeek = now.getDay();
     const monday = new Date(now);
@@ -72,20 +91,14 @@ export default function GarbageSchedule() {
       d.setDate(monday.getDate() + i);
       const dateStr = d.toISOString().split('T')[0];
       const dayNum = d.getDay();
-      const entries = upcoming.filter(u => {
-        const ud = String(u.collection_date).split('T')[0];
-        return ud === dateStr;
-      });
 
-      // Group by property
-      const byProperty = new Map();
-      for (const e of entries) {
-        const key = e.property_id;
-        if (!byProperty.has(key)) {
-          byProperty.set(key, { address: e.address, city: e.city, types: [] });
-        }
-        byProperty.get(key).types.push(e.trash_type);
-      }
+      // Tomorrow's date (collections tomorrow → take out today)
+      const tomorrow = new Date(d);
+      tomorrow.setDate(d.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      const takeIn = groupByProperty(upcomingByDate.get(dateStr) || []);
+      const takeOut = groupByProperty(upcomingByDate.get(tomorrowStr) || []);
 
       days.push({
         dateStr,
@@ -93,11 +106,12 @@ export default function GarbageSchedule() {
         shortDate: fmtShortDate(dateStr),
         isToday: dateStr === new Date().toISOString().split('T')[0],
         isWeekend: dayNum === 0 || dayNum === 6,
-        properties: [...byProperty.values()],
+        takeOut,
+        takeIn,
       });
     }
     return days;
-  }, [upcoming, weekOffset, dayNames]);
+  }, [upcoming, upcomingByDate, weekOffset, dayNames]);
 
   const weekLabel = useMemo(() => {
     if (weekData.length === 0) return '';
@@ -235,7 +249,7 @@ export default function GarbageSchedule() {
                 borderRadius: 'var(--radius-sm)',
                 padding: '0.75rem',
                 background: day.isToday ? 'var(--accent-soft)' : day.isWeekend ? 'var(--bg-surface-2)' : 'var(--bg-surface)',
-                opacity: day.isWeekend && day.properties.length === 0 ? 0.5 : 1,
+                opacity: day.isWeekend && day.takeOut.length === 0 && day.takeIn.length === 0 ? 0.5 : 1,
               }}
             >
               <div className="flex justify-between items-center mb-sm">
@@ -245,20 +259,50 @@ export default function GarbageSchedule() {
                 <span className="mono text-muted text-sm">{day.shortDate}</span>
               </div>
 
-              {day.properties.length === 0 ? (
+              {day.takeOut.length === 0 && day.takeIn.length === 0 ? (
                 <p className="text-muted text-sm" style={{ margin: 0 }}>—</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  {day.properties.map((prop, j) => (
-                    <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0', borderBottom: j < day.properties.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                      <span className="text-sm" style={{ fontWeight: 500 }}>{prop.address}</span>
-                      <div className="flex gap-xs flex-wrap" style={{ flexShrink: 0 }}>
-                        {prop.types.map(type => (
-                          <span key={type} className={`badge ${trashBadgeClass[type] || ''}`} style={{ ...trashBadgeStyle[type], fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>{trashLabel(type)}</span>
-                        ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {day.takeOut.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-xs mb-xs">
+                        <span style={{ fontSize: '0.85rem' }}>↗</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--warning)' }}>
+                          {lang === 'de' ? 'Rausstellen' : 'Take out'}
+                        </span>
                       </div>
+                      {day.takeOut.map((prop, j) => (
+                        <div key={`out-${j}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.2rem 0', borderBottom: j < day.takeOut.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
+                          <span className="text-sm" style={{ fontWeight: 500 }}>{prop.address}</span>
+                          <div className="flex gap-xs flex-wrap" style={{ flexShrink: 0 }}>
+                            {prop.types.map(type => (
+                              <span key={type} className={`badge ${trashBadgeClass[type] || ''}`} style={{ ...trashBadgeStyle[type], fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>{trashLabel(type)}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                  {day.takeIn.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-xs mb-xs">
+                        <span style={{ fontSize: '0.85rem' }}>↙</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--success)' }}>
+                          {lang === 'de' ? 'Reinholen' : 'Take in'}
+                        </span>
+                      </div>
+                      {day.takeIn.map((prop, j) => (
+                        <div key={`in-${j}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.2rem 0', borderBottom: j < day.takeIn.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
+                          <span className="text-sm" style={{ fontWeight: 500 }}>{prop.address}</span>
+                          <div className="flex gap-xs flex-wrap" style={{ flexShrink: 0 }}>
+                            {prop.types.map(type => (
+                              <span key={type} className={`badge ${trashBadgeClass[type] || ''}`} style={{ ...trashBadgeStyle[type], fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>{trashLabel(type)}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
