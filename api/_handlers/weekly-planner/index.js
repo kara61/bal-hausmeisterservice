@@ -104,13 +104,16 @@ async function getHistoryTasks(dates) {
     });
   }
 
-  // Extra jobs (task_assignments table)
+  // Extra jobs (task_assignments not linked to garbage_tasks)
   const { rows: extraRows } = await pool.query(
     `SELECT ta.date, ta.task_description, ta.status,
             p.address AS property_address, p.id AS property_id
      FROM task_assignments ta
      JOIN properties p ON p.id = ta.property_id
      WHERE ta.date = ANY($1)
+       AND NOT EXISTS (
+         SELECT 1 FROM garbage_tasks gt WHERE gt.task_assignment_id = ta.id
+       )
      ORDER BY ta.date, p.address`,
     [dates]
   );
@@ -242,13 +245,16 @@ async function getForecastTasks(dates) {
     });
   }
 
-  // Extra jobs with future dates
+  // Extra jobs with future dates (exclude garbage-linked assignments)
   const { rows: extraRows } = await pool.query(
     `SELECT ta.date, ta.task_description,
             p.address AS property_address, p.id AS property_id
      FROM task_assignments ta
      JOIN properties p ON p.id = ta.property_id
      WHERE ta.date = ANY($1)
+       AND NOT EXISTS (
+         SELECT 1 FROM garbage_tasks gt WHERE gt.task_assignment_id = ta.id
+       )
      ORDER BY ta.date, p.address`,
     [dates]
   );
