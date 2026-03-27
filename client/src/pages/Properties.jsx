@@ -75,6 +75,7 @@ export default function Properties() {
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: '36px' }}>#</th>
               <th>{t('common.address')}</th>
               <th>{t('common.city')}</th>
               <th>{t('properties.tasks')}</th>
@@ -83,8 +84,9 @@ export default function Properties() {
             </tr>
           </thead>
           <tbody>
-            {properties.map(p => (
+            {properties.map((p, i) => (
               <tr key={p.id}>
+                <td className="mono text-muted">{i + 1}</td>
                 <td style={{ fontWeight: 600 }}>{p.address}</td>
                 <td>{p.city}</td>
                 <td className="text-secondary">{p.standard_tasks || '—'}</td>
