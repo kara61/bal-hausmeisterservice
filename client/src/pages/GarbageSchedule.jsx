@@ -18,7 +18,7 @@ export default function GarbageSchedule() {
   const trashLabel = (type) => t(`garbage.${type}`) || type;
   const trashBadgeClass = { restmuell: 'badge-neutral', gelb: 'badge-warning' };
   const trashBadgeStyle = {
-    bio: { background: 'rgba(160, 120, 70, 0.15)', color: '#b8860b', border: '1px solid rgba(160, 120, 70, 0.3)' },
+    bio: { background: 'rgba(180, 60, 40, 0.15)', color: '#c0392b', border: '1px solid rgba(180, 60, 40, 0.3)' },
     papier: { background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.25)' },
   };
 
