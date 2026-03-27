@@ -47,6 +47,7 @@ import dailyPlansIdHandler from './_handlers/daily-plans/[id].js';
 import dailyPlansApproveHandler from './_handlers/daily-plans/approve.js';
 import planAssignmentsPostponeHandler from './_handlers/plan-assignments/[id]/postpone.js';
 import planAssignmentsIdHandler from './_handlers/plan-assignments/[id].js';
+import weeklyPlannerHandler from './_handlers/weekly-planner/index.js';
 import commandCenterHandler from './_handlers/command-center/index.js';
 import analyticsHandler from './_handlers/analytics/index.js';
 import analyticsExportHandler from './_handlers/analytics/export.js';
@@ -118,6 +119,9 @@ const routes = [
 
   // Daily Plans
   ['daily-plans', dailyPlansIndexHandler],
+
+  // Weekly Planner
+  ['weekly-planner', weeklyPlannerHandler],
 
   // Command Center
   ['command-center', commandCenterHandler],
