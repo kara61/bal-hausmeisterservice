@@ -16,7 +16,7 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
   const [form, setForm] = useState(() => {
     if (!worker) return {
       name: '', phone_number: '', worker_type: 'fulltime', hourly_rate: '', monthly_salary: '',
-      registration_date: '', vacation_entitlement: '', is_field_worker: true,
+      registration_date: '', vacation_entitlement: '', worker_role: 'field',
     };
     return {
       ...worker,
@@ -24,7 +24,7 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
       hourly_rate: worker.hourly_rate || '',
       monthly_salary: worker.monthly_salary || '',
       vacation_entitlement: worker.vacation_entitlement || '',
-      is_field_worker: worker.is_field_worker !== false,
+      worker_role: worker.worker_role || 'field',
     };
   });
 
@@ -75,16 +75,12 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label">{t('workers.fieldWorker')}</label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={form.is_field_worker}
-              onChange={e => update('is_field_worker', e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            {form.is_field_worker ? t('workers.filterField') : t('workers.office')}
-          </label>
+          <label className="form-label">{t('workers.role')}</label>
+          <select className="select" value={form.worker_role} onChange={e => update('worker_role', e.target.value)}>
+            <option value="field">{t('workers.role.field')}</option>
+            <option value="cleaning">{t('workers.role.cleaning')}</option>
+            <option value="office">{t('workers.role.office')}</option>
+          </select>
         </div>
 
         <div className="form-group">
