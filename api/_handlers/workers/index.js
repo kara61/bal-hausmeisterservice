@@ -24,7 +24,7 @@ export default withErrorHandler(async (req, res) => {
     }
 
     const role = worker_role || 'field';
-    if (!['field', 'cleaning', 'office'].includes(role)) {
+    if (!['field', 'cleaning', 'office', 'joker'].includes(role)) {
       return res.status(400).json({ error: 'worker_role must be field, cleaning, or office' });
     }
 

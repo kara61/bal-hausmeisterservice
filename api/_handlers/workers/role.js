@@ -10,7 +10,7 @@ export default withErrorHandler(async (req, res) => {
   }
 
   const { worker_id, role, force } = req.body;
-  if (!worker_id || !['field', 'cleaning', 'office'].includes(role)) {
+  if (!worker_id || !['field', 'cleaning', 'office', 'joker'].includes(role)) {
     return res.status(400).json({ error: 'worker_id and role (field/cleaning/office) are required' });
   }
 

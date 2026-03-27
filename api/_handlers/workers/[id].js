@@ -28,7 +28,7 @@ export default withErrorHandler(async (req, res) => {
           val = null;
         }
         if (enumFields.has(field)) {
-          if (!['field', 'cleaning', 'office'].includes(val)) {
+          if (!['field', 'cleaning', 'office', 'joker'].includes(val)) {
             return res.status(400).json({ error: 'worker_role must be field, cleaning, or office' });
           }
         }
