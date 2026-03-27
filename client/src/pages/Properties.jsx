@@ -40,6 +40,9 @@ export default function Properties() {
       if (sortKey === 'weekday') {
         va = a.assigned_weekday ?? 99;
         vb = b.assigned_weekday ?? 99;
+      } else if (sortKey === 'tasks') {
+        va = (a.tasks || []).length;
+        vb = (b.tasks || []).length;
       } else {
         va = (a[sortKey] || '').toLowerCase();
         vb = (b[sortKey] || '').toLowerCase();
@@ -117,7 +120,7 @@ export default function Properties() {
               <th style={{ width: '36px' }}>#</th>
               <SortHeader col="address">{t('common.address')}</SortHeader>
               <SortHeader col="city">{t('common.city')}</SortHeader>
-              <SortHeader col="standard_tasks">{t('properties.tasks')}</SortHeader>
+              <SortHeader col="tasks">{t('properties.tasks')}</SortHeader>
               <SortHeader col="weekday">{t('properties.weekday')}</SortHeader>
               <th>{t('common.actions')}</th>
             </tr>
@@ -128,7 +131,11 @@ export default function Properties() {
                 <td className="mono text-muted">{i + 1}</td>
                 <td style={{ fontWeight: 600 }}>{p.address}</td>
                 <td>{p.city}</td>
-                <td className="text-secondary">{p.standard_tasks || '—'}</td>
+                <td className="text-secondary">
+                  {p.tasks && p.tasks.length > 0
+                    ? p.tasks.map(t => t.task_name).join(', ')
+                    : '—'}
+                </td>
                 <td>
                   {p.assigned_weekday !== null && p.assigned_weekday !== undefined
                     ? <span className="badge badge-accent">{t(`day.${p.assigned_weekday}`)}</span>
