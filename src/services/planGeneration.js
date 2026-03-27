@@ -262,17 +262,25 @@ export async function redistributeSickWorkers(dateStr) {
   );
   if (sickAssignments.length === 0) return { reassigned: 0, details: [] };
 
-  // Get available workers with preferences and current assignment counts
+  // Get the roles of sick workers so we can find replacements with matching roles
+  const { rows: sickWorkerDetails } = await pool.query(
+    `SELECT id, worker_role FROM workers WHERE id = ANY($1::int[])`,
+    [[...sickIds]]
+  );
+  const sickWorkerRoleMap = new Map(sickWorkerDetails.map(w => [w.id, w.worker_role]));
+  const neededRoles = [...new Set(sickWorkerDetails.map(w => w.worker_role))];
+
+  // Get available workers with preferences and current assignment counts (BUG-015: match role dynamically)
   const { rows: workers } = await pool.query(
-    `SELECT w.id, w.name, w.phone_number,
+    `SELECT w.id, w.name, w.phone_number, w.worker_role,
             COALESCE(wp.is_flex_worker, false) AS is_flex,
             COALESCE(wp.max_properties_per_day, 4) AS max_properties,
             (SELECT COUNT(*) FROM plan_assignments pa2
              WHERE pa2.daily_plan_id = $1 AND pa2.worker_id = w.id) AS assignment_count
      FROM workers w
      LEFT JOIN worker_preferences wp ON wp.worker_id = w.id
-     WHERE w.is_active = true AND w.worker_role = 'field' AND w.id != ALL($2::int[])`,
-    [plan.id, [...sickIds]]
+     WHERE w.is_active = true AND w.worker_role = ANY($2::text[]) AND w.id != ALL($3::int[])`,
+    [plan.id, neededRoles, [...sickIds]]
   );
 
   let reassigned = 0;
@@ -286,7 +294,10 @@ export async function redistributeSickWorkers(dateStr) {
     );
     const propertyHistory = history.map(h => h.worker_id);
 
-    const withCounts = workers.map(w => ({
+    // BUG-015: filter replacement workers to same role as the sick worker
+    const sickRole = sickWorkerRoleMap.get(assignment.worker_id) || 'field';
+    const roleWorkers = workers.filter(w => w.worker_role === sickRole);
+    const withCounts = roleWorkers.map(w => ({
       ...w,
       assignment_count: Number(w.assignment_count),
     }));
@@ -371,6 +382,13 @@ export async function carryOverPlanTasks(fromDate, toDate) {
     targetPlan = newPlan;
   }
 
+  // BUG-016: start numbering carried-over assignments after existing max
+  const { rows: [{ max_order }] } = await pool.query(
+    `SELECT COALESCE(MAX(assignment_order), 0) AS max_order FROM plan_assignments WHERE daily_plan_id = $1`,
+    [targetPlan.id]
+  );
+  let nextOrder = max_order + 1;
+
   const carried = [];
   for (const assignment of incomplete) {
     // Mark original as carried_over
@@ -385,7 +403,7 @@ export async function carryOverPlanTasks(fromDate, toDate) {
        (daily_plan_id, worker_id, property_id, assignment_order, source, status, task_name, worker_role, carried_from_id)
        VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8) RETURNING *`,
       [targetPlan.id, assignment.worker_id, assignment.property_id,
-       assignment.assignment_order, assignment.source,
+       nextOrder++, assignment.source,
        assignment.task_name, assignment.worker_role, assignment.id]
     );
     carried.push(newAssignment);

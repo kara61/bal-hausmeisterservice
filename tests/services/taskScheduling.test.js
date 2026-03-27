@@ -123,6 +123,43 @@ describe('shouldTaskRunOnDate', () => {
   });
 });
 
+describe('BUG-013: timezone consistency between taskScheduling and weekly-planner', () => {
+  // Verify that getWeekday produces the same weekday as the weekly-planner helpers
+  // by testing dates across the entire week and near DST boundaries
+  const weekdayTests = [
+    { date: '2026-03-23', expected: 1, name: 'Monday' },
+    { date: '2026-03-24', expected: 2, name: 'Tuesday' },
+    { date: '2026-03-25', expected: 3, name: 'Wednesday' },
+    { date: '2026-03-26', expected: 4, name: 'Thursday' },
+    { date: '2026-03-27', expected: 5, name: 'Friday' },
+    { date: '2026-03-28', expected: 6, name: 'Saturday' },
+    { date: '2026-03-29', expected: 0, name: 'Sunday' },
+  ];
+
+  for (const { date, expected, name } of weekdayTests) {
+    it(`returns ${expected} (${name}) for ${date}`, () => {
+      expect(getWeekday(date)).toBe(expected);
+    });
+  }
+
+  it('handles DST-transition date (last Sunday of March in EU)', () => {
+    // 2026-03-29 is a Sunday — DST clocks spring forward
+    expect(getWeekday('2026-03-29')).toBe(0);
+  });
+
+  it('shouldTaskRunOnDate agrees with getWeekday for property_default', () => {
+    // If getWeekday says Monday(1), property_default should match weekday=1
+    for (const { date, expected } of weekdayTests) {
+      const task = { schedule_type: 'property_default' };
+      const property = { assigned_weekday: expected };
+      expect(shouldTaskRunOnDate(task, property, date)).toBe(true);
+      // And should NOT match a different weekday
+      const wrong = (expected + 1) % 7;
+      expect(shouldTaskRunOnDate(task, { assigned_weekday: wrong }, date)).toBe(false);
+    }
+  });
+});
+
 // --- Integration tests ---
 
 async function createTestTeam(date = '2026-03-23') {

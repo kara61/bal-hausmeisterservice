@@ -170,12 +170,13 @@ async function getTimeEntries(dateStr) {
 async function getAlerts(dateStr) {
   const alerts = [];
 
-  // Flagged time entries (unresolved)
+  // Flagged time entries (unresolved) — BUG-018: filter by date
   const { rows: flagged } = await pool.query(
     `SELECT te.id, te.worker_id, te.flag_reason, w.name AS worker_name
      FROM time_entries te JOIN workers w ON w.id = te.worker_id
-     WHERE te.is_flagged = true AND te.resolved = false
-     ORDER BY te.date DESC LIMIT 10`
+     WHERE te.is_flagged = true AND te.resolved = false AND te.date = $1
+     ORDER BY te.date DESC LIMIT 10`,
+    [dateStr]
   );
   for (const f of flagged) {
     alerts.push({ type: 'flagged_entry', id: f.id, workerId: f.worker_id, workerName: f.worker_name, reason: f.flag_reason });

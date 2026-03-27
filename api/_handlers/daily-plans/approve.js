@@ -13,7 +13,7 @@ export default withErrorHandler(async (req, res) => {
   const { id } = req.query;
   if (!id) return res.status(400).json({ error: 'Plan ID is required' });
 
-  const plan = await approvePlan(parseInt(id, 10), 'halil');
+  const plan = await approvePlan(parseInt(id, 10), req.user.username);
   const { sent } = await sendPlanAssignments(plan.id);
 
   return res.json({ ...plan, messages_sent: sent });

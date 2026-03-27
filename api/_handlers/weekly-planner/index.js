@@ -2,41 +2,63 @@ import { pool } from '../../../src/db/pool.js';
 import { checkAuth } from '../../_utils/auth.js';
 import { withErrorHandler } from '../../_utils/handler.js';
 
-// Helpers
-function getMonday(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  const day = d.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setUTCDate(d.getUTCDate() + diff);
-  return d;
+// Helpers — use YYYY-MM-DD string arithmetic to avoid timezone issues (BUG-013)
+
+function parseDateParts(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return { year: y, month: m, day: d };
+}
+
+function dateFromParts(year, month, day) {
+  return new Date(year, month - 1, day);
 }
 
 function toDateStr(d) {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getWeekday(dateStr) {
+  const { year, month, day } = parseDateParts(dateStr);
+  return dateFromParts(year, month, day).getDay();
+}
+
+function getMonday(dateStr) {
+  const { year, month, day } = parseDateParts(dateStr);
+  const d = dateFromParts(year, month, day);
+  const dow = d.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  return d;
 }
 
 function getWeekDates(mondayDate) {
   const dates = [];
   for (let i = 0; i < 5; i++) {
     const d = new Date(mondayDate);
-    d.setUTCDate(d.getUTCDate() + i);
+    d.setDate(d.getDate() + i);
     dates.push(toDateStr(d));
   }
   return dates;
 }
 
 function getCalendarWeek(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00Z');
+  const { year, month, day } = parseDateParts(dateStr);
+  const d = dateFromParts(year, month, day);
   const thursday = new Date(d);
-  thursday.setUTCDate(d.getUTCDate() + (4 - (d.getUTCDay() || 7)));
-  const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
+  thursday.setDate(d.getDate() + (4 - (d.getDay() || 7)));
+  const yearStart = new Date(thursday.getFullYear(), 0, 1);
   return Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
 }
 
 function isBiweeklyActive(targetDateStr, biweeklyStartDateStr) {
-  const target = new Date(targetDateStr + 'T00:00:00Z');
-  const start = new Date(biweeklyStartDateStr + 'T00:00:00Z');
-  const diffWeeks = Math.floor((target - start) / (7 * 86400000));
+  const tp = parseDateParts(targetDateStr);
+  const sp = parseDateParts(biweeklyStartDateStr);
+  const target = dateFromParts(tp.year, tp.month, tp.day);
+  const start = dateFromParts(sp.year, sp.month, sp.day);
+  const diffWeeks = Math.round((target - start) / (7 * 86400000));
   return diffWeeks % 2 === 0;
 }
 
@@ -154,9 +176,8 @@ async function getForecastTasks(dates) {
   );
 
   for (const dateStr of dates) {
-    const d = new Date(dateStr + 'T00:00:00Z');
-    const dayOfWeek = d.getUTCDay(); // 0=Sun, 1=Mon...
-    const dayOfMonth = d.getUTCDate();
+    const { year, month, day: dayOfMonth } = parseDateParts(dateStr);
+    const dayOfWeek = dateFromParts(year, month, dayOfMonth).getDay(); // 0=Sun, 1=Mon...
 
     for (const pt of ptRows) {
       let matches = false;
@@ -168,7 +189,9 @@ async function getForecastTasks(dates) {
       } else if (pt.schedule_type === 'biweekly') {
         matches = pt.schedule_day === dayOfWeek
           && pt.biweekly_start_date
-          && isBiweeklyActive(dateStr, toDateStr(new Date(pt.biweekly_start_date)));
+          && isBiweeklyActive(dateStr, typeof pt.biweekly_start_date === 'string'
+              ? pt.biweekly_start_date.slice(0, 10)
+              : toDateStr(pt.biweekly_start_date));
       } else if (pt.schedule_type === 'monthly') {
         matches = pt.schedule_day === dayOfMonth;
       }
@@ -214,8 +237,9 @@ async function getForecastTasks(dates) {
 
   // Also check day-before for "raus" tasks
   const nextDays = dates.map(d => {
-    const next = new Date(d + 'T00:00:00Z');
-    next.setUTCDate(next.getUTCDate() + 1);
+    const { year, month, day } = parseDateParts(d);
+    const next = dateFromParts(year, month, day);
+    next.setDate(next.getDate() + 1);
     return toDateStr(next);
   });
   const { rows: rausRows } = await pool.query(
@@ -229,8 +253,9 @@ async function getForecastTasks(dates) {
   );
   for (const row of rausRows) {
     const collectionDate = toDateStr(new Date(row.collection_date));
-    const rausDate = new Date(collectionDate + 'T00:00:00Z');
-    rausDate.setUTCDate(rausDate.getUTCDate() - 1);
+    const cp = parseDateParts(collectionDate);
+    const rausDate = dateFromParts(cp.year, cp.month, cp.day);
+    rausDate.setDate(rausDate.getDate() - 1);
     const rausDateStr = toDateStr(rausDate);
     if (!tasks[rausDateStr]) continue;
     const label = row.trash_type.charAt(0).toUpperCase() + row.trash_type.slice(1);
@@ -287,9 +312,11 @@ export default withErrorHandler(async (req, res) => {
   const fridayStr = weekDates[4];
 
   // Check 8-week forecast limit
-  const maxForecast = new Date(todayStr + 'T00:00:00Z');
-  maxForecast.setUTCDate(maxForecast.getUTCDate() + 56);
-  if (new Date(mondayStr + 'T00:00:00Z') > maxForecast) {
+  const tp = parseDateParts(todayStr);
+  const maxForecast = dateFromParts(tp.year, tp.month, tp.day);
+  maxForecast.setDate(maxForecast.getDate() + 56);
+  const mp = parseDateParts(mondayStr);
+  if (dateFromParts(mp.year, mp.month, mp.day) > maxForecast) {
     return res.json({
       week_start: mondayStr,
       week_end: fridayStr,

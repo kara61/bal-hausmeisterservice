@@ -38,6 +38,26 @@ describeWithDb('Daily Plans API - with DB', () => {
     expect(json).toEqual([]);
   });
 
+  it('POST with invalid date returns 400 (BUG-019)', async () => {
+    const { status, json } = await callHandler(handler, {
+      method: 'POST',
+      body: { date: 'not-a-date' },
+      authenticated: true,
+    });
+    expect(status).toBe(400);
+    expect(json.error).toMatch(/invalid date/i);
+  });
+
+  it('POST with malformed date format returns 400 (BUG-019)', async () => {
+    const { status, json } = await callHandler(handler, {
+      method: 'POST',
+      body: { date: '03-23-2026' },
+      authenticated: true,
+    });
+    expect(status).toBe(400);
+    expect(json.error).toMatch(/invalid date/i);
+  });
+
   it('approve returns 500 for non-existent plan (approvePlan throws)', async () => {
     const { status, json } = await callHandler(approveHandler, {
       method: 'POST',
