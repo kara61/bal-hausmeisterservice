@@ -62,14 +62,47 @@ export default function Reports() {
     }
   };
 
-  const handleDownload = (id) => {
-    const token = localStorage.getItem('token');
-    window.open(`/api/reports/${id}/download?token=${token}`);
+  // BUG-033: Use fetch with Bearer header instead of exposing JWT in URL query string
+  const handleDownload = async (id) => {
+    try {
+      const authToken = localStorage.getItem('token');
+      const res = await fetch(`/api/reports/${id}/download`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `report-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
-  const handleDownloadTimesheet = (id) => {
-    const token = localStorage.getItem('token');
-    window.open(`/api/timesheets/${id}?token=${token}`);
+  const handleDownloadTimesheet = async (id) => {
+    try {
+      const authToken = localStorage.getItem('token');
+      const res = await fetch(`/api/timesheets/${id}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `timesheet-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   const handleStatusUpdate = async (id, status) => {

@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 import { useLang } from '../context/LanguageContext';
 import TaskCard from '../components/TaskCard';
+import { todayLocal } from '../utils/date';
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return todayLocal();
 }
 
 export default function DailyTasks() {

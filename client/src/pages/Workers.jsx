@@ -19,8 +19,12 @@ export default function Workers() {
   const { t } = useLang();
 
   const loadWorkers = async () => {
-    const data = await api.get('/workers');
-    setWorkers(data);
+    try {
+      const data = await api.get('/workers');
+      setWorkers(data);
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
   };
 
   useEffect(() => { loadWorkers(); }, []);

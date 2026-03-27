@@ -121,59 +121,81 @@ export async function generateGarbageTasks(dateStr) {
  * Create a single garbage task, linking to or creating a task_assignment.
  */
 async function createGarbageTask(schedule, taskType, dueDate) {
-  // Check if garbage_task already exists
-  const { rowCount: exists } = await pool.query(
-    `SELECT 1 FROM garbage_tasks
-     WHERE garbage_schedule_id = $1 AND task_type = $2`,
-    [schedule.id, taskType]
-  );
+  // Use a transaction to prevent race-condition duplicates (BUG-024)
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-  if (exists > 0) return null; // Skip if already exists
-
-  const description = formatGarbageTaskDescription(schedule.trash_type, taskType);
-
-  // Check if a task_assignment already exists for this property + date
-  const { rows: existingAssignments } = await pool.query(
-    `SELECT id, task_description FROM task_assignments
-     WHERE property_id = $1 AND date = $2`,
-    [schedule.property_id, dueDate]
-  );
-
-  let taskAssignmentId;
-
-  if (existingAssignments.length > 0) {
-    // Append garbage description to existing task
-    const assignment = existingAssignments[0];
-    const newDescription = assignment.task_description
-      ? `${assignment.task_description}, ${description}`
-      : description;
-
-    await pool.query(
-      `UPDATE task_assignments SET task_description = $1, updated_at = NOW()
-       WHERE id = $2`,
-      [newDescription, assignment.id]
+    // Check if garbage_task already exists (inside transaction for atomicity)
+    const { rowCount: exists } = await client.query(
+      `SELECT 1 FROM garbage_tasks
+       WHERE garbage_schedule_id = $1 AND task_type = $2`,
+      [schedule.id, taskType]
     );
-    taskAssignmentId = assignment.id;
-  } else {
-    // Create new task_assignment
-    const { rows } = await pool.query(
-      `INSERT INTO task_assignments (property_id, date, task_description, status)
-       VALUES ($1, $2, $3, 'pending')
-       RETURNING id`,
-      [schedule.property_id, dueDate, description]
+
+    if (exists > 0) {
+      await client.query('ROLLBACK');
+      return null; // Skip if already exists
+    }
+
+    const description = formatGarbageTaskDescription(schedule.trash_type, taskType);
+
+    // Check if a task_assignment already exists for this property + date
+    const { rows: existingAssignments } = await client.query(
+      `SELECT id, task_description FROM task_assignments
+       WHERE property_id = $1 AND date = $2`,
+      [schedule.property_id, dueDate]
     );
-    taskAssignmentId = rows[0].id;
+
+    let taskAssignmentId;
+
+    if (existingAssignments.length > 0) {
+      // Append garbage description to existing task — deduplicate first (BUG-024)
+      const assignment = existingAssignments[0];
+      const existingText = assignment.task_description || '';
+      if (existingText.includes(description)) {
+        // Description already present, reuse assignment without appending
+        taskAssignmentId = assignment.id;
+      } else {
+        const newDescription = existingText
+          ? `${existingText}, ${description}`
+          : description;
+
+        await client.query(
+          `UPDATE task_assignments SET task_description = $1, updated_at = NOW()
+           WHERE id = $2`,
+          [newDescription, assignment.id]
+        );
+        taskAssignmentId = assignment.id;
+      }
+    } else {
+      // Create new task_assignment
+      const { rows } = await client.query(
+        `INSERT INTO task_assignments (property_id, date, task_description, status)
+         VALUES ($1, $2, $3, 'pending')
+         RETURNING id`,
+        [schedule.property_id, dueDate, description]
+      );
+      taskAssignmentId = rows[0].id;
+    }
+
+    // Create garbage_task record
+    const { rows: gtRows } = await client.query(
+      `INSERT INTO garbage_tasks (garbage_schedule_id, task_type, due_date, task_assignment_id, status)
+       VALUES ($1, $2, $3, $4, 'pending')
+       ON CONFLICT (garbage_schedule_id, task_type) DO NOTHING
+       RETURNING *`,
+      [schedule.id, taskType, dueDate, taskAssignmentId]
+    );
+
+    await client.query('COMMIT');
+    return gtRows.length > 0 ? gtRows[0] : null;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  // Create garbage_task record
-  const { rows: gtRows } = await pool.query(
-    `INSERT INTO garbage_tasks (garbage_schedule_id, task_type, due_date, task_assignment_id, status)
-     VALUES ($1, $2, $3, $4, 'pending')
-     ON CONFLICT (garbage_schedule_id, task_type) DO NOTHING
-     RETURNING *`,
-    [schedule.id, taskType, dueDate, taskAssignmentId]
-  );
-  return gtRows.length > 0 ? gtRows[0] : null;
 }
 
 /**
@@ -200,12 +222,25 @@ export async function getScheduleForProperty(propertyId) {
  * @param {string} [sourcePdf]
  */
 export async function deleteScheduleForProperty(propertyId, sourcePdf) {
+  // BUG-025: Delete associated garbage_tasks first to avoid orphaned rows
   if (sourcePdf) {
+    await pool.query(
+      `DELETE FROM garbage_tasks WHERE garbage_schedule_id IN (
+         SELECT id FROM garbage_schedules WHERE property_id = $1 AND source_pdf = $2
+       )`,
+      [propertyId, sourcePdf]
+    );
     await pool.query(
       'DELETE FROM garbage_schedules WHERE property_id = $1 AND source_pdf = $2',
       [propertyId, sourcePdf]
     );
   } else {
+    await pool.query(
+      `DELETE FROM garbage_tasks WHERE garbage_schedule_id IN (
+         SELECT id FROM garbage_schedules WHERE property_id = $1
+       )`,
+      [propertyId]
+    );
     await pool.query(
       'DELETE FROM garbage_schedules WHERE property_id = $1',
       [propertyId]

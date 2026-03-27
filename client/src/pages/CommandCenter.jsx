@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLang } from '../context/LanguageContext';
 import { api } from '../api/client';
+import { todayLocal } from '../utils/date';
 import StatsBar from '../components/command-center/StatsBar.jsx';
 import WorkerPanel from '../components/command-center/WorkerPanel.jsx';
 import PropertyGrid from '../components/command-center/PropertyGrid.jsx';
@@ -17,7 +18,7 @@ export default function CommandCenter() {
   const [error, setError] = useState('');
   const intervalRef = useRef(null);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayLocal();
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? t('dashboard.goodMorning') : hour < 18 ? t('dashboard.goodDay') : t('dashboard.goodEvening');

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../context/LanguageContext';
 import { api } from '../api/client';
+import { todayLocal } from '../utils/date';
 
 const STATUS_BADGE = {
   draft: 'badge-warning',
@@ -11,7 +12,7 @@ const STATUS_BADGE = {
 
 export default function DailyPlan() {
   const { t } = useLang();
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [plan, setPlan] = useState(null);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(false);

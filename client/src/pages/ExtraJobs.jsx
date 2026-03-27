@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 import { useLang } from '../context/LanguageContext';
+import { todayLocal } from '../utils/date';
 import ExtraJobForm from '../components/ExtraJobForm';
 
 export default function ExtraJobs() {
@@ -27,7 +28,7 @@ export default function ExtraJobs() {
 
   const loadTeams = async () => {
     try {
-      const d = dateFilter || new Date().toISOString().split('T')[0];
+      const d = dateFilter || todayLocal();
       const data = await api.get(`/teams?date=${d}`);
       setTeams(data);
     } catch (err) {

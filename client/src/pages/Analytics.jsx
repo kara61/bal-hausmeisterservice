@@ -87,9 +87,27 @@ export default function Analytics() {
   };
 
   const handleExport = async () => {
+    // BUG-032: Use fetch with Bearer token instead of window.open (exposes no auth)
     const monthParam = tab === 'properties' ? `&month=${month}-01` : '';
     const url = `/api/analytics/export?from=${range.from}&to=${range.to}${monthParam}`;
-    window.open(url, '_blank');
+    try {
+      const authToken = localStorage.getItem('token');
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `analytics-export-${range.from}-${range.to}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Silently fail — user can retry
+    }
   };
 
   const tabs = ['workers', 'properties', 'operations', 'costs'];

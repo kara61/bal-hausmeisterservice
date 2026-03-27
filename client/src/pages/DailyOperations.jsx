@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLang } from '../context/LanguageContext';
 import { api } from '../api/client';
+import { todayLocal } from '../utils/date';
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return todayLocal();
 }
 
 function shiftDate(dateStr, days) {

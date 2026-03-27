@@ -260,6 +260,10 @@ export async function handleIncomingMessage(phoneNumber, messageBody, media = {}
   }
 
   // Plan approval/edit from Halil (button IDs: plan_approve_X, plan_edit_X)
+  // BUG-028: Security note — these actions are restricted to Halil's phone number,
+  // but the primary defence against forged webhooks is the Twilio signature validation
+  // in the webhook handler (see BUG-001 fix). If signature validation is bypassed,
+  // an attacker could forge the phone number. Keep webhook validation enabled.
   if (command.startsWith('plan_approve_') && phone === config.halilWhatsappNumber?.replace('whatsapp:', '')) {
     const planId = parseInt(command.replace('plan_approve_', ''), 10);
     try {
