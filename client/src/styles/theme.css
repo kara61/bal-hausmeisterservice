@@ -640,6 +640,102 @@ h1, h2, h3, h4 {
 }
 
 
+/* ── Vacation Progress ─────────────────────────────────── */
+.vac-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.vac-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.vac-progress-fill[data-color="success"] { background: var(--success); }
+.vac-progress-fill[data-color="warning"] { background: var(--warning); }
+.vac-progress-fill[data-color="danger"]  { background: var(--danger); }
+
+
+/* ── Hour Balances Cards ───────────────────────────────── */
+.hb-worker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hb-worker-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.hb-worker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hb-worker-header:hover {
+  background: var(--bg-hover);
+}
+
+.hb-worker-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hb-balance-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.hb-balance-value[data-sign="positive"] { color: var(--success); }
+.hb-balance-value[data-sign="negative"] { color: var(--danger); }
+.hb-balance-value[data-sign="zero"]     { color: var(--text-muted); }
+
+.hb-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.hb-chevron.open {
+  transform: rotate(180deg);
+}
+
+.hb-worker-detail {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.hb-worker-detail .data-table {
+  margin-top: 0.75rem;
+}
+
+.hb-payout-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 640px) {
+  .hb-payout-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+
 /* ── Buttons ───────────────────────────────────────────── */
 .btn {
   display: inline-flex;

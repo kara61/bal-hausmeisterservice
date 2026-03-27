@@ -137,6 +137,9 @@ export const translations = {
     'sickLeave.vacationDeducted': 'Urlaub',
     'sickLeave.unpaid': 'Unbezahlt',
     'sickLeave.none': 'Keine Krankmeldungen vorhanden',
+    'sickLeave.totalRecords': 'Meldungen',
+    'sickLeave.pendingCount': 'Offen',
+    'sickLeave.totalDays': 'Krankheitstage',
 
     // Vacation
     'vacation.title': 'Urlaubskonto',
@@ -145,6 +148,10 @@ export const translations = {
     'vacation.used': 'Genommen',
     'vacation.remaining': 'Verbleibend',
     'vacation.none': 'Keine Urlaubsdaten fuer dieses Jahr',
+    'vacation.totalWorkers': 'Mitarbeiter',
+    'vacation.avgRemaining': 'Durchschn. Rest',
+    'vacation.lowBalance': 'Wenig Urlaub',
+    'vacation.usagePercent': 'Verbraucht',
 
     // Hour Balances (Stundenkonto)
     'nav.hourBalances': 'Stundenkonto',
@@ -532,6 +539,9 @@ export const translations = {
     'sickLeave.vacationDeducted': 'Vacation',
     'sickLeave.unpaid': 'Unpaid',
     'sickLeave.none': 'No sick leave records',
+    'sickLeave.totalRecords': 'Records',
+    'sickLeave.pendingCount': 'Pending',
+    'sickLeave.totalDays': 'Sick days',
 
     // Vacation
     'vacation.title': 'Vacation Balance',
@@ -540,6 +550,10 @@ export const translations = {
     'vacation.used': 'Used',
     'vacation.remaining': 'Remaining',
     'vacation.none': 'No vacation data for this year',
+    'vacation.totalWorkers': 'Workers',
+    'vacation.avgRemaining': 'Avg. remaining',
+    'vacation.lowBalance': 'Low balance',
+    'vacation.usagePercent': 'Used',
 
     // Hour Balances (Stundenkonto)
     'nav.hourBalances': 'Hour Balances',
