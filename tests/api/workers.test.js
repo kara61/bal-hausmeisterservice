@@ -51,6 +51,7 @@ describeWithDb('Workers API - with DB', () => {
         worker_type: 'fulltime',
         hourly_rate: 15,
         worker_role: 'field',
+        registration_date: '2025-06-01',
       },
     });
     expect(status).toBe(201);
@@ -66,6 +67,7 @@ describeWithDb('Workers API - with DB', () => {
       body: {
         phone_number: '+4917699999999',
         worker_type: 'fulltime',
+        registration_date: '2025-06-01',
       },
     });
     expect(status).toBe(400);
@@ -80,6 +82,7 @@ describeWithDb('Workers API - with DB', () => {
         name: 'Bad Type',
         phone_number: '+4917699999999',
         worker_type: 'intern',
+        registration_date: '2025-06-01',
       },
     });
     expect(status).toBe(400);
@@ -96,6 +99,8 @@ describeWithDb('Workers API - with DB', () => {
         name: 'Duplicate Phone',
         phone_number: '+4917600000001',
         worker_type: 'fulltime',
+        worker_role: 'field',
+        registration_date: '2025-06-01',
       },
     });
     expect(status).toBe(409);

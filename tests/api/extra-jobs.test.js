@@ -65,8 +65,8 @@ describeWithDb('Extra Jobs API - with DB', () => {
   it('POST creates an extra job with valid data', async () => {
     const worker = await createTestWorker({ name: 'TeamWorker', phone_number: '+4917600000099' });
     const teamResult = await pool.query(
-      `INSERT INTO teams (name) VALUES ($1) RETURNING *`,
-      ['Test Team']
+      `INSERT INTO teams (date, name) VALUES ($1, $2) RETURNING *`,
+      ['2026-03-27', 'Test Team']
     );
     const team = teamResult.rows[0];
     await pool.query(

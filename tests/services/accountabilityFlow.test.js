@@ -106,15 +106,16 @@ describeWithDb('accountability flow DB functions', () => {
   });
 
   it('getWorkerFlowState returns current visit and next assignment', async () => {
+    const today = new Date().toISOString().split('T')[0];
     const worker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001' });
     const prop1 = await createTestProperty({ address: 'Straße 1', assigned_weekday: 4 });
     const prop2 = await createTestProperty({ address: 'Straße 2', assigned_weekday: 4 });
-    const plan = await createTestPlan({ plan_date: '2026-03-26', status: 'approved' });
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
     await createTestAssignment(plan.id, worker.id, prop1.id, { assignment_order: 1 });
     await createTestAssignment(plan.id, worker.id, prop2.id, { assignment_order: 2 });
     await createVisitsFromPlan(plan.id);
 
-    const state = await getWorkerFlowState(worker.id, '2026-03-26');
+    const state = await getWorkerFlowState(worker.id, today);
     expect(state.visits).toHaveLength(2);
     expect(state.currentVisit).toBeNull();
     expect(state.nextVisit).toBeTruthy();
@@ -128,11 +129,12 @@ describeWithDb('accountability bot flow', () => {
   afterEach(async () => { await cleanDb(); });
 
   it('guides worker through property sequence after check-in', async () => {
+    const today = new Date().toISOString().split('T')[0];
     const worker = await createTestWorker({ name: 'Ali Yilmaz', phone_number: '+4917600000001' });
     const prop1 = await createTestProperty({ address: 'Mozartstraße 12', city: 'Pfaffenhofen', assigned_weekday: 4, standard_tasks: 'Treppenhausreinigung' });
     const prop2 = await createTestProperty({ address: 'Beethoven Residenz', city: 'Pfaffenhofen', assigned_weekday: 4, standard_tasks: 'Grünpflege' });
 
-    const plan = await createTestPlan({ plan_date: '2026-03-26', status: 'approved' });
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
     await createTestAssignment(plan.id, worker.id, prop1.id, { assignment_order: 1 });
     await createTestAssignment(plan.id, worker.id, prop2.id, { assignment_order: 2 });
 

@@ -8,28 +8,10 @@ export const describeWithDb = dbAvailable
 
 export async function cleanDb() {
   await pool.query(`
-    DELETE FROM analytics_property_monthly;
-    DELETE FROM analytics_daily;
-    DELETE FROM property_visit_photos;
-    DELETE FROM property_visits;
-    DELETE FROM plan_assignments;
-    DELETE FROM daily_plans;
-    DELETE FROM worker_preferences;
-    DELETE FROM garbage_tasks;
-    DELETE FROM garbage_schedules;
-    DELETE FROM conversation_state;
-    DELETE FROM task_assignments;
-    DELETE FROM extra_jobs;
-    DELETE FROM team_members;
-    DELETE FROM teams;
-    DELETE FROM hour_balances;
-    DELETE FROM property_tasks;
-    DELETE FROM properties;
-    DELETE FROM monthly_reports;
-    DELETE FROM sick_leave;
-    DELETE FROM time_entries;
-    DELETE FROM vacation_balances;
-    DELETE FROM workers;
+    TRUNCATE workers, properties, daily_plans, time_entries, sick_leave,
+    monthly_reports, hour_balances, vacation_balances, teams, extra_jobs,
+    conversation_state, garbage_schedules, analytics_daily,
+    analytics_property_monthly CASCADE
   `);
 }
 
