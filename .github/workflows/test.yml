@@ -1,0 +1,74 @@
+name: Test Suite
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: bal_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/bal_test
+      JWT_SECRET: test-secret-do-not-use-in-production
+      ADMIN_USERNAME: halil
+      ADMIN_PASSWORD_HASH: "$2b$10$Bh6CUjrlyoC6ZMOj5O8Tb.BjRYdtjfWBsfnU050TTvqrmKgTEMjR2"
+      SUPABASE_URL: http://localhost:9999
+      SUPABASE_SERVICE_KEY: test-key
+      TWILIO_ACCOUNT_SID: ACtest
+      TWILIO_AUTH_TOKEN: test-token
+      TWILIO_WHATSAPP_NUMBER: "+14155551234"
+      HALIL_WHATSAPP_NUMBER: "+4917699999999"
+      SKIP_TWILIO_VALIDATION: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run database migrations
+        run: npm run migrate
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Install client dependencies
+        run: cd client && npm ci
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results/
+            playwright-report/
