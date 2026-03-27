@@ -120,6 +120,13 @@ export const translations = {
     'timeEntries.checkIn': 'Einchecken',
     'timeEntries.checkOut': 'Auschecken',
     'timeEntries.none': 'Keine Eintraege fuer diesen Monat',
+    'timeEntries.duration': 'Dauer',
+    'timeEntries.totalEntries': 'Eintraege',
+    'timeEntries.flagged': 'Markiert',
+    'timeEntries.totalHours': 'Gesamt',
+    'timeEntries.resolved': 'Geloest',
+    'timeEntries.open': 'Offen',
+    'timeEntries.noFlags': 'Alles in Ordnung',
 
     // Sick Leave
     'sickLeave.title': 'Krankmeldungen',
@@ -508,6 +515,13 @@ export const translations = {
     'timeEntries.checkIn': 'Check In',
     'timeEntries.checkOut': 'Check Out',
     'timeEntries.none': 'No entries for this month',
+    'timeEntries.duration': 'Duration',
+    'timeEntries.totalEntries': 'Entries',
+    'timeEntries.flagged': 'Flagged',
+    'timeEntries.totalHours': 'Total',
+    'timeEntries.resolved': 'Resolved',
+    'timeEntries.open': 'Open',
+    'timeEntries.noFlags': 'All clear',
 
     // Sick Leave
     'sickLeave.title': 'Sick Leave',
