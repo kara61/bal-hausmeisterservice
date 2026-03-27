@@ -27,11 +27,10 @@ function getWeekDates(mondayDate) {
 
 function getCalendarWeek(dateStr) {
   const d = new Date(dateStr + 'T00:00:00Z');
-  const jan4 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
-  const dayOfYear = Math.floor((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000) + 1;
-  const jan4DayOfWeek = jan4.getUTCDay() || 7;
-  const weekNum = Math.ceil((dayOfYear + jan4DayOfWeek - 1) / 7);
-  return weekNum;
+  const thursday = new Date(d);
+  thursday.setUTCDate(d.getUTCDate() + (4 - (d.getUTCDay() || 7)));
+  const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
+  return Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
 }
 
 function isBiweeklyActive(targetDateStr, biweeklyStartDateStr) {
