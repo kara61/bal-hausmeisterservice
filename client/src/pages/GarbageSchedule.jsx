@@ -13,6 +13,7 @@ export default function GarbageSchedule() {
   const [detailPropertyId, setDetailPropertyId] = useState(null);
   const [mappingPropertyId, setMappingPropertyId] = useState('');
   const [mappingResult, setMappingResult] = useState(null);
+  const [selected, setSelected] = useState(new Set());
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const { t } = useLang();
@@ -121,16 +122,49 @@ export default function GarbageSchedule() {
     }
   };
 
+  const toggleSelect = (pid) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(pid) ? next.delete(pid) : next.add(pid);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === summary.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(summary.map(s => s.property_id)));
+    }
+  };
+
   const handleDelete = async (pid) => {
     if (!confirm(t('garbage.confirmDelete'))) return;
     try {
       setError(null);
       await api.delete(`/garbage/schedule/${pid}`);
       loadSummary();
+      setSelected(prev => { const next = new Set(prev); next.delete(pid); return next; });
       if (detailPropertyId === pid) { setDetail(null); setDetailPropertyId(null); }
     } catch (err) {
       setError(err.message || t('common.error'));
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`${selected.size} ${t('garbage.confirmDelete')}`)) return;
+    setError(null);
+    for (const pid of selected) {
+      try {
+        await api.delete(`/garbage/schedule/${pid}`);
+      } catch (err) {
+        setError(err.message || t('common.error'));
+      }
+    }
+    setSelected(new Set());
+    if (selected.has(detailPropertyId)) { setDetail(null); setDetailPropertyId(null); }
+    loadSummary();
   };
 
   const isUploading = uploadProgress && uploadProgress.current < uploadProgress.total;
@@ -231,7 +265,14 @@ export default function GarbageSchedule() {
       </div>
 
       <div className="card mb-lg">
-        <div className="card-title mb-md">{t('garbage.importedSchedules')}</div>
+        <div className="flex justify-between items-center mb-md">
+          <div className="card-title">{t('garbage.importedSchedules')}</div>
+          {selected.size > 0 && (
+            <button onClick={handleBulkDelete} className="btn btn-danger btn-sm">
+              {t('common.delete')} ({selected.size})
+            </button>
+          )}
+        </div>
         {summary.length === 0 ? (
           <p className="text-muted text-sm">{t('garbage.noSchedules')}</p>
         ) : (
@@ -239,6 +280,9 @@ export default function GarbageSchedule() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: '36px' }}>
+                    <input type="checkbox" checked={summary.length > 0 && selected.size === summary.length} onChange={toggleSelectAll} />
+                  </th>
                   <th>{t('garbage.property')}</th>
                   <th>{t('garbage.totalDates')}</th>
                   <th>{t('garbage.trashTypes')}</th>
@@ -248,7 +292,10 @@ export default function GarbageSchedule() {
               </thead>
               <tbody>
                 {summary.map(item => (
-                  <tr key={item.property_id}>
+                  <tr key={item.property_id} style={selected.has(item.property_id) ? { background: 'var(--accent-soft)' } : {}}>
+                    <td>
+                      <input type="checkbox" checked={selected.has(item.property_id)} onChange={() => toggleSelect(item.property_id)} />
+                    </td>
                     <td style={{ fontWeight: 600 }}>{item.address}, {item.city}</td>
                     <td><span className="mono">{item.total_dates}</span></td>
                     <td>
