@@ -62,28 +62,41 @@ export function shouldTaskRunOnDate(task, property, dateStr) {
 // --- DB functions ---
 
 export async function generateDailyTasks(dateStr) {
-  const weekday = getWeekday(dateStr);
-
+  // Fetch all active properties with their active tasks
   const { rows: properties } = await pool.query(
-    `SELECT id, standard_tasks FROM properties
-     WHERE assigned_weekday = $1 AND is_active = true`,
-    [weekday]
+    `SELECT p.id, p.assigned_weekday,
+            pt.id AS task_id, pt.task_name, pt.worker_role,
+            pt.schedule_type, pt.schedule_day, pt.biweekly_start_date
+     FROM properties p
+     JOIN property_tasks pt ON pt.property_id = p.id
+     WHERE p.is_active = true AND pt.is_active = true`
   );
 
   const created = [];
-  for (const prop of properties) {
+  for (const row of properties) {
+    const property = { assigned_weekday: row.assigned_weekday };
+    const task = {
+      schedule_type: row.schedule_type,
+      schedule_day: row.schedule_day,
+      biweekly_start_date: row.biweekly_start_date,
+    };
+
+    if (!shouldTaskRunOnDate(task, property, dateStr)) continue;
+
+    // Duplicate check: same property + date + task_description
     const { rowCount } = await pool.query(
-      `SELECT 1 FROM task_assignments WHERE property_id = $1 AND date = $2`,
-      [prop.id, dateStr]
+      `SELECT 1 FROM task_assignments
+       WHERE property_id = $1 AND date = $2 AND task_description = $3`,
+      [row.id, dateStr, row.task_name]
     );
-    if (rowCount === 0) {
-      const { rows } = await pool.query(
-        `INSERT INTO task_assignments (property_id, date, task_description, status)
-         VALUES ($1, $2, $3, 'pending') RETURNING *`,
-        [prop.id, dateStr, prop.standard_tasks]
-      );
-      created.push(rows[0]);
-    }
+    if (rowCount > 0) continue;
+
+    const { rows } = await pool.query(
+      `INSERT INTO task_assignments (property_id, date, task_description, worker_role, status)
+       VALUES ($1, $2, $3, $4, 'pending') RETURNING *`,
+      [row.id, dateStr, row.task_name, row.worker_role]
+    );
+    created.push(rows[0]);
   }
 
   // Generate garbage tasks for the day
