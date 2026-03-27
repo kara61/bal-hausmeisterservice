@@ -1,18 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../api/client';
 import { useLang } from '../context/LanguageContext';
 
 export default function GarbageSchedule() {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [year, setYear] = useState(new Date().getFullYear());
   const [propertyId, setPropertyId] = useState('');
   const [properties, setProperties] = useState([]);
-  const [uploadResult, setUploadResult] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null); // { current, total, fileName, results }
   const [summary, setSummary] = useState([]);
   const [detail, setDetail] = useState(null);
   const [detailPropertyId, setDetailPropertyId] = useState(null);
   const [mappingPropertyId, setMappingPropertyId] = useState('');
+  const [mappingResult, setMappingResult] = useState(null);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
   const { t } = useLang();
 
   const trashLabel = (type) => t(`garbage.${type}`) || type;
@@ -22,7 +24,6 @@ export default function GarbageSchedule() {
     papier: { background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.25)' },
   };
 
-  // Parse date string as local date (avoids UTC timezone shift)
   const fmtDate = (dateStr) => {
     const [y, m, d] = String(dateStr).split('T')[0].split('-');
     return `${d}.${m}.${y}`;
@@ -47,44 +48,66 @@ export default function GarbageSchedule() {
   useEffect(() => { loadProperties(); loadSummary(); }, []);
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
     setError(null);
-    const formData = new FormData();
-    formData.append('pdf', file);
-    formData.append('year', year);
-    if (propertyId) formData.append('property_id', propertyId);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/garbage/upload', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
-      setUploadResult(data);
-      loadSummary();
-    } catch (err) {
-      setError(err.message || t('common.error'));
-      setUploadResult({ error: err.message });
+    setMappingResult(null);
+
+    const results = [];
+    setUploadProgress({ current: 0, total: files.length, fileName: '', results: [] });
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress({ current: i, total: files.length, fileName: file.name, results });
+
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('year', year);
+      if (propertyId) formData.append('property_id', propertyId);
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/garbage/upload', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          results.push({ file: file.name, error: data.error || 'Upload failed' });
+        } else {
+          results.push({ file: file.name, ...data });
+        }
+      } catch (err) {
+        results.push({ file: file.name, error: err.message });
+      }
+    }
+
+    setUploadProgress({ current: files.length, total: files.length, fileName: '', results });
+    loadSummary();
+    setFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    // If there's exactly one result that needs mapping, show mapping UI
+    const needsMapping = results.filter(r => r.needs_mapping);
+    if (needsMapping.length === 1) {
+      setMappingResult(needsMapping[0]);
     }
   };
 
   const handleMap = async () => {
-    if (!mappingPropertyId || !uploadResult) return;
+    if (!mappingPropertyId || !mappingResult) return;
     try {
       setError(null);
       await api.post('/garbage/map', {
         property_id: parseInt(mappingPropertyId, 10),
-        dates: uploadResult.dates,
-        source_pdf: uploadResult.source_pdf,
+        dates: mappingResult.dates,
+        source_pdf: mappingResult.source_pdf,
       });
-      setUploadResult({ message: t('garbage.mappingSuccess') });
+      setMappingResult(null);
       setMappingPropertyId('');
       loadSummary();
     } catch (err) {
       setError(err.message || t('common.error'));
-      setUploadResult({ error: err.message });
     }
   };
 
@@ -110,6 +133,9 @@ export default function GarbageSchedule() {
     }
   };
 
+  const isUploading = uploadProgress && uploadProgress.current < uploadProgress.total;
+  const progressPct = uploadProgress ? Math.round((uploadProgress.current / uploadProgress.total) * 100) : 0;
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -127,7 +153,14 @@ export default function GarbageSchedule() {
         <div className="flex gap-md flex-wrap items-center">
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">{t('garbage.pdfFile')}</label>
-            <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0] || null)} style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              multiple
+              onChange={e => setFiles(Array.from(e.target.files))}
+              style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}
+            />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">{t('garbage.year')}</label>
@@ -140,31 +173,59 @@ export default function GarbageSchedule() {
               {properties.map(p => <option key={p.id} value={p.id}>{p.address}, {p.city}</option>)}
             </select>
           </div>
-          <button onClick={handleUpload} className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>{t('common.upload')}</button>
+          <button onClick={handleUpload} disabled={files.length === 0 || isUploading} className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>
+            {isUploading ? `${uploadProgress.current}/${uploadProgress.total}...` : files.length > 1 ? `${t('common.upload')} (${files.length})` : t('common.upload')}
+          </button>
         </div>
 
-        {uploadResult && (
-          <div className={`alert mt-md ${uploadResult.error ? 'alert-danger' : uploadResult.needs_mapping ? 'alert-warning' : 'alert-success'}`}>
-            {uploadResult.error
-              ? `${t('garbage.error')} ${uploadResult.error}`
-              : uploadResult.needs_mapping
-                ? (
-                  <div>
-                    <p className="mb-sm">
-                      {t('garbage.autoFail')}
-                      {uploadResult.extracted_address && ` ${t('garbage.detectedAddress')} "${uploadResult.extracted_address}".`}
-                      {' '}{uploadResult.total_dates} {t('garbage.datesFound')}
-                    </p>
-                    <div className="flex gap-sm items-center">
-                      <select value={mappingPropertyId} onChange={e => setMappingPropertyId(e.target.value)} className="select" style={{ width: 'auto', minWidth: '180px' }}>
-                        <option value="">{t('garbage.selectProperty')}</option>
-                        {properties.map(p => <option key={p.id} value={p.id}>{p.address}, {p.city}</option>)}
-                      </select>
-                      <button onClick={handleMap} disabled={!mappingPropertyId} className="btn btn-primary btn-sm">{t('garbage.mapProperty')}</button>
-                    </div>
-                  </div>
-                )
-                : uploadResult.message || t('garbage.uploadSuccess')}
+        {/* Progress bar */}
+        {isUploading && (
+          <div className="mt-md">
+            <div className="flex justify-between text-sm mb-xs">
+              <span>{uploadProgress.fileName}</span>
+              <span className="mono">{uploadProgress.current}/{uploadProgress.total}</span>
+            </div>
+            <div style={{ height: '6px', background: 'var(--bg-surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progressPct}%`, background: 'var(--accent)', borderRadius: '3px', transition: 'width 0.3s ease' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Upload results summary */}
+        {uploadProgress && !isUploading && uploadProgress.results.length > 0 && (
+          <div className="mt-md">
+            {uploadProgress.results.map((r, i) => (
+              <div key={i} className={`alert mb-xs ${r.error ? 'alert-danger' : 'alert-success'}`} style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}>
+                <strong>{r.file}:</strong>{' '}
+                {r.error
+                  ? r.error
+                  : r.auto_matched
+                    ? `${r.dates_count} ${t('garbage.datesFound')} → ${r.property_address}`
+                    : r.imported
+                      ? `${r.dates_count} ${t('garbage.datesFound')}`
+                      : r.needs_mapping
+                        ? `${r.total_dates} ${t('garbage.datesFound')} — ${t('garbage.autoFail')}`
+                        : t('garbage.uploadSuccess')}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Mapping UI for unmatched upload */}
+        {mappingResult && (
+          <div className="alert alert-warning mt-md">
+            <p className="mb-sm">
+              <strong>{mappingResult.file}:</strong> {t('garbage.autoFail')}
+              {mappingResult.extracted_address && ` ${t('garbage.detectedAddress')} "${mappingResult.extracted_address}".`}
+              {' '}{mappingResult.total_dates} {t('garbage.datesFound')}
+            </p>
+            <div className="flex gap-sm items-center">
+              <select value={mappingPropertyId} onChange={e => setMappingPropertyId(e.target.value)} className="select" style={{ width: 'auto', minWidth: '180px' }}>
+                <option value="">{t('garbage.selectProperty')}</option>
+                {properties.map(p => <option key={p.id} value={p.id}>{p.address}, {p.city}</option>)}
+              </select>
+              <button onClick={handleMap} disabled={!mappingPropertyId} className="btn btn-primary btn-sm">{t('garbage.mapProperty')}</button>
+            </div>
           </div>
         )}
       </div>
@@ -190,7 +251,13 @@ export default function GarbageSchedule() {
                   <tr key={item.property_id}>
                     <td style={{ fontWeight: 600 }}>{item.address}, {item.city}</td>
                     <td><span className="mono">{item.total_dates}</span></td>
-                    <td>{item.trash_types}</td>
+                    <td>
+                      <div className="flex gap-xs flex-wrap">
+                        {(Array.isArray(item.trash_types) ? item.trash_types : []).map(type => (
+                          <span key={type} className={`badge ${trashBadgeClass[type] || ''}`} style={trashBadgeStyle[type] || {}}>{trashLabel(type)}</span>
+                        ))}
+                      </div>
+                    </td>
                     <td><span className="mono text-sm">{fmtDate(item.earliest_date)} — {fmtDate(item.latest_date)}</span></td>
                     <td>
                       <div className="flex gap-xs">
