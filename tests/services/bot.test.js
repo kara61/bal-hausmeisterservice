@@ -20,7 +20,7 @@ describeWithDb('handleIncomingMessage', () => {
     await createTestWorker({ phone_number: '+4917612345678' });
     const result = await handleIncomingMessage('+4917612345678', 'Hallo wie gehts');
     expect(result.type).toBe('menu');
-    expect(result.response).toContain('Ich kann nur diese Aktionen');
+    expect(result.response).toContain('Was moechtest du tun');
   });
 
   it('processes Einchecken button press', async () => {
