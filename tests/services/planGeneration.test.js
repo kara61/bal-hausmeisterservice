@@ -118,6 +118,21 @@ describeWithDb('generateDraftPlan', () => {
 
     expect(plan2.id).toBe(plan1.id);
   });
+
+  it('excludes non-field workers from plan generation', async () => {
+    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', is_field_worker: true });
+    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', is_field_worker: false });
+    const prop = await createTestProperty({ assigned_weekday: 1, address: 'Teststr 1' });
+
+    const plan = await generateDraftPlan('2026-03-30');
+    const full = await getPlanWithAssignments(plan.id);
+
+    const assignedWorkerIds = full.assignments.map(a => a.worker_id);
+    expect(assignedWorkerIds).not.toContain(officeWorker.id);
+    if (full.assignments.length > 0) {
+      expect(assignedWorkerIds).toContain(fieldWorker.id);
+    }
+  });
 });
 
 describeWithDb('redistributeSickWorkers', () => {
