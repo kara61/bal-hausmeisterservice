@@ -13,9 +13,9 @@ export default withErrorHandler(async (req, res) => {
   }
 
   if (req.method === 'PUT') {
-    const fields = ['name', 'phone_number', 'worker_type', 'hourly_rate', 'monthly_salary', 'vacation_entitlement', 'registration_date', 'is_field_worker'];
+    const fields = ['name', 'phone_number', 'worker_type', 'hourly_rate', 'monthly_salary', 'vacation_entitlement', 'registration_date', 'worker_role'];
     const numericFields = new Set(['hourly_rate', 'monthly_salary', 'vacation_entitlement']);
-    const booleanFields = new Set(['is_field_worker']);
+    const enumFields = new Set(['worker_role']);
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -27,8 +27,10 @@ export default withErrorHandler(async (req, res) => {
         if (numericFields.has(field) && (val === '' || val === null)) {
           val = null;
         }
-        if (booleanFields.has(field)) {
-          val = Boolean(val);
+        if (enumFields.has(field)) {
+          if (!['field', 'cleaning', 'office'].includes(val)) {
+            return res.status(400).json({ error: 'worker_role must be field, cleaning, or office' });
+          }
         }
         values.push(val);
         paramIndex++;
