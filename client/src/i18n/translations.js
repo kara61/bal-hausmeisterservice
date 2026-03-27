@@ -101,6 +101,13 @@ export const translations = {
     'workers.monthlySalary': 'Monatliches Gehalt (EUR)',
     'workers.registrationDate': 'Registrierungsdatum',
     'workers.vacationEntitlement': 'Urlaubsanspruch (Tage/Jahr)',
+    'workers.fieldWorker': 'Außendienst',
+    'workers.office': 'Büro',
+    'workers.filterAll': 'Alle',
+    'workers.filterField': 'Außendienst',
+    'workers.filterOffice': 'Büro',
+    'workers.lastFieldWorkerWarning': 'Kein Außendienstmitarbeiter mehr vorhanden. Tagespläne können nicht erstellt werden.',
+    'workers.futureAssignmentsWarning': 'Dieser Mitarbeiter hat zukünftige Einsätze. Diese werden entfernt.',
 
     // Time Entries
     'timeEntries.title': 'Zeiterfassung',
@@ -441,6 +448,13 @@ export const translations = {
     'workers.monthlySalary': 'Monthly Salary (EUR)',
     'workers.registrationDate': 'Registration Date',
     'workers.vacationEntitlement': 'Vacation Entitlement (days/year)',
+    'workers.fieldWorker': 'Field Worker',
+    'workers.office': 'Office',
+    'workers.filterAll': 'All',
+    'workers.filterField': 'Field',
+    'workers.filterOffice': 'Office',
+    'workers.lastFieldWorkerWarning': 'No field workers remaining. Daily plans cannot be generated.',
+    'workers.futureAssignmentsWarning': 'This worker has future assignments. They will be removed.',
 
     // Time Entries
     'timeEntries.title': 'Time Tracking',
