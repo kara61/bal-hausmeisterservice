@@ -349,3 +349,86 @@ export async function reassignPlanAssignment(assignmentId, newWorkerId) {
   if (!updated) throw new Error('Assignment not found');
   return updated;
 }
+
+export async function carryOverPlanTasks(fromDate, toDate) {
+  // Find incomplete assignments from the source date
+  const { rows: incomplete } = await pool.query(
+    `SELECT pa.* FROM plan_assignments pa
+     JOIN daily_plans dp ON dp.id = pa.daily_plan_id
+     WHERE dp.plan_date = $1 AND pa.status IN ('pending', 'in_progress')`,
+    [fromDate]
+  );
+
+  if (incomplete.length === 0) return [];
+
+  // Ensure a plan exists for the target date
+  let { rows: [targetPlan] } = await pool.query(
+    'SELECT * FROM daily_plans WHERE plan_date = $1',
+    [toDate]
+  );
+  if (!targetPlan) {
+    const { rows: [newPlan] } = await pool.query(
+      `INSERT INTO daily_plans (plan_date, status) VALUES ($1, 'draft') RETURNING *`,
+      [toDate]
+    );
+    targetPlan = newPlan;
+  }
+
+  const carried = [];
+  for (const assignment of incomplete) {
+    // Mark original as carried_over
+    await pool.query(
+      `UPDATE plan_assignments SET status = 'carried_over' WHERE id = $1`,
+      [assignment.id]
+    );
+
+    // Create new assignment on target date
+    const { rows: [newAssignment] } = await pool.query(
+      `INSERT INTO plan_assignments
+       (daily_plan_id, worker_id, property_id, assignment_order, source, status, task_name, worker_role, carried_from_id)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8) RETURNING *`,
+      [targetPlan.id, assignment.worker_id, assignment.property_id,
+       assignment.assignment_order, assignment.source,
+       assignment.task_name, assignment.worker_role, assignment.id]
+    );
+    carried.push(newAssignment);
+  }
+
+  return carried;
+}
+
+export async function postponePlanTask(assignmentId, reason, newDate) {
+  // Update original
+  const { rows: [updated] } = await pool.query(
+    `UPDATE plan_assignments
+     SET status = 'postponed', postpone_reason = $2, postponed_to = $3
+     WHERE id = $1 RETURNING *`,
+    [assignmentId, reason, newDate]
+  );
+  if (!updated) throw new Error('Assignment not found');
+
+  // Ensure a plan exists for the new date
+  let { rows: [targetPlan] } = await pool.query(
+    'SELECT * FROM daily_plans WHERE plan_date = $1',
+    [newDate]
+  );
+  if (!targetPlan) {
+    const { rows: [newPlan] } = await pool.query(
+      `INSERT INTO daily_plans (plan_date, status) VALUES ($1, 'draft') RETURNING *`,
+      [newDate]
+    );
+    targetPlan = newPlan;
+  }
+
+  // Create postponed copy on new date
+  await pool.query(
+    `INSERT INTO plan_assignments
+     (daily_plan_id, worker_id, property_id, assignment_order, source, status, task_name, worker_role, carried_from_id)
+     VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8)`,
+    [targetPlan.id, updated.worker_id, updated.property_id,
+     updated.assignment_order, updated.source,
+     updated.task_name, updated.worker_role, updated.id]
+  );
+
+  return updated;
+}
