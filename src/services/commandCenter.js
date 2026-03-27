@@ -156,8 +156,10 @@ async function getAssignmentsWithDetails(planId) {
 
 async function getTimeEntries(dateStr) {
   const { rows } = await pool.query(
-    `SELECT worker_id, check_in, check_out, is_flagged, flag_reason
-     FROM time_entries WHERE date = $1`,
+    `SELECT te.worker_id, te.check_in, te.check_out, te.is_flagged, te.flag_reason
+     FROM time_entries te
+     JOIN workers w ON w.id = te.worker_id
+     WHERE te.date = $1 AND w.is_field_worker = true`,
     [dateStr]
   );
   return rows;
@@ -223,7 +225,7 @@ async function getTimelineEntries(dateStr) {
   const { rows } = await pool.query(
     `SELECT te.worker_id, w.name AS worker_name, te.check_in, te.check_out
      FROM time_entries te JOIN workers w ON w.id = te.worker_id
-     WHERE te.date = $1 AND te.check_in IS NOT NULL
+     WHERE te.date = $1 AND te.check_in IS NOT NULL AND w.is_field_worker = true
      ORDER BY te.check_in`,
     [dateStr]
   );

@@ -102,6 +102,27 @@ describeWithDb('getCommandCenterData', () => {
     expect(data.workers).toEqual([]);
     expect(data.stats.workersTotal).toBe(0);
   });
+
+  it('excludes non-field worker time entries from timeline', async () => {
+    const today = '2026-03-26';
+    const fieldWorker = await createTestWorker({ name: 'Ali', phone_number: '+4917600000001', is_field_worker: true });
+    const officeWorker = await createTestWorker({ name: 'Buero', phone_number: '+4917600000099', is_field_worker: false });
+    const property = await createTestProperty({ assigned_weekday: 4 });
+    const plan = await createTestPlan({ plan_date: today, status: 'approved' });
+    await createTestAssignment(plan.id, fieldWorker.id, property.id);
+
+    // Both workers have time entries
+    await pool.query(
+      `INSERT INTO time_entries (worker_id, date, check_in) VALUES ($1, $2, NOW()), ($3, $2, NOW())`,
+      [fieldWorker.id, today, officeWorker.id]
+    );
+
+    const data = await getCommandCenterData(today);
+
+    const timelineNames = data.timeline.map(t => t.worker_name);
+    expect(timelineNames).toContain('Ali');
+    expect(timelineNames).not.toContain('Buero');
+  });
 });
 
 describeWithDb('getCommandCenterData - full integration', () => {
