@@ -17,6 +17,7 @@ import GarbageSchedule from './pages/GarbageSchedule';
 import DailyPlan from './pages/DailyPlan';
 import CommandCenter from './pages/CommandCenter';
 import Analytics from './pages/Analytics';
+import HourBalances from './pages/HourBalances';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="time-entries" element={<TimeEntries />} />
             <Route path="sick-leave" element={<SickLeave />} />
             <Route path="vacation" element={<Vacation />} />
+            <Route path="hour-balances" element={<HourBalances />} />
             <Route path="reports" element={<Reports />} />
             <Route path="properties" element={<Properties />} />
             <Route path="daily-tasks" element={<DailyTasks />} />
