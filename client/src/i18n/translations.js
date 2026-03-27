@@ -438,6 +438,30 @@ export const translations = {
     'analytics.cost.totalCost': 'Gesamtkosten',
     'analytics.cost.costPerProperty': 'Kosten/Objekt',
     'analytics.cost.utilization': 'Auslastung',
+
+    // Weekly Planner
+    'nav.weeklyPlanner': 'Wochenplaner',
+
+    // Weekly Planner page
+    'weeklyPlanner.title': 'Wochenplaner',
+    'weeklyPlanner.today': 'Heute',
+    'weeklyPlanner.forecast': 'Prognose',
+    'weeklyPlanner.history': 'VERLAUF',
+    'weeklyPlanner.forecastBadge': 'PROGNOSE',
+    'weeklyPlanner.currentBadge': 'AKTUELL',
+    'weeklyPlanner.allProperties': 'Alle Objekte',
+    'weeklyPlanner.allWorkers': 'Alle Mitarbeiter',
+    'weeklyPlanner.field': 'Außendienst',
+    'weeklyPlanner.cleaning': 'Reinigung',
+    'weeklyPlanner.garbage': 'Müll',
+    'weeklyPlanner.extra': 'Zusatz',
+    'weeklyPlanner.done': 'Erledigt',
+    'weeklyPlanner.postponed': 'Verschoben',
+    'weeklyPlanner.missed': 'Verpasst',
+    'weeklyPlanner.inProgress': 'In Arbeit',
+    'weeklyPlanner.noTasks': 'Keine Aufgaben',
+    'weeklyPlanner.dashedHint': 'Gestrichelte Rahmen = Prognose (keine Mitarbeiter zugewiesen)',
+    'weeklyPlanner.postponedTo': 'verschoben auf',
   },
 
   en: {
@@ -879,5 +903,29 @@ export const translations = {
     'analytics.cost.totalCost': 'Total cost',
     'analytics.cost.costPerProperty': 'Cost/property',
     'analytics.cost.utilization': 'Utilization',
+
+    // Weekly Planner
+    'nav.weeklyPlanner': 'Weekly Planner',
+
+    // Weekly Planner page
+    'weeklyPlanner.title': 'Weekly Planner',
+    'weeklyPlanner.today': 'Today',
+    'weeklyPlanner.forecast': 'Forecast',
+    'weeklyPlanner.history': 'HISTORY',
+    'weeklyPlanner.forecastBadge': 'FORECAST',
+    'weeklyPlanner.currentBadge': 'CURRENT',
+    'weeklyPlanner.allProperties': 'All Properties',
+    'weeklyPlanner.allWorkers': 'All Workers',
+    'weeklyPlanner.field': 'Field',
+    'weeklyPlanner.cleaning': 'Cleaning',
+    'weeklyPlanner.garbage': 'Garbage',
+    'weeklyPlanner.extra': 'Extra',
+    'weeklyPlanner.done': 'Done',
+    'weeklyPlanner.postponed': 'Postponed',
+    'weeklyPlanner.missed': 'Missed',
+    'weeklyPlanner.inProgress': 'In Progress',
+    'weeklyPlanner.noTasks': 'No tasks',
+    'weeklyPlanner.dashedHint': 'Dashed borders = Forecast (no workers assigned)',
+    'weeklyPlanner.postponedTo': 'postponed to',
   },
 };
