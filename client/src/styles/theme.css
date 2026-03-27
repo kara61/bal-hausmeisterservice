@@ -1172,6 +1172,333 @@ h1, h2, h3, h4 {
 }
 
 
+/* ── Daily Tasks Teams ─────────────────────────────────── */
+.dt-teams-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.dt-teams-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.dt-teams-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dt-teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.dt-team-card {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 0.75rem;
+}
+
+.dt-team-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--accent);
+  margin-bottom: 0.375rem;
+}
+
+.dt-team-members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dt-team-member {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.dt-team-form {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.dt-worker-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+}
+
+.dt-worker-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dt-worker-checkbox:hover {
+  border-color: var(--border-default);
+}
+
+.dt-worker-checkbox.selected {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+
+.dt-worker-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+/* ── Daily Operations ──────────────────────────────────── */
+.ops-status-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ops-plan-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ops-worker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1rem;
+}
+
+.ops-worker-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.ops-unassigned-card {
+  border-color: var(--danger-border);
+}
+
+.ops-worker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-2);
+}
+
+.ops-worker-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.ops-worker-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ops-worker-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ops-worker-progress-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ops-worker-progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.ops-pct-text {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ops-properties {
+  padding: 0.5rem;
+}
+
+.ops-property {
+  margin-bottom: 0.5rem;
+}
+
+.ops-property:last-child {
+  margin-bottom: 0;
+}
+
+.ops-property-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.ops-property-address {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.85rem;
+}
+
+.ops-property-address svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.ops-partner-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.ops-task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.5rem;
+  margin: 0 0.25rem 0.25rem;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border-subtle);
+  transition: background 0.15s;
+}
+
+.ops-task-row:hover {
+  background: var(--bg-hover);
+}
+
+.ops-task-row.status-pending      { border-left-color: var(--text-muted); }
+.ops-task-row.status-in_progress  { border-left-color: var(--info); }
+.ops-task-row.status-done         { border-left-color: var(--success); opacity: 0.7; }
+.ops-task-row.status-postponed    { border-left-color: var(--warning); }
+.ops-task-row.status-carried_over { border-left-color: var(--accent); }
+
+.ops-task-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.ops-task-badge {
+  padding: 2px 4px;
+  min-width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ops-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.ops-task-actions .btn-ghost {
+  padding: 0.25rem;
+  min-width: auto;
+}
+
+.ops-reassign-select {
+  width: auto !important;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.375rem;
+  min-width: 120px;
+}
+
+.ops-unassigned-prop {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem;
+  margin: 0.25rem 0.5rem;
+  background: var(--danger-soft);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.ops-unassigned-prop svg {
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.ops-loading {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem;
+}
+
+.ops-loading-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: ops-pulse 1.2s ease-in-out infinite;
+}
+
+.ops-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.ops-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ops-pulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 480px) {
+  .ops-worker-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ── Extra Jobs Filter ─────────────────────────────────── */
+.ej-filter-bar {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+
 /* ── Upload Zone ───────────────────────────────────────── */
 .upload-zone {
   background: var(--bg-surface);

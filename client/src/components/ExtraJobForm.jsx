@@ -17,11 +17,7 @@ export default function ExtraJobForm({ teams, onSubmit, onCancel }) {
     <form onSubmit={handleSubmit} className="form-card">
       <div className="form-card-title">{t('extraJobs.newTitle')}</div>
 
-      <div className="form-row">
-        <div className="form-group col-span-full">
-          <label className="form-label">{t('common.description')} *</label>
-          <textarea required value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="textarea" />
-        </div>
+      <div className="form-row-3">
         <div className="form-group">
           <label className="form-label">{t('common.address')} *</label>
           <input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="input" />
@@ -38,6 +34,13 @@ export default function ExtraJobForm({ teams, onSubmit, onCancel }) {
               <option key={tm.id} value={tm.id}>{tm.name}</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '0.75rem' }}>
+        <div className="form-group">
+          <label className="form-label">{t('common.description')} *</label>
+          <textarea required value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="textarea" />
         </div>
       </div>
 

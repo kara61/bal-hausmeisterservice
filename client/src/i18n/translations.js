@@ -190,6 +190,8 @@ export const translations = {
     'tasks.none': 'Keine Aufgaben fuer diesen Tag. Klicke "Aufgaben generieren" um zu starten.',
     'tasks.postponeReason': 'Grund fuer Verschiebung:',
     'tasks.newDate': 'Neues Datum (YYYY-MM-DD):',
+    'tasks.totalTasks': 'Aufgaben',
+    'tasks.completionRate': 'Erledigt',
 
     // Reports
     'reports.title': 'Berichte',
@@ -617,6 +619,8 @@ export const translations = {
     'tasks.none': 'No tasks for this day. Click "Generate Tasks" to start.',
     'tasks.postponeReason': 'Reason for postponement:',
     'tasks.newDate': 'New date (YYYY-MM-DD):',
+    'tasks.totalTasks': 'Tasks',
+    'tasks.completionRate': 'Completed',
 
     // Reports
     'reports.title': 'Reports',
