@@ -48,6 +48,10 @@ import planAssignmentsIdHandler from './_handlers/plan-assignments/[id].js';
 import commandCenterHandler from './_handlers/command-center/index.js';
 import analyticsHandler from './_handlers/analytics/index.js';
 import analyticsExportHandler from './_handlers/analytics/export.js';
+import hourBalancesIndexHandler from './_handlers/hour-balances/index.js';
+import hourBalancesSyncHandler from './_handlers/hour-balances/sync.js';
+import hourBalancesPayoutHandler from './_handlers/hour-balances/payout.js';
+import hourBalancesInitialHandler from './_handlers/hour-balances/initial.js';
 
 // Route definitions: [pattern, handler, paramNames]
 // Order matters — more specific routes first
@@ -111,6 +115,12 @@ const routes = [
   // Analytics
   ['analytics/export', analyticsExportHandler],
   ['analytics', analyticsHandler],
+
+  // Hour Balances (Stundenkonto)
+  ['hour-balances/sync', hourBalancesSyncHandler],
+  ['hour-balances/payout', hourBalancesPayoutHandler],
+  ['hour-balances/initial', hourBalancesInitialHandler],
+  ['hour-balances', hourBalancesIndexHandler],
 ];
 
 // Dynamic routes: [pattern, handler, paramMap]
