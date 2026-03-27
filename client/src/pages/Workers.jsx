@@ -9,6 +9,7 @@ export default function Workers() {
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
   const [warning, setWarning] = useState(null);
+  const [filter, setFilter] = useState('all');
   const { t } = useLang();
 
   const loadWorkers = async () => {
@@ -51,6 +52,30 @@ export default function Workers() {
     }
   };
 
+  const handleFieldToggle = async (worker) => {
+    const newValue = !worker.is_field_worker;
+    try {
+      setError(null);
+      const result = await api.put('/workers/field-status', {
+        worker_id: worker.id,
+        is_field_worker: newValue,
+      });
+      if (result?._warning === 'last_field_worker') {
+        setWarning(t('workers.lastFieldWorkerWarning'));
+        return;
+      }
+      loadWorkers();
+    } catch (err) {
+      setError(err.message || t('common.error'));
+    }
+  };
+
+  const filteredWorkers = workers.filter(w => {
+    if (filter === 'field') return w.is_field_worker;
+    if (filter === 'office') return !w.is_field_worker;
+    return true;
+  });
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -79,6 +104,18 @@ export default function Workers() {
         </div>
       )}
 
+      <div className="flex gap-sm mb-md">
+        {['all', 'field', 'office'].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
+          >
+            {t(`workers.filter${f.charAt(0).toUpperCase() + f.slice(1)}`)}
+          </button>
+        ))}
+      </div>
+
       <div className="data-table-wrapper">
         <table className="data-table">
           <thead>
@@ -88,13 +125,17 @@ export default function Workers() {
               <th>{t('common.type')}</th>
               <th>{t('common.rate')}</th>
               <th>{t('workers.vacationDays')}</th>
+              <th>{t('workers.fieldWorker')}</th>
               <th>{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
-            {workers.map(w => (
+            {filteredWorkers.map(w => (
               <tr key={w.id}>
-                <td style={{ fontWeight: 600 }}>{w.name}</td>
+                <td style={{ fontWeight: 600 }}>
+                  {w.name}
+                  {!w.is_field_worker && <span className="badge badge-neutral" style={{ marginLeft: '8px', fontSize: '0.75rem' }}>{t('workers.office')}</span>}
+                </td>
                 <td><span className="mono">{w.phone_number}</span></td>
                 <td>
                   <span className={`badge ${w.worker_type === 'fulltime' ? 'badge-accent' : 'badge-neutral'}`}>
@@ -103,6 +144,7 @@ export default function Workers() {
                 </td>
                 <td><span className="mono">{w.hourly_rate ? `${w.hourly_rate} EUR/h` : '—'}</span></td>
                 <td><span className="mono">{w.vacation_entitlement} {t('common.days')}</span></td>
+                <td><input type="checkbox" checked={w.is_field_worker} onChange={() => handleFieldToggle(w)} style={{ cursor: 'pointer' }} /></td>
                 <td>
                   <div className="flex gap-xs">
                     <button onClick={() => { setEditing(w); setShowForm(true); }} className="btn btn-secondary btn-sm">{t('common.edit')}</button>
@@ -112,7 +154,7 @@ export default function Workers() {
               </tr>
             ))}
             {workers.length === 0 && (
-              <tr><td colSpan={6}><div className="empty-state"><div className="empty-state-text">{t('workers.none')}</div></div></td></tr>
+              <tr><td colSpan={7}><div className="empty-state"><div className="empty-state-text">{t('workers.none')}</div></div></td></tr>
             )}
           </tbody>
         </table>
