@@ -45,6 +45,7 @@ import cronEveningHandler from './_handlers/cron/evening.js';
 import dailyPlansIndexHandler from './_handlers/daily-plans/index.js';
 import dailyPlansIdHandler from './_handlers/daily-plans/[id].js';
 import dailyPlansApproveHandler from './_handlers/daily-plans/approve.js';
+import planAssignmentsPostponeHandler from './_handlers/plan-assignments/[id]/postpone.js';
 import planAssignmentsIdHandler from './_handlers/plan-assignments/[id].js';
 import commandCenterHandler from './_handlers/command-center/index.js';
 import analyticsHandler from './_handlers/analytics/index.js';
@@ -162,6 +163,8 @@ const dynamicRoutes = [
   [/^daily-plans\/([^/]+)\/approve$/, dailyPlansApproveHandler, { id: 1 }],
   // /daily-plans/:id
   [/^daily-plans\/([^/]+)$/, dailyPlansIdHandler, { id: 1 }],
+  // /plan-assignments/:id/postpone
+  [/^plan-assignments\/([^/]+)\/postpone$/, planAssignmentsPostponeHandler, { id: 1 }],
   // /plan-assignments/:id
   [/^plan-assignments\/([^/]+)$/, planAssignmentsIdHandler, { id: 1 }],
 ];
