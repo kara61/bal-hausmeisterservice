@@ -1,6 +1,9 @@
 import { pool } from '../db/pool.js';
 import { calculateMonthlyHours, splitOfficialAndUnofficial } from './timeCalculation.js';
 
+/** Legal Minijob ceiling since Jan 2024 */
+export const MINIJOB_MAX_MONTHLY = 538;
+
 export function calculateSurplusHours(entries, workerType, minijobMonthlyMax = null) {
   const totalHours = calculateMonthlyHours(entries);
   const { unofficial } = splitOfficialAndUnofficial(totalHours, workerType, minijobMonthlyMax);
@@ -27,7 +30,7 @@ export async function syncMonthForAll(year, month) {
     );
 
     const minijobMax = worker.worker_type === 'minijob' && worker.hourly_rate
-      ? Math.round((worker.monthly_salary / worker.hourly_rate) * 100) / 100
+      ? Math.round((Math.min(worker.monthly_salary, MINIJOB_MAX_MONTHLY) / worker.hourly_rate) * 100) / 100
       : null;
 
     const surplus = calculateSurplusHours(entries, worker.worker_type, minijobMax);
@@ -79,13 +82,46 @@ export async function getWorkerBalances() {
 }
 
 export async function recordPayout(workerId, year, month, payoutHours, note) {
+  // First, try to update an existing row with a guard against overpayment
+  const update = await pool.query(
+    `UPDATE hour_balances
+     SET payout_hours = hour_balances.payout_hours + $4,
+         note = COALESCE($5, hour_balances.note),
+         updated_at = NOW()
+     WHERE worker_id = $1 AND year = $2 AND month = $3
+       AND hour_balances.payout_hours + $4 <= hour_balances.surplus_hours
+     RETURNING *`,
+    [workerId, year, month, payoutHours, note]
+  );
+
+  if (update.rowCount > 0) {
+    return update.rows[0];
+  }
+
+  // Check if a row exists but the payout would exceed surplus
+  const existing = await pool.query(
+    `SELECT * FROM hour_balances WHERE worker_id = $1 AND year = $2 AND month = $3`,
+    [workerId, year, month]
+  );
+
+  if (existing.rowCount > 0) {
+    const row = existing.rows[0];
+    const available = Number(row.surplus_hours) - Number(row.payout_hours);
+    throw new Error(
+      `Payout of ${payoutHours}h exceeds available balance of ${available}h`
+    );
+  }
+
+  // No existing row — only allow insert if payout is 0 (or surplus covers it)
+  if (payoutHours > 0) {
+    throw new Error(
+      `Payout of ${payoutHours}h exceeds available balance of 0h`
+    );
+  }
+
   const { rows } = await pool.query(
     `INSERT INTO hour_balances (worker_id, year, month, payout_hours, note)
      VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (worker_id, year, month)
-     DO UPDATE SET payout_hours = hour_balances.payout_hours + $4,
-                   note = COALESCE($5, hour_balances.note),
-                   updated_at = NOW()
      RETURNING *`,
     [workerId, year, month, payoutHours, note]
   );
