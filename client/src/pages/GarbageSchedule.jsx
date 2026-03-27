@@ -16,7 +16,11 @@ export default function GarbageSchedule() {
   const { t } = useLang();
 
   const trashLabel = (type) => t(`garbage.${type}`) || type;
-  const trashBadge = { restmuell: 'badge-neutral', bio: 'badge-success', papier: 'badge-info', gelb: 'badge-warning' };
+  const trashBadgeClass = { restmuell: 'badge-neutral', gelb: 'badge-warning' };
+  const trashBadgeStyle = {
+    bio: { background: 'rgba(160, 120, 70, 0.15)', color: '#b8860b', border: '1px solid rgba(160, 120, 70, 0.3)' },
+    papier: { background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.25)' },
+  };
 
   // Parse date string as local date (avoids UTC timezone shift)
   const fmtDate = (dateStr) => {
@@ -212,7 +216,7 @@ export default function GarbageSchedule() {
             {detail.map((entry, i) => (
               <div key={i} style={{ padding: '0.5rem 0.85rem', background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="mono fw-bold">{fmtDate(entry.collection_date)}</span>
-                <span className={`badge ${trashBadge[entry.trash_type] || 'badge-neutral'}`}>{trashLabel(entry.trash_type)}</span>
+                <span className={`badge ${trashBadgeClass[entry.trash_type] || ''}`} style={trashBadgeStyle[entry.trash_type] || {}}>{trashLabel(entry.trash_type)}</span>
               </div>
             ))}
           </div>
