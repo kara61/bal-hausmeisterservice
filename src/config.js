@@ -15,3 +15,7 @@ export const config = {
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
 };
+
+if (!config.jwtSecret && process.env.NODE_ENV !== 'test') {
+  throw new Error('JWT_SECRET environment variable is required. Set it before starting the server.');
+}

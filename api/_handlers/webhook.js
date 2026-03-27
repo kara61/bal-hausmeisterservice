@@ -8,19 +8,24 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
     // Validate Twilio signature
-    if (process.env.NODE_ENV !== 'test' && config.twilioAuthToken) {
+    if (process.env.SKIP_TWILIO_VALIDATION !== 'true' && config.twilioAuthToken) {
       const signature = req.headers['x-twilio-signature'];
       // Use x-forwarded-* headers to reconstruct original URL (before Vercel rewrite)
       const proto = req.headers['x-forwarded-proto'] || 'https';
       const host = req.headers['x-forwarded-host'] || req.headers.host;
       const url = `${proto}://${host}/api/webhook`;
 
-      const isValid = typeof twilio.validateRequest === 'function'
-        ? twilio.validateRequest(config.twilioAuthToken, signature, url, req.body)
-        : true; // Skip if validateRequest not available
-
-      if (!isValid) {
-        return res.status(403).send('Invalid Twilio signature');
+      try {
+        if (typeof twilio.validateRequest !== 'function') {
+          return res.status(403).send('Twilio validation unavailable');
+        }
+        const isValid = twilio.validateRequest(config.twilioAuthToken, signature, url, req.body);
+        if (!isValid) {
+          return res.status(403).send('Invalid Twilio signature');
+        }
+      } catch (err) {
+        console.error('Twilio signature validation error:', err.message);
+        return res.status(403).send('Twilio signature validation failed');
       }
     }
 

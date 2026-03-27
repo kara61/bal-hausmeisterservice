@@ -7,8 +7,6 @@ export function requireAuth(req, res, next) {
 
   if (header && header.startsWith('Bearer ')) {
     token = header.split(' ')[1];
-  } else if (req.query.token) {
-    token = req.query.token;
   } else {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -30,8 +28,6 @@ export function checkAuth(req, res) {
 
   if (header && header.startsWith('Bearer ')) {
     token = header.split(' ')[1];
-  } else if (req.query?.token) {
-    token = req.query.token;
   }
 
   if (!token) {
