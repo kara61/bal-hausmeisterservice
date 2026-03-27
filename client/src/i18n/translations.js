@@ -105,6 +105,7 @@ export const translations = {
     'workers.role.field': 'Außendienst',
     'workers.role.cleaning': 'Reinigung',
     'workers.role.office': 'Büro',
+    'workers.role.joker': 'Joker (Vertretung)',
     'workers.filterAll': 'Alle',
     'workers.filterField': 'Außendienst',
     'workers.filterCleaning': 'Reinigung',
@@ -205,6 +206,17 @@ export const translations = {
     'reports.markSent': 'Als gesendet',
     'reports.none': 'Keine Berichte vorhanden',
     'reports.confirmDelete': 'Bericht wirklich loeschen? Die PDF-Datei wird ebenfalls geloescht.',
+    'reports.salaryReports': 'Gehaltsberichte',
+
+    // Timesheets (Stundenzettel)
+    'timesheets.title': 'Stundenzettel',
+    'timesheets.generateTitle': 'Stundenzettel erstellen',
+    'timesheets.generate': 'Stundenzettel erstellen',
+    'timesheets.generating': 'Wird erstellt...',
+    'timesheets.description': 'Erstellt fuer jeden Mitarbeiter einen Stundenzettel basierend auf Gehalt und Stundensatz.',
+    'timesheets.totalHours': 'Stunden gesamt',
+    'timesheets.none': 'Keine Stundenzettel fuer diesen Monat',
+    'timesheets.confirmDelete': 'Stundenzettel wirklich loeschen?',
 
     // Properties
     'properties.title': 'Objekte',
@@ -534,6 +546,7 @@ export const translations = {
     'workers.role.field': 'Field',
     'workers.role.cleaning': 'Cleaning',
     'workers.role.office': 'Office',
+    'workers.role.joker': 'Joker (Substitute)',
     'workers.filterAll': 'All',
     'workers.filterField': 'Field',
     'workers.filterCleaning': 'Cleaning',
@@ -634,6 +647,17 @@ export const translations = {
     'reports.markSent': 'Mark sent',
     'reports.none': 'No reports found',
     'reports.confirmDelete': 'Really delete this report? The PDF file will also be removed.',
+    'reports.salaryReports': 'Salary Reports',
+
+    // Timesheets
+    'timesheets.title': 'Timesheets',
+    'timesheets.generateTitle': 'Generate Timesheets',
+    'timesheets.generate': 'Generate Timesheets',
+    'timesheets.generating': 'Generating...',
+    'timesheets.description': 'Creates a timesheet for each worker based on salary and hourly rate.',
+    'timesheets.totalHours': 'Total Hours',
+    'timesheets.none': 'No timesheets for this month',
+    'timesheets.confirmDelete': 'Really delete this timesheet?',
 
     // Properties
     'properties.title': 'Properties',

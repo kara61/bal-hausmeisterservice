@@ -86,6 +86,7 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
             <option value="field">{t('workers.role.field')}</option>
             <option value="cleaning">{t('workers.role.cleaning')}</option>
             <option value="office">{t('workers.role.office')}</option>
+            <option value="joker">{t('workers.role.joker')}</option>
           </select>
         </div>
 
@@ -96,12 +97,10 @@ export default function WorkerForm({ worker, onSave, onCancel }) {
       </div>
 
       <div className="form-row-3">
-        {form.worker_type === 'minijob' && (
-          <div className="form-group">
-            <label className="form-label">{t('workers.monthlySalary')}</label>
-            <input className="input" type="number" step="0.01" value={form.monthly_salary} onChange={e => update('monthly_salary', e.target.value)} />
-          </div>
-        )}
+        <div className="form-group">
+          <label className="form-label">{t('workers.monthlySalary')}</label>
+          <input className="input" type="number" step="0.01" value={form.monthly_salary} onChange={e => update('monthly_salary', e.target.value)} />
+        </div>
 
         <div className="form-group">
           <label className="form-label">{t('workers.vacationEntitlement')}</label>

@@ -54,6 +54,9 @@ import hourBalancesIndexHandler from './_handlers/hour-balances/index.js';
 import hourBalancesSyncHandler from './_handlers/hour-balances/sync.js';
 import hourBalancesPayoutHandler from './_handlers/hour-balances/payout.js';
 import hourBalancesInitialHandler from './_handlers/hour-balances/initial.js';
+import timesheetsIndexHandler from './_handlers/timesheets/index.js';
+import timesheetsGenerateHandler from './_handlers/timesheets/generate.js';
+import timesheetsIdHandler from './_handlers/timesheets/[id].js';
 
 // Route definitions: [pattern, handler, paramNames]
 // Order matters — more specific routes first
@@ -85,6 +88,10 @@ const routes = [
   // Reports
   ['reports/generate', reportsGenerateHandler],
   ['reports', reportsIndexHandler],
+
+  // Timesheets (Stundenzettel)
+  ['timesheets/generate', timesheetsGenerateHandler],
+  ['timesheets', timesheetsIndexHandler],
 
   // Teams
   ['teams', teamsIndexHandler],
@@ -141,6 +148,8 @@ const dynamicRoutes = [
   [/^reports\/([^/]+)\/download$/, reportsIdDownloadHandler, { id: 1 }],
   // /reports/:id
   [/^reports\/([^/]+)$/, reportsIdHandler, { id: 1 }],
+  // /timesheets/:id
+  [/^timesheets\/([^/]+)$/, timesheetsIdHandler, { id: 1 }],
   // /teams/:id/members
   [/^teams\/([^/]+)\/members$/, teamsIdMembersHandler, { id: 1 }],
   // /teams/:id
