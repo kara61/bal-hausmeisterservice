@@ -40,12 +40,13 @@ export async function createTestWorker(overrides = {}) {
     monthly_salary: null,
     registration_date: '2025-01-01',
     vacation_entitlement: 26,
+    is_field_worker: true,
   };
   const w = { ...defaults, ...overrides };
   const result = await pool.query(
-    `INSERT INTO workers (name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [w.name, w.phone_number, w.worker_type, w.hourly_rate, w.monthly_salary, w.registration_date, w.vacation_entitlement]
+    `INSERT INTO workers (name, phone_number, worker_type, hourly_rate, monthly_salary, registration_date, vacation_entitlement, is_field_worker)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [w.name, w.phone_number, w.worker_type, w.hourly_rate, w.monthly_salary, w.registration_date, w.vacation_entitlement, w.is_field_worker]
   );
   return result.rows[0];
 }
