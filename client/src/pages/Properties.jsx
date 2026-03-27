@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 import { useLang } from '../context/LanguageContext';
 import PropertyForm from '../components/PropertyForm';
@@ -8,6 +8,8 @@ export default function Properties() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
+  const [sortKey, setSortKey] = useState('address');
+  const [sortDir, setSortDir] = useState('asc');
   const { t } = useLang();
 
   const loadProperties = async () => {
@@ -20,6 +22,43 @@ export default function Properties() {
   };
 
   useEffect(() => { loadProperties(); }, []);
+
+  const toggleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const arr = [...properties];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => {
+      let va, vb;
+      if (sortKey === 'weekday') {
+        va = a.assigned_weekday ?? 99;
+        vb = b.assigned_weekday ?? 99;
+      } else {
+        va = (a[sortKey] || '').toLowerCase();
+        vb = (b[sortKey] || '').toLowerCase();
+      }
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+    return arr;
+  }, [properties, sortKey, sortDir]);
+
+  const SortHeader = ({ col, children }) => (
+    <th onClick={() => toggleSort(col)} style={{ cursor: 'pointer', userSelect: 'none' }}>
+      <span className="flex items-center gap-xs">
+        {children}
+        {sortKey === col && <span style={{ opacity: 0.6 }}>{sortDir === 'asc' ? '▲' : '▼'}</span>}
+      </span>
+    </th>
+  );
 
   const handleSubmit = async (form) => {
     try {
@@ -76,15 +115,15 @@ export default function Properties() {
           <thead>
             <tr>
               <th style={{ width: '36px' }}>#</th>
-              <th>{t('common.address')}</th>
-              <th>{t('common.city')}</th>
-              <th>{t('properties.tasks')}</th>
-              <th>{t('properties.weekday')}</th>
+              <SortHeader col="address">{t('common.address')}</SortHeader>
+              <SortHeader col="city">{t('common.city')}</SortHeader>
+              <SortHeader col="standard_tasks">{t('properties.tasks')}</SortHeader>
+              <SortHeader col="weekday">{t('properties.weekday')}</SortHeader>
               <th>{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
-            {properties.map((p, i) => (
+            {sorted.map((p, i) => (
               <tr key={p.id}>
                 <td className="mono text-muted">{i + 1}</td>
                 <td style={{ fontWeight: 600 }}>{p.address}</td>
@@ -104,7 +143,7 @@ export default function Properties() {
               </tr>
             ))}
             {properties.length === 0 && (
-              <tr><td colSpan={5}><div className="empty-state"><div className="empty-state-text">{t('properties.none')}</div></div></td></tr>
+              <tr><td colSpan={6}><div className="empty-state"><div className="empty-state-text">{t('properties.none')}</div></div></td></tr>
             )}
           </tbody>
         </table>
