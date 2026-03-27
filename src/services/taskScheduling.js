@@ -120,8 +120,8 @@ export async function carryOverTasks(fromDate, toDate) {
     );
 
     const { rowCount } = await pool.query(
-      `SELECT 1 FROM task_assignments WHERE property_id = $1 AND date = $2`,
-      [task.property_id, toDate]
+      `SELECT 1 FROM task_assignments WHERE property_id = $1 AND date = $2 AND task_description = $3`,
+      [task.property_id, toDate, task.task_description]
     );
     if (rowCount === 0) {
       const { rows } = await pool.query(
@@ -142,6 +142,9 @@ export async function postponeTask(taskId, reason, newDate) {
      WHERE id = $1 RETURNING *`,
     [taskId, reason, newDate]
   );
+  if (rows.length === 0) {
+    throw new Error(`Task with id ${taskId} does not exist`);
+  }
   const task = rows[0];
 
   const { rowCount } = await pool.query(
