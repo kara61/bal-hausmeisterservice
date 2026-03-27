@@ -97,6 +97,18 @@ describe('Hour Balances Sync API - validation', () => {
     expect(status).toBe(200);
     expect(json).toEqual({ synced: 0 });
   });
+
+  it('BUG-011: coerces string month/year to integers (December sync)', async () => {
+    const { syncMonthForAll } = await import('../../src/services/hourBalance.js');
+    const { status, json } = await callHandler(syncHandler, {
+      method: 'POST',
+      authenticated: true,
+      body: { year: '2026', month: '12' },
+    });
+    expect(status).toBe(200);
+    // Verify syncMonthForAll was called with integers, not strings
+    expect(syncMonthForAll).toHaveBeenLastCalledWith(2026, 12);
+  });
 });
 
 describe('Hour Balances Payout API - auth', () => {

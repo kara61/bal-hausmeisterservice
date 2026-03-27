@@ -24,7 +24,13 @@ export default withErrorHandler(async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    const { worker_id, year, entitlement_days } = req.body;
+    const { worker_id, year, entitlement_days } = req.body || {};
+    if (!worker_id || !year || !entitlement_days
+        || !Number.isFinite(Number(worker_id))
+        || !Number.isFinite(Number(year))
+        || !Number.isFinite(Number(entitlement_days))) {
+      return res.status(400).json({ error: 'worker_id, year, and entitlement_days are required and must be numeric' });
+    }
     await ensureVacationBalance(worker_id, year, entitlement_days);
     const balance = await getVacationBalance(worker_id, year);
     return res.status(201).json(balance);

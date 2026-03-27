@@ -9,6 +9,8 @@ export default withErrorHandler(async (req, res) => {
   const { year, month } = req.body;
   if (!year || !month) return res.status(400).json({ error: 'year and month are required' });
 
-  const results = await syncMonthForAll(year, month);
+  const yearInt = parseInt(year, 10);
+  const monthInt = parseInt(month, 10);
+  const results = await syncMonthForAll(yearInt, monthInt);
   return res.json(results);
 });

@@ -23,7 +23,8 @@ export async function adjustSickLeave(sickLeaveId, adjustments) {
       );
 
       if (adjustments.vacation_deducted_days > 0) {
-        await deductVacation(client, sl.worker_id, adjustments.vacation_deducted_days);
+        const year = new Date(sl.start_date).getFullYear();
+        await deductVacation(client, sl.worker_id, adjustments.vacation_deducted_days, year);
       }
 
       await client.query('COMMIT');
@@ -31,6 +32,9 @@ export async function adjustSickLeave(sickLeaveId, adjustments) {
     }
 
     const aokApproved = adjustments.aok_approved_days;
+    if (aokApproved > sl.declared_days) {
+      throw new Error('aok_approved_days cannot exceed declared_days');
+    }
     const remainingDays = sl.declared_days - aokApproved;
 
     let vacationDeducted = 0;

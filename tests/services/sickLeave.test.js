@@ -75,4 +75,37 @@ describeWithDb('adjustSickLeave', () => {
     expect(result.unpaid_days).toBe(1);
     expect(result.status).toBe('overridden');
   });
+
+  it('BUG-008: overridden branch deducts vacation from the sick leave year, not current year', async () => {
+    // Create vacation balance for 2025 (not current year)
+    await pool.query(
+      'INSERT INTO vacation_balances (worker_id, year, entitlement_days, used_days) VALUES ($1, 2025, 26, 0)',
+      [worker.id]
+    );
+    const sickLeave = await pool.query(
+      `INSERT INTO sick_leave (worker_id, start_date, declared_days, status) VALUES ($1, '2025-11-10', 5, 'pending') RETURNING *`,
+      [worker.id]
+    );
+    await adjustSickLeave(sickLeave.rows[0].id, {
+      aok_approved_days: 3,
+      vacation_deducted_days: 2,
+      unpaid_days: 0,
+      status: 'overridden',
+    });
+    const vac = await pool.query(
+      'SELECT * FROM vacation_balances WHERE worker_id = $1 AND year = 2025',
+      [worker.id]
+    );
+    expect(vac.rows[0].used_days).toBe(2);
+  });
+
+  it('BUG-009: throws error when aok_approved_days exceeds declared_days', async () => {
+    const sickLeave = await pool.query(
+      `INSERT INTO sick_leave (worker_id, start_date, declared_days, status) VALUES ($1, '2026-01-10', 5, 'pending') RETURNING *`,
+      [worker.id]
+    );
+    await expect(
+      adjustSickLeave(sickLeave.rows[0].id, { aok_approved_days: 7 })
+    ).rejects.toThrow('aok_approved_days cannot exceed declared_days');
+  });
 });
