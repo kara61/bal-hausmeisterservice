@@ -66,6 +66,11 @@ export function mockRes() {
       res._chunks.push(chunk);
       return res;
     },
+    send(data) {
+      res._sendData = data;
+      res._ended = true;
+      return res;
+    },
   };
   return res;
 }
