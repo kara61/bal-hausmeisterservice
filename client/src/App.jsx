@@ -11,10 +11,9 @@ import SickLeave from './pages/SickLeave';
 import Vacation from './pages/Vacation';
 import Reports from './pages/Reports';
 import Properties from './pages/Properties';
-import DailyTasks from './pages/DailyTasks';
+import DailyOperations from './pages/DailyOperations';
 import ExtraJobs from './pages/ExtraJobs';
 import GarbageSchedule from './pages/GarbageSchedule';
-import DailyPlan from './pages/DailyPlan';
 import CommandCenter from './pages/CommandCenter';
 import Analytics from './pages/Analytics';
 import HourBalances from './pages/HourBalances';
@@ -43,8 +42,7 @@ export default function App() {
             <Route path="hour-balances" element={<HourBalances />} />
             <Route path="reports" element={<Reports />} />
             <Route path="properties" element={<Properties />} />
-            <Route path="daily-tasks" element={<DailyTasks />} />
-            <Route path="daily-plan" element={<DailyPlan />} />
+            <Route path="daily-operations" element={<DailyOperations />} />
             <Route path="extra-jobs" element={<ExtraJobs />} />
             <Route path="garbage" element={<GarbageSchedule />} />
             <Route path="analytics" element={<Analytics />} />
