@@ -204,7 +204,7 @@ export async function getWorkerAnalytics(fromDate, toDate) {
     `SELECT ad.*, w.name AS worker_name
      FROM analytics_daily ad
      JOIN workers w ON w.id = ad.worker_id
-     WHERE ad.date >= $1 AND ad.date <= $2 AND w.is_field_worker = true
+     WHERE ad.date >= $1 AND ad.date <= $2 AND w.worker_role = 'field'
      ORDER BY ad.worker_id, ad.date`,
     [fromDate, toDate]
   );
@@ -266,7 +266,7 @@ export async function getCostAnalytics(fromDate, toDate) {
        SUM(ad.properties_completed)::int AS properties_completed
      FROM analytics_daily ad
      JOIN workers w ON w.id = ad.worker_id
-     WHERE ad.date >= $1 AND ad.date <= $2 AND w.is_field_worker = true
+     WHERE ad.date >= $1 AND ad.date <= $2 AND w.worker_role = 'field'
      GROUP BY ad.worker_id, w.name, w.hourly_rate
      ORDER BY w.name`,
     [fromDate, toDate]
