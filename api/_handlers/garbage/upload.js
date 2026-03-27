@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     const pdfBuffer = await readFile(pdfFile.filepath);
-    const dates = await parseAwpPdf(pdfBuffer, year);
+    const { dates, text: pdfText } = await parseAwpPdf(pdfBuffer, year);
 
     if (dates.length === 0) {
       return res.status(422).json({ error: 'No collection dates found in PDF' });
@@ -41,11 +41,7 @@ export default async function handler(req, res) {
     }
 
     // Try auto-match by extracted address
-    const { createRequire } = await import('module');
-    const require = createRequire(import.meta.url);
-    const pdfParse = require('pdf-parse');
-    const pdfData = await pdfParse(pdfBuffer);
-    const extractedAddress = extractAddressFromPdf(pdfData.text);
+    const extractedAddress = extractAddressFromPdf(pdfText);
 
     if (extractedAddress) {
       const { rows } = await pool.query(

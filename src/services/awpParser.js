@@ -81,16 +81,20 @@ export async function parseAwpPdf(pdfBuffer, year) {
   const data = new Uint8Array(pdfBuffer.buffer || pdfBuffer);
   const doc = await pdfjsLib.getDocument({ data, disableAutoFetch: true, isEvalSupported: false }).promise;
   const results = [];
+  const textParts = [];
 
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     const page = await doc.getPage(pageNum);
     const content = await page.getTextContent();
 
     for (const item of content.items) {
-      const str = item.str.trim();
-      if (!str) continue;
+      const str = item.str;
+      textParts.push(str);
 
-      const match = str.match(DATE_REGEX);
+      const trimmed = str.trim();
+      if (!trimmed) continue;
+
+      const match = trimmed.match(DATE_REGEX);
       if (!match) continue;
 
       const day = parseInt(match[1], 10);
@@ -111,7 +115,8 @@ export async function parseAwpPdf(pdfBuffer, year) {
     }
   }
 
-  return results;
+  const fullText = textParts.join(' ');
+  return { dates: results, text: fullText };
 }
 
 /**
