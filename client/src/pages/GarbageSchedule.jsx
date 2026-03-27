@@ -283,6 +283,7 @@ export default function GarbageSchedule() {
                   <th style={{ width: '36px' }}>
                     <input type="checkbox" checked={summary.length > 0 && selected.size === summary.length} onChange={toggleSelectAll} />
                   </th>
+                  <th style={{ width: '36px' }}>#</th>
                   <th>{t('garbage.property')}</th>
                   <th>{t('garbage.totalDates')}</th>
                   <th>{t('garbage.trashTypes')}</th>
@@ -291,11 +292,12 @@ export default function GarbageSchedule() {
                 </tr>
               </thead>
               <tbody>
-                {summary.map(item => (
+                {summary.map((item, i) => (
                   <tr key={item.property_id} style={selected.has(item.property_id) ? { background: 'var(--accent-soft)' } : {}}>
                     <td>
                       <input type="checkbox" checked={selected.has(item.property_id)} onChange={() => toggleSelect(item.property_id)} />
                     </td>
+                    <td className="mono text-muted">{i + 1}</td>
                     <td style={{ fontWeight: 600 }}>{item.address}, {item.city}</td>
                     <td><span className="mono">{item.total_dates}</span></td>
                     <td>
