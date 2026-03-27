@@ -52,16 +52,23 @@ export default function Workers() {
     }
   };
 
-  const handleFieldToggle = async (worker) => {
+  const handleFieldToggle = async (worker, force = false) => {
     const newValue = !worker.is_field_worker;
     try {
       setError(null);
+      setWarning(null);
       const result = await api.put('/workers/field-status', {
         worker_id: worker.id,
         is_field_worker: newValue,
+        force,
       });
-      if (result?._warning === 'last_field_worker') {
-        setWarning(t('workers.lastFieldWorkerWarning'));
+      if (result?._warnings) {
+        const messages = [];
+        if (result._warnings.includes('last_field_worker')) messages.push(t('workers.lastFieldWorkerWarning'));
+        if (result._warnings.includes('future_assignments')) messages.push(t('workers.futureAssignmentsWarning'));
+        if (confirm(messages.join('\n\n'))) {
+          await handleFieldToggle(worker, true);
+        }
         return;
       }
       loadWorkers();
@@ -153,7 +160,7 @@ export default function Workers() {
                 </td>
               </tr>
             ))}
-            {workers.length === 0 && (
+            {filteredWorkers.length === 0 && (
               <tr><td colSpan={7}><div className="empty-state"><div className="empty-state-text">{t('workers.none')}</div></div></td></tr>
             )}
           </tbody>
