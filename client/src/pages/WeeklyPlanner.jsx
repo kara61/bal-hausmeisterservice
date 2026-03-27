@@ -30,7 +30,10 @@ const STATUS_ICONS = {
 const DAYS_PER_VIEW = 3;
 
 function toDateStr(d) {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function getMonday(date) {
@@ -39,6 +42,11 @@ function getMonday(date) {
   const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   return d;
+}
+
+function parseDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 function fmtDE(dateStr) {
@@ -92,7 +100,7 @@ export default function WeeklyPlanner() {
   useEffect(() => { setViewOffset(0); }, [weekStart]);
 
   const navigateWeek = (offset) => {
-    const d = new Date(weekStart + 'T00:00:00');
+    const d = parseDate(weekStart);
     d.setDate(d.getDate() + offset * 7);
     setWeekStart(toDateStr(d));
   };
@@ -141,7 +149,7 @@ export default function WeeklyPlanner() {
 
   const maxDate = new Date();
   maxDate.setDate(maxDate.getDate() + 56);
-  const isAtFutureLimit = new Date(weekStart + 'T00:00:00') >= maxDate;
+  const isAtFutureLimit = parseDate(weekStart) >= maxDate;
 
   // Stats
   const stats = useMemo(() => {
@@ -288,9 +296,9 @@ export default function WeeklyPlanner() {
               key={dateStr}
               className={`wp-day-dot ${i >= viewOffset && i < viewOffset + DAYS_PER_VIEW ? 'active' : ''} ${dateStr === todayStr ? 'today' : ''}`}
               onClick={() => setViewOffset(Math.min(i, weekDates.length - DAYS_PER_VIEW))}
-              title={`${dayShort[new Date(dateStr + 'T00:00:00').getDay()]} ${fmtDE(dateStr)}`}
+              title={`${dayShort[parseDate(dateStr).getDay()]} ${fmtDE(dateStr)}`}
             >
-              {dayShort[new Date(dateStr + 'T00:00:00').getDay()]}
+              {dayShort[parseDate(dateStr).getDay()]}
             </button>
           ))}
         </div>
@@ -304,7 +312,7 @@ export default function WeeklyPlanner() {
         {visibleDates.map(dateStr => {
           const day = filteredDays[dateStr];
           if (!day) return null;
-          const d = new Date(dateStr + 'T00:00:00');
+          const d = parseDate(dateStr);
           const dayIdx = d.getDay();
           const isToday = dateStr === todayStr;
           const isForecast = day.mode === 'forecast';
