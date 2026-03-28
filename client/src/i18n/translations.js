@@ -128,6 +128,9 @@ export const translations = {
     'timeEntries.resolved': 'Geloest',
     'timeEntries.open': 'Offen',
     'timeEntries.noFlags': 'Alles in Ordnung',
+    'timeEntries.viewMonthly': 'Monatlich',
+    'timeEntries.viewDaily': 'Taeglich',
+    'timeEntries.noneDay': 'Keine Eintraege fuer diesen Tag',
 
     // Sick Leave
     'sickLeave.title': 'Krankmeldungen',
@@ -593,6 +596,9 @@ export const translations = {
     'timeEntries.resolved': 'Resolved',
     'timeEntries.open': 'Open',
     'timeEntries.noFlags': 'All clear',
+    'timeEntries.viewMonthly': 'Monthly',
+    'timeEntries.viewDaily': 'Daily',
+    'timeEntries.noneDay': 'No entries for this day',
 
     // Sick Leave
     'sickLeave.title': 'Sick Leave',

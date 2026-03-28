@@ -13,10 +13,19 @@ function calcDuration(checkIn, checkOut) {
   return { h, m, total: ms / 3600000 };
 }
 
+function toLocalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export default function TimeEntries() {
   const now = new Date();
+  const [viewMode, setViewMode] = useState('monthly'); // 'monthly' | 'daily'
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [selectedDate, setSelectedDate] = useState(toLocalDateStr(now));
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -25,14 +34,17 @@ export default function TimeEntries() {
 
   const load = async () => {
     try {
-      const data = await api.get(`/time-entries?month=${month}&year=${year}`);
+      const url = viewMode === 'daily'
+        ? `/time-entries?date=${selectedDate}`
+        : `/time-entries?month=${month}&year=${year}`;
+      const data = await api.get(url);
       setEntries(data);
     } catch (err) {
       setError(err.message || t('common.error'));
     }
   };
 
-  useEffect(() => { load(); }, [month, year]);
+  useEffect(() => { load(); }, [month, year, selectedDate, viewMode]);
 
   const startEdit = (entry) => {
     setError(null);
@@ -75,7 +87,33 @@ export default function TimeEntries() {
           <h1 className="page-title">{t('timeEntries.title')}</h1>
           <p className="text-secondary text-sm mt-sm">{stats.total} {t('timeEntries.totalEntries').toLowerCase()}</p>
         </div>
-        <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
+        <div className="flex gap-sm items-center">
+          <div className="btn-group">
+            <button
+              className={`btn btn-sm ${viewMode === 'monthly' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setViewMode('monthly')}
+            >
+              {t('timeEntries.viewMonthly')}
+            </button>
+            <button
+              className={`btn btn-sm ${viewMode === 'daily' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setViewMode('daily')}
+            >
+              {t('timeEntries.viewDaily')}
+            </button>
+          </div>
+          {viewMode === 'daily' ? (
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              className="input"
+              style={{ width: 'auto' }}
+            />
+          ) : (
+            <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
+          )}
+        </div>
       </div>
 
       {error && (
@@ -193,7 +231,7 @@ export default function TimeEntries() {
                     <div className="empty-state-icon">
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <div className="empty-state-text">{t('timeEntries.none')}</div>
+                    <div className="empty-state-text">{viewMode === 'daily' ? t('timeEntries.noneDay') : t('timeEntries.none')}</div>
                   </div>
                 </td>
               </tr>

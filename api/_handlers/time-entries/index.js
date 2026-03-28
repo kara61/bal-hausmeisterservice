@@ -6,9 +6,13 @@ export default withErrorHandler(async (req, res) => {
   if (checkAuth(req, res)) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { month, year, worker_id } = req.query;
+  const { month, year, date, worker_id } = req.query;
 
-  if (month || year) {
+  if (date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date))) {
+      return res.status(400).json({ error: 'date must be a valid YYYY-MM-DD string' });
+    }
+  } else if (month || year) {
     const monthInt = parseInt(month, 10);
     const yearInt = parseInt(year, 10);
     if (!month || !year || isNaN(monthInt) || isNaN(yearInt) || monthInt < 1 || monthInt > 12 || yearInt < 1000 || yearInt > 9999) {
@@ -24,7 +28,10 @@ export default withErrorHandler(async (req, res) => {
   `;
   const params = [];
 
-  if (month && year) {
+  if (date) {
+    params.push(date);
+    query += ` AND te.date = $${params.length}`;
+  } else if (month && year) {
     params.push(parseInt(month, 10), parseInt(year, 10));
     query += ` AND EXTRACT(MONTH FROM te.date) = $${params.length - 1} AND EXTRACT(YEAR FROM te.date) = $${params.length}`;
   }
