@@ -5,6 +5,12 @@ import { pool } from '../src/db/pool.js';
 import { seed, cleanup } from './sim/seed.js';
 import { Report } from './sim/report.js';
 import scenario1 from './sim/scenarios/scenario1.js';
+import scenario2 from './sim/scenarios/scenario2.js';
+import scenario3 from './sim/scenarios/scenario3.js';
+import scenario4 from './sim/scenarios/scenario4.js';
+import scenario5 from './sim/scenarios/scenario5.js';
+import scenario6 from './sim/scenarios/scenario6.js';
+import scenario7 from './sim/scenarios/scenario7.js';
 
 const REPORT_PATH = 'docs/simulation/results.md';
 
@@ -25,6 +31,12 @@ async function main() {
 
     // Run scenarios
     await scenario1(report, data);
+    await scenario2(report, data);
+    await scenario3(report, data);
+    const s4result = await scenario4(report, data);
+    await scenario5(report, data);
+    await scenario6(report, data);
+    await scenario7(report, data);
 
   } catch (err) {
     console.error('\nFATAL ERROR:', err);
