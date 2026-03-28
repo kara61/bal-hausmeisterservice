@@ -91,6 +91,67 @@ async function getOrCreateTemplate(body, buttons) {
   return content.sid;
 }
 
+/**
+ * Send a WhatsApp interactive list message via Twilio Content API.
+ * Used for property selection during checkout (supports up to 10 items per section).
+ *
+ * @param {string} to - Recipient phone number
+ * @param {string} body - Message body text
+ * @param {string} buttonText - Text on the list button (e.g., "Objekt waehlen")
+ * @param {Array<{id: string, title: string, description?: string}>} items - List items
+ */
+export async function sendWhatsAppListMessage(to, body, buttonText, items) {
+  const recipient = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+
+  try {
+    const cacheKey = `list_${body}_${items.map(i => i.id).join(',')}`;
+    const friendlyName = 'bal_list_' + hashCode(cacheKey);
+
+    // Try to find existing template
+    const existing = await client.content.v1.contents.list({ limit: 100 });
+    const found = existing.find(c => c.friendlyName === friendlyName);
+    let contentSid;
+
+    if (found) {
+      contentSid = found.sid;
+    } else {
+      const content = await client.content.v1.contents.create({
+        friendlyName,
+        language: 'de',
+        types: {
+          'twilio/list-picker': {
+            body,
+            button: buttonText,
+            items: items.map(item => ({
+              id: item.id,
+              title: item.title.substring(0, 24),
+              description: item.description ? item.description.substring(0, 72) : undefined,
+            })),
+          },
+        },
+      });
+      contentSid = content.sid;
+    }
+
+    return await client.messages.create({
+      from: config.twilio.whatsappNumber,
+      to: recipient,
+      contentSid,
+    });
+  } catch (err) {
+    console.warn('List message failed, falling back to numbered text:', err.message);
+
+    // Fallback: numbered text list
+    const lines = items.map((item, i) => `${i + 1}. ${item.title}`);
+    const fallbackBody = `${body}\n\n${lines.join('\n')}\n\nSchreib die Nummer:`;
+    return client.messages.create({
+      from: config.twilio.whatsappNumber,
+      to: recipient,
+      body: fallbackBody,
+    });
+  }
+}
+
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {

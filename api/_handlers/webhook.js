@@ -1,7 +1,7 @@
 import twilio from 'twilio';
 import { config } from '../../src/config.js';
-import { handleIncomingMessage } from '../../src/services/bot.js';
-import { sendWhatsAppMessage, sendWhatsAppButtons } from '../../src/services/whatsapp.js';
+import { handleIncomingMessageV2 } from '../../src/services/botV2.js';
+import { sendWhatsAppMessage, sendWhatsAppButtons, sendWhatsAppListMessage } from '../../src/services/whatsapp.js';
 
 export default async function handler(req, res) {
   try {
@@ -38,14 +38,16 @@ export default async function handler(req, res) {
     // Use ButtonPayload (from interactive button clicks) if available, otherwise Body
     const messageText = ButtonPayload || Body || '';
 
-    const result = await handleIncomingMessage(From, messageText, {
+    const result = await handleIncomingMessageV2(From, messageText, {
       numMedia: parseInt(NumMedia || '0', 10),
       mediaUrl: MediaUrl0,
       mediaContentType: MediaContentType0,
     });
 
-    // Send with buttons if the response includes them
-    if (result.buttons && result.buttons.length > 0) {
+    // Send with list if the response includes list items
+    if (result.listItems && result.listItems.length > 0) {
+      await sendWhatsAppListMessage(From, result.response, result.listButtonText || 'Waehlen', result.listItems);
+    } else if (result.buttons && result.buttons.length > 0) {
       await sendWhatsAppButtons(From, result.response, result.buttons);
     } else {
       await sendWhatsAppMessage(From, result.response);

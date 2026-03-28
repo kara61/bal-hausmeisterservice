@@ -30,45 +30,12 @@ export async function sendPlanAssignments(planId) {
 
   if (assignments.length === 0) return { sent: 0 };
 
-  const { rows: [plan] } = await pool.query(
-    'SELECT plan_date FROM daily_plans WHERE id = $1',
-    [planId]
-  );
-  const dateStr = plan.plan_date instanceof Date
-    ? plan.plan_date.toISOString().split('T')[0]
-    : plan.plan_date;
-  const dayLabel = formatDateLabel(dateStr);
-
   // Create property visits for the accountability flow
   await createVisitsFromPlan(planId);
 
-  // Group by worker, then by property
-  const byWorker = new Map();
-  for (const a of assignments) {
-    if (!byWorker.has(a.worker_id)) {
-      byWorker.set(a.worker_id, { phone: a.worker_phone, name: a.worker_name, properties: new Map() });
-    }
-    const worker = byWorker.get(a.worker_id);
-    if (!worker.properties.has(a.property_id)) {
-      worker.properties.set(a.property_id, { address: a.address, city: a.city, tasks: [] });
-    }
-    worker.properties.get(a.property_id).tasks.push(a.task_name);
-  }
-
-  let sent = 0;
-  for (const [, worker] of byWorker) {
-    const lines = [];
-    let i = 1;
-    for (const [, prop] of worker.properties) {
-      lines.push(formatAssignmentLine(i, prop.address, prop.city, prop.tasks));
-      i++;
-    }
-    const message = `Deine Aufgaben fuer heute (${dayLabel}):\n\n${lines.join('\n')}\n\nDruecke "Einchecken" wenn du loslegst.`;
-    await sendWhatsAppButtons(worker.phone, message, [{ id: 'einchecken', title: 'Einchecken' }]);
-    sent++;
-  }
-
-  return { sent };
+  // No longer sending WhatsApp messages here.
+  // The morning cron (sendMorningAssignments) handles delivery at 06:15.
+  return { sent: 0, prepared: assignments.length };
 }
 
 export async function notifyHalilPlanReady(planId) {

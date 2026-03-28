@@ -2,8 +2,6 @@ import { pool } from '../../../src/db/pool.js';
 import { detectMissingCheckouts, flagMissingCheckout } from '../../../src/services/anomaly.js';
 import { sendWhatsAppMessage } from '../../../src/services/whatsapp.js';
 import { config } from '../../../src/config.js';
-import { generateDraftPlan } from '../../../src/services/planGeneration.js';
-import { notifyHalilPlanReady } from '../../../src/services/planNotifications.js';
 import { computeDailyAnalyticsForDate, computePropertyMonthlyForMonth } from '../../../src/services/analytics.js';
 
 export default async function handler(req, res) {
@@ -35,10 +33,7 @@ export default async function handler(req, res) {
       `DELETE FROM conversation_state WHERE updated_at < NOW() - INTERVAL '24 hours'`
     );
 
-    // Generate draft plan for tomorrow
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    const plan = await generateDraftPlan(tomorrow);
-    await notifyHalilPlanReady(plan.id);
+    // Plan generation moved to evening-plan cron (20:00 CET)
 
     // Compute analytics for yesterday
     await computeDailyAnalyticsForDate(yesterday);
@@ -51,7 +46,7 @@ export default async function handler(req, res) {
       await computePropertyMonthlyForMonth(monthStr);
     }
 
-    res.json({ ok: true, flagged: missing.length, plan_date: tomorrow, plan_id: plan.id, analytics_computed: yesterday });
+    res.json({ ok: true, flagged: missing.length, analytics_computed: yesterday });
   } catch (err) {
     console.error('Nightly cron error:', err);
     res.status(500).json({ error: 'Cron failed' });
