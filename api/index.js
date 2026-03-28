@@ -42,6 +42,13 @@ import garbageSchedulePropertyHandler from './_handlers/garbage/schedule/[proper
 import cronNightlyHandler from './_handlers/cron/nightly.js';
 import cronMorningHandler from './_handlers/cron/morning.js';
 import cronEveningHandler from './_handlers/cron/evening.js';
+import cronMorningRemindHandler from './_handlers/cron/morning-remind.js';
+import cronCheckinRemindHandler from './_handlers/cron/checkin-remind.js';
+import cronCheckoutRemindHandler from './_handlers/cron/checkout-remind.js';
+import cronCheckoutFinalHandler from './_handlers/cron/checkout-final.js';
+import cronEveningSummaryHandler from './_handlers/cron/evening-summary.js';
+import cronEveningPlanHandler from './_handlers/cron/evening-plan.js';
+import cronAutoApproveHandler from './_handlers/cron/auto-approve.js';
 import dailyPlansIndexHandler from './_handlers/daily-plans/index.js';
 import dailyPlansIdHandler from './_handlers/daily-plans/[id].js';
 import dailyPlansApproveHandler from './_handlers/daily-plans/approve.js';
@@ -116,6 +123,13 @@ const routes = [
   ['cron/nightly', cronNightlyHandler],
   ['cron/morning', cronMorningHandler],
   ['cron/evening', cronEveningHandler],
+  ['cron/morning-remind', cronMorningRemindHandler],
+  ['cron/checkin-remind', cronCheckinRemindHandler],
+  ['cron/checkout-remind', cronCheckoutRemindHandler],
+  ['cron/checkout-final', cronCheckoutFinalHandler],
+  ['cron/evening-summary', cronEveningSummaryHandler],
+  ['cron/evening-plan', cronEveningPlanHandler],
+  ['cron/auto-approve', cronAutoApproveHandler],
 
   // Daily Plans
   ['daily-plans', dailyPlansIndexHandler],
