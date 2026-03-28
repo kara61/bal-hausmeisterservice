@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const tomorrow = req.query?.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];
     const plan = await generateDraftPlan(tomorrow);
     await notifyHalilPlanReady(plan.id);
     res.json({ ok: true, date: tomorrow, plan_id: plan.id });

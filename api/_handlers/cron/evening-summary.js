@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = req.query?.date || new Date().toISOString().split('T')[0];
     await sendEveningSummary(today);
     res.json({ ok: true, date: today });
   } catch (err) {

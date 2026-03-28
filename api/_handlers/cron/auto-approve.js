@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const tomorrow = req.query?.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
     const { rows } = await pool.query(
       `SELECT id FROM daily_plans WHERE plan_date = $1 AND status = 'draft'`,
