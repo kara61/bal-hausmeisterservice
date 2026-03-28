@@ -62,7 +62,7 @@ describe('Cron Nightly - happy path', () => {
     expect(status).toBe(200);
     expect(json.ok).toBe(true);
     expect(json).toHaveProperty('flagged');
-    expect(json).toHaveProperty('plan_date');
+    expect(json).toHaveProperty('analytics_computed');
   });
 });
 

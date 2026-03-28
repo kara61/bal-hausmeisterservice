@@ -17,8 +17,8 @@ describe('Webhook signature validation (BUG-001, BUG-007)', () => {
     vi.doMock('../../src/config.js', () => ({
       config: { twilioAuthToken: 'some-token' },
     }));
-    vi.doMock('../../src/services/bot.js', () => ({
-      handleIncomingMessage: vi.fn(),
+    vi.doMock('../../src/services/botV2.js', () => ({
+      handleIncomingMessageV2: vi.fn(),
     }));
     vi.doMock('../../src/services/whatsapp.js', () => ({
       sendWhatsAppMessage: vi.fn(),
@@ -45,8 +45,8 @@ describe('Webhook signature validation (BUG-001, BUG-007)', () => {
     vi.doMock('../../src/config.js', () => ({
       config: { twilioAuthToken: 'some-token' },
     }));
-    vi.doMock('../../src/services/bot.js', () => ({
-      handleIncomingMessage: vi.fn(),
+    vi.doMock('../../src/services/botV2.js', () => ({
+      handleIncomingMessageV2: vi.fn(),
     }));
     vi.doMock('../../src/services/whatsapp.js', () => ({
       sendWhatsAppMessage: vi.fn(),
@@ -73,8 +73,8 @@ describe('Webhook signature validation (BUG-001, BUG-007)', () => {
     vi.doMock('../../src/config.js', () => ({
       config: { twilioAuthToken: 'some-token' },
     }));
-    vi.doMock('../../src/services/bot.js', () => ({
-      handleIncomingMessage: vi.fn(),
+    vi.doMock('../../src/services/botV2.js', () => ({
+      handleIncomingMessageV2: vi.fn(),
     }));
     vi.doMock('../../src/services/whatsapp.js', () => ({
       sendWhatsAppMessage: vi.fn(),
@@ -103,8 +103,8 @@ describe('Webhook signature validation (BUG-001, BUG-007)', () => {
     vi.doMock('../../src/config.js', () => ({
       config: { twilioAuthToken: 'some-token' },
     }));
-    vi.doMock('../../src/services/bot.js', () => ({
-      handleIncomingMessage: vi.fn(),
+    vi.doMock('../../src/services/botV2.js', () => ({
+      handleIncomingMessageV2: vi.fn(),
     }));
     vi.doMock('../../src/services/whatsapp.js', () => ({
       sendWhatsAppMessage: vi.fn(),
@@ -133,12 +133,13 @@ describe('Webhook signature validation (BUG-001, BUG-007)', () => {
     vi.doMock('../../src/config.js', () => ({
       config: { twilioAuthToken: 'some-token' },
     }));
-    vi.doMock('../../src/services/bot.js', () => ({
-      handleIncomingMessage: vi.fn().mockResolvedValue({ response: 'ok', buttons: [] }),
+    vi.doMock('../../src/services/botV2.js', () => ({
+      handleIncomingMessageV2: vi.fn().mockResolvedValue({ response: 'ok', buttons: [] }),
     }));
     vi.doMock('../../src/services/whatsapp.js', () => ({
       sendWhatsAppMessage: vi.fn().mockResolvedValue(undefined),
       sendWhatsAppButtons: vi.fn().mockResolvedValue(undefined),
+      sendWhatsAppListMessage: vi.fn().mockResolvedValue(undefined),
     }));
 
     const { default: handler } = await import('../../api/_handlers/webhook.js');
